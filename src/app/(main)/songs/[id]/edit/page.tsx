@@ -1,0 +1,507 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ArrowLeft, Save, Loader2, Music, FileText, X, CheckCircle } from 'lucide-react'
+import Link from 'next/link'
+import { toast } from 'sonner'
+
+interface Category {
+  id: string
+  name: string
+}
+
+interface Song {
+  id: string
+  title: string
+  artist: string | null
+  categoryId: string
+  sheetMusic: string | null
+  audioFile: string | null
+  lyrics: string | null
+  notes: string | null
+}
+
+interface UploadedFile {
+  path: string
+  name: string
+  size: number
+  type: string
+}
+
+export default function EditSongPage() {
+  const params = useParams()
+  const router = useRouter()
+  const [song, setSong] = useState<Song | null>(null)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [formData, setFormData] = useState({
+    title: '',
+    artist: '',
+    categoryId: '',
+    lyrics: '',
+    notes: '',
+  })
+  const [sheetMusic, setSheetMusic] = useState<UploadedFile | null>(null)
+  const [audioFile, setAudioFile] = useState<UploadedFile | null>(null)
+  const [uploadingSheet, setUploadingSheet] = useState(false)
+  const [uploadingAudio, setUploadingAudio] = useState(false)
+
+  useEffect(() => {
+    fetchData()
+  }, [params.id])
+
+  const fetchData = async () => {
+    try {
+      const { id } = await params
+
+      // 并行获取歌曲和分类数据
+      const [songRes, categoriesRes] = await Promise.all([
+        fetch(`/api/songs/${id}`),
+        fetch('/api/categories'),
+      ])
+
+      if (songRes.ok) {
+        const songData = await songRes.json()
+        setSong(songData)
+        setFormData({
+          title: songData.title || '',
+          artist: songData.artist || '',
+          categoryId: songData.categoryId || '',
+          lyrics: songData.lyrics || '',
+          notes: songData.notes || '',
+        })
+        if (songData.sheetMusic) {
+          setSheetMusic({
+            path: songData.sheetMusic,
+            name: '现有歌谱',
+            size: 0,
+            type: 'application/pdf',
+          })
+        }
+        if (songData.audioFile) {
+          setAudioFile({
+            path: songData.audioFile,
+            name: '现有音频',
+            size: 0,
+            type: 'audio/mpeg',
+          })
+        }
+      } else {
+        toast.error('歌曲不存在')
+        router.push('/songs')
+        return
+      }
+
+      if (categoriesRes.ok) {
+        const categoriesData = await categoriesRes.json()
+        setCategories(categoriesData)
+      }
+    } catch (error) {
+      console.error('Failed to fetch data:', error)
+      toast.error('加载失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 上传文件
+  const uploadFile = async (file: File, type: 'sheet' | 'audio') => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('type', type)
+
+    const response = await fetch('/api/files/upload', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.error || '上传失败')
+    }
+
+    return response.json()
+  }
+
+  // 处理歌谱文件变化
+  const handleSheetMusicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingSheet(true)
+    try {
+      const result = await uploadFile(file, 'sheet')
+      setSheetMusic(result)
+      toast.success('歌谱上传成功')
+    } catch (error: any) {
+      toast.error(error.message || '歌谱上传失败')
+    } finally {
+      setUploadingSheet(false)
+    }
+  }
+
+  // 处理音频文件变化
+  const handleAudioFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingAudio(true)
+    try {
+      const result = await uploadFile(file, 'audio')
+      setAudioFile(result)
+      toast.success('音频上传成功')
+    } catch (error: any) {
+      toast.error(error.message || '音频上传失败')
+    } finally {
+      setUploadingAudio(false)
+    }
+  }
+
+  // 删除已上传的文件
+  const removeSheetMusic = () => {
+    setSheetMusic(null)
+  }
+
+  const removeAudioFile = () => {
+    setAudioFile(null)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!formData.title.trim()) {
+      toast.error('请输入歌曲名称')
+      return
+    }
+
+    if (!formData.categoryId) {
+      toast.error('请选择分类')
+      return
+    }
+
+    setSaving(true)
+
+    try {
+      const { id } = await params
+      const response = await fetch(`/api/songs/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          sheetMusic: sheetMusic?.path || null,
+          audioFile: audioFile?.path || null,
+        }),
+      })
+
+      if (response.ok) {
+        toast.success('歌曲更新成功')
+        router.push(`/songs/${id}`)
+      } else {
+        const data = await response.json()
+        toast.error(data.error || '更新失败')
+      }
+    } catch (error) {
+      console.error('Failed to update song:', error)
+      toast.error('更新失败')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return ''
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center space-x-4">
+          <div className="h-10 w-20 skeleton rounded-xl" />
+          <div className="space-y-2">
+            <div className="h-8 w-48 skeleton rounded" />
+            <div className="h-4 w-32 skeleton rounded" />
+          </div>
+        </div>
+        <Card className="animate-pulse border-0 shadow-sm">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="h-10 w-full skeleton rounded-xl" />
+              <div className="h-10 w-full skeleton rounded-xl" />
+              <div className="h-32 w-full skeleton rounded-xl" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!song) {
+    return null
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* 头部 */}
+      <div className="flex items-center space-x-4 animate-fade-in">
+        <Link href={`/songs/${song.id}`}>
+          <Button variant="ghost" size="sm" className="rounded-xl">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            返回
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            <span className="gradient-text">编辑歌曲</span>
+          </h1>
+          <p className="text-muted-foreground">{song.title}</p>
+        </div>
+      </div>
+
+      <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '100ms' }}>
+        <CardHeader>
+          <CardTitle>歌曲信息</CardTitle>
+          <CardDescription>修改歌曲基本信息</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* 文件上传区域 */}
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* 歌谱上传 */}
+              <div className="space-y-2">
+                <Label htmlFor="sheetMusic">歌谱文件</Label>
+                {sheetMusic ? (
+                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-xl">
+                    <div className="flex items-center space-x-3">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="text-sm font-medium text-green-900 truncate max-w-[200px]">
+                          {sheetMusic.name}
+                        </p>
+                        {sheetMusic.size > 0 && (
+                          <p className="text-xs text-green-600">
+                            {formatFileSize(sheetMusic.size)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeSheetMusic}
+                      className="p-1 hover:bg-green-100 rounded-lg transition-colors"
+                    >
+                      <X className="h-4 w-4 text-green-600" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Input
+                      id="sheetMusic"
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={handleSheetMusicChange}
+                      className="hidden"
+                      disabled={uploadingSheet}
+                    />
+                    <label
+                      htmlFor="sheetMusic"
+                      className="flex items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary hover:bg-gray-50 transition-colors cursor-pointer"
+                    >
+                      {uploadingSheet ? (
+                        <div className="flex items-center space-x-2 text-muted-foreground">
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          <span>上传中...</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center space-y-2 text-muted-foreground">
+                          <FileText className="h-8 w-8" />
+                          <span className="text-sm">点击上传歌谱</span>
+                          <span className="text-xs">支持图片和 PDF</span>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {/* 音频上传 */}
+              <div className="space-y-2">
+                <Label htmlFor="audioFile">音频文件</Label>
+                {audioFile ? (
+                  <div className="flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-xl">
+                    <div className="flex items-center space-x-3">
+                      <CheckCircle className="h-5 w-5 text-purple-600" />
+                      <div>
+                        <p className="text-sm font-medium text-purple-900 truncate max-w-[200px]">
+                          {audioFile.name}
+                        </p>
+                        {audioFile.size > 0 && (
+                          <p className="text-xs text-purple-600">
+                            {formatFileSize(audioFile.size)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeAudioFile}
+                      className="p-1 hover:bg-purple-100 rounded-lg transition-colors"
+                    >
+                      <X className="h-4 w-4 text-purple-600" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Input
+                      id="audioFile"
+                      type="file"
+                      accept="audio/*"
+                      onChange={handleAudioFileChange}
+                      className="hidden"
+                      disabled={uploadingAudio}
+                    />
+                    <label
+                      htmlFor="audioFile"
+                      className="flex items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary hover:bg-gray-50 transition-colors cursor-pointer"
+                    >
+                      {uploadingAudio ? (
+                        <div className="flex items-center space-x-2 text-muted-foreground">
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          <span>上传中...</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center space-y-2 text-muted-foreground">
+                          <Music className="h-8 w-8" />
+                          <span className="text-sm">点击上传音频</span>
+                          <span className="text-xs">支持 MP3, WAV</span>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 歌曲信息 */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="title">歌曲名称 *</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                  required
+                  placeholder="请输入歌曲名称"
+                  className="h-11 rounded-xl input-focus"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="artist">歌手/作者</Label>
+                <Input
+                  id="artist"
+                  value={formData.artist}
+                  onChange={(e) =>
+                    setFormData({ ...formData, artist: e.target.value })
+                  }
+                  placeholder="请输入歌手或作者"
+                  className="h-11 rounded-xl input-focus"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category">分类 *</Label>
+              <select
+                id="category"
+                value={formData.categoryId}
+                onChange={(e) =>
+                  setFormData({ ...formData, categoryId: e.target.value })
+                }
+                required
+                className="w-full h-11 px-3 border rounded-xl input-focus"
+              >
+                <option value="">请选择分类</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="lyrics">歌词</Label>
+              <Textarea
+                id="lyrics"
+                value={formData.lyrics}
+                onChange={(e) =>
+                  setFormData({ ...formData, lyrics: e.target.value })
+                }
+                placeholder="请输入歌词（可选）"
+                rows={8}
+                className="rounded-xl input-focus"
+              />
+              {formData.lyrics && (
+                <p className="text-xs text-muted-foreground">
+                  共 {formData.lyrics.split('\n').length} 行
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">备注</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
+                placeholder="请输入备注（可选）"
+                rows={3}
+                className="rounded-xl input-focus"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-4">
+              <Link href={`/songs/${song.id}`}>
+                <Button variant="outline" type="button" className="rounded-xl">
+                  取消
+                </Button>
+              </Link>
+              <Button
+                type="submit"
+                disabled={saving || uploadingSheet || uploadingAudio}
+                className="rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25 btn-active"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    保存中...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    保存修改
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

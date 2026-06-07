@@ -1,0 +1,123 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  phone     String?  @unique
+  password  String
+  role      String   @default("MEMBER") // SUPER_ADMIN, ADMIN, LEADER, MEMBER
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关联
+  ownedTeams  Team[]       @relation("TeamOwner")
+  teamMembers TeamMember[]
+  messages    Message[]
+}
+
+// 团队表
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  avatar      String?
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner   User         @relation("TeamOwner", fields: [ownerId], references: [id])
+  members TeamMember[]
+  messages Message[]
+}
+
+// 团队成员表
+model TeamMember {
+  id       String   @id @default(cuid())
+  teamId   String
+  userId   String
+  role     String   @default("MEMBER") // OWNER, ADMIN, MEMBER
+  joinedAt DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+}
+
+// 聊天消息表
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  type      String   @default("TEXT") // TEXT, IMAGE, FILE
+  teamId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// 歌曲表
+model Song {
+  id          String   @id @default(cuid())
+  title       String
+  artist      String?
+  categoryId  String
+  sheetMusic  String?  // 歌谱文件路径
+  audioFile   String?  // 音频文件路径
+  lyrics      String?  // 歌词
+  notes       String?  // 备注
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id])
+  meetings MeetingSong[]
+}
+
+// 分类表
+model Category {
+  id    String @id @default(cuid())
+  name  String @unique
+  songs Song[]
+}
+
+// 聚会记录表
+model Meeting {
+  id          String   @id @default(cuid())
+  date        DateTime
+  theme       String?  // 主题信息
+  speaker     String?  // 讲员
+  leader      String?  // 主领
+  type        String   @default("MORNING") // MORNING, AFTERNOON, EVENING
+  notes       String?  // 备注
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  songs MeetingSong[]
+}
+
+// 聚会歌曲关联表
+model MeetingSong {
+  id        String  @id @default(cuid())
+  meetingId String
+  songId    String
+  order     Int     // 歌曲顺序
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  song    Song    @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, songId])
+}
