@@ -58,10 +58,10 @@ export function Header() {
 
           {/* 用户菜单 */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger>
               <div className="relative h-10 w-10 rounded-xl cursor-pointer hover:opacity-80 transition-opacity ring-2 ring-gray-200/50 hover:ring-primary/30 transition-all">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={session?.user?.avatar || ''} alt={session?.user?.name || ''} />
+                  <AvatarImage src={''} alt={session?.user?.name || ''} />
                   <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-white font-semibold">
                     {userInitials}
                   </AvatarFallback>
@@ -69,11 +69,11 @@ export function Header() {
                 <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 rounded-xl" align="end" forceMount>
+            <DropdownMenuContent className="w-64 rounded-xl" align="end">
               <DropdownMenuLabel className="font-normal p-4">
                 <div className="flex items-center space-x-3">
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src={session?.user?.avatar || ''} alt={session?.user?.name || ''} />
+                    <AvatarImage src={''} alt={session?.user?.name || ''} />
                     <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-white font-semibold text-lg">
                       {userInitials}
                     </AvatarFallback>
@@ -85,7 +85,7 @@ export function Header() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
+              <DropdownMenuItem className="rounded-lg cursor-pointer">
                 <Link href="/settings" className="flex items-center px-4 py-2.5">
                   <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center mr-3">
                     <User className="h-4 w-4 text-blue-600" />
@@ -93,7 +93,7 @@ export function Header() {
                   <span>个人资料</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
+              <DropdownMenuItem className="rounded-lg cursor-pointer">
                 <Link href="/settings" className="flex items-center px-4 py-2.5">
                   <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center mr-3">
                     <Settings className="h-4 w-4 text-purple-600" />

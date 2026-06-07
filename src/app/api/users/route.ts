@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requirePermission, PERMISSIONS } from '@/lib/permissions'
+import { requirePermission } from '@/lib/server-permissions'
+import { PERMISSIONS } from '@/lib/permissions'
 
 export async function GET() {
   try {

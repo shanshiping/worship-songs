@@ -61,7 +61,7 @@ export default function MeetingDetailPage() {
 
   const fetchMeeting = async () => {
     try {
-      const id = typeof params.id === 'string' ? params.id : params.id[0]
+      const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : ''
       const response = await fetch(`/api/meetings/${id}`)
       if (response.ok) {
         const data = await response.json()
@@ -90,7 +90,7 @@ export default function MeetingDetailPage() {
 
     setDeleting(true)
     try {
-      const id = typeof params.id === 'string' ? params.id : params.id[0]
+      const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : ''
       const response = await fetch(`/api/meetings/${id}`, {
         method: 'DELETE',
       })

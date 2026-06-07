@@ -71,7 +71,7 @@ export default function SongDetailPage() {
 
   const fetchSong = async () => {
     try {
-      const id = typeof params.id === 'string' ? params.id : params.id[0]
+      const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : ''
       const response = await fetch(`/api/songs/${id}`)
       if (response.ok) {
         const data = await response.json()
@@ -98,7 +98,7 @@ export default function SongDetailPage() {
 
     setDeleting(true)
     try {
-      const id = typeof params.id === 'string' ? params.id : params.id[0]
+      const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : ''
       const response = await fetch(`/api/songs/${id}`, {
         method: 'DELETE',
       })

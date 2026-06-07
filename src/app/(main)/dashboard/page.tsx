@@ -164,7 +164,7 @@ export default function DashboardPage() {
                 <p className="text-3xl font-bold">
                   {card.key === 'topSong'
                     ? (stats.topSongs[0]?.title || '暂无')
-                    : stats[card.key as keyof DashboardStats]
+                    : String(stats[card.key as keyof DashboardStats] || 0)
                   }
                 </p>
               </div>
