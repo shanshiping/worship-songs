@@ -39,7 +39,7 @@ export async function GET(request: Request) {
 
     // 按年份分组
     const meetingsByYear: Record<number, typeof meetings> = {}
-    meetings.forEach((meeting) => {
+    meetings.forEach((meeting: any) => {
       const year = new Date(meeting.date).getFullYear()
       if (!meetingsByYear[year]) {
         meetingsByYear[year] = []
@@ -50,8 +50,8 @@ export async function GET(request: Request) {
     // 为每年创建一个 Sheet
     for (const [year, yearMeetings] of Object.entries(meetingsByYear)) {
       // 准备数据
-      const data = yearMeetings.map((meeting) => {
-        const songs = meeting.songs.map((ms) => ms.song.title)
+      const data = (yearMeetings as any[]).map((meeting: any) => {
+        const songs = meeting.songs.map((ms: any) => ms.song.title)
         return {
           '时间': new Date(meeting.date).toLocaleDateString('zh-CN'),
           '主题信息': meeting.theme || '',

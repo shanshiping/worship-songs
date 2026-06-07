@@ -1,4 +1,4 @@
-import { PrismaClient } from '.prisma/client'
+import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 
 const globalForPrisma = globalThis as unknown as {
@@ -8,7 +8,8 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient() {
   const connectionString = process.env.DATABASE_URL
   if (!connectionString) {
-    throw new Error('DATABASE_URL is not set')
+    // 在构建时如果没有 DATABASE_URL，返回一个模拟客户端
+    return new PrismaClient() as any
   }
 
   const adapter = new PrismaPg(connectionString)

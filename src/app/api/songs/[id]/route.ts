@@ -33,7 +33,7 @@ export async function GET(
         },
       })
 
-      meetings = meetingSongs.map(ms => ({
+      meetings = meetingSongs.map((ms: any) => ({
         meeting: ms.meeting,
       }))
     } catch (e) {

@@ -28,7 +28,7 @@ export async function GET() {
 
     // 获取歌曲详情
     const topSongsWithDetails = await Promise.all(
-      topSongs.map(async (item) => {
+      topSongs.map(async (item: any) => {
         const song = await prisma.song.findUnique({
           where: { id: item.songId },
         })

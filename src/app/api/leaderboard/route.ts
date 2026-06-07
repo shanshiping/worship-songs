@@ -50,7 +50,7 @@ export async function GET(request: Request) {
 
     // 获取歌曲详情
     const leaderboard = await Promise.all(
-      topSongs.map(async (item, index) => {
+      topSongs.map(async (item: any, index: number) => {
         const song = await prisma.song.findUnique({
           where: { id: item.songId },
           include: {

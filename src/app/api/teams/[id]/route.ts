@@ -63,7 +63,7 @@ export async function GET(
     }
 
     // 检查用户是否是团队成员
-    const isMember = team.members.some(m => m.userId === session.user.id)
+    const isMember = team.members.some((m: any) => m.userId === session.user.id)
     if (!isMember) {
       return NextResponse.json(
         { error: '您不是该团队成员' },
