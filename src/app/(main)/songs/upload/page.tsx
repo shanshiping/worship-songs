@@ -24,6 +24,12 @@ interface UploadedFile {
   type: string
 }
 
+const KEY_PRESETS = [
+  'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B',
+  'Cm', 'C#m', 'Dm', 'D#m', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'A#m', 'Bm',
+]
+const TIME_SIGNATURE_PRESETS = ['4/4', '3/4', '6/8', '2/4', '12/8', '2/2', '3/8', '9/8']
+
 export default function UploadSongPage() {
   const { t } = useI18n()
   const router = useRouter()
@@ -35,6 +41,13 @@ export default function UploadSongPage() {
     title: '',
     artist: '',
     categoryId: '',
+    key: '',
+    timeSignature: '',
+    composer: '',
+    lyricist: '',
+    team: '',
+    album: '',
+    mvUrl: '',
     lyrics: '',
     notes: '',
   })
@@ -306,13 +319,13 @@ export default function UploadSongPage() {
                       {uploadingSheet ? (
                         <div className="flex items-center space-x-2 text-muted-foreground">
                           <Loader2 className="h-5 w-5 animate-spin" />
-                          <span>songs.uploading</span>
+                          <span>{t('songs.uploading')}</span>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center space-y-2 text-muted-foreground">
                           <FileText className="h-8 w-8" />
-                          <span className="text-sm">songs.dropSheet</span>
-                          <span className="text-xs">songs.dropSheetHint</span>
+                          <span className="text-sm">{t('songs.dropSheet')}</span>
+                          <span className="text-xs">{t('songs.dropSheetHint')}</span>
                         </div>
                       )}
                     </label>
@@ -361,13 +374,13 @@ export default function UploadSongPage() {
                       {uploadingAudio ? (
                         <div className="flex items-center space-x-2 text-muted-foreground">
                           <Loader2 className="h-5 w-5 animate-spin" />
-                          <span>songs.uploading</span>
+                          <span>{t('songs.uploading')}</span>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center space-y-2 text-muted-foreground">
                           <Music className="h-8 w-8" />
-                          <span className="text-sm">songs.dropAudio</span>
-                          <span className="text-xs">songs.dropAudioHint</span>
+                          <span className="text-sm">{t('songs.dropAudio')}</span>
+                          <span className="text-xs">{t('songs.dropAudioHint')}</span>
                         </div>
                       )}
                     </label>
@@ -379,14 +392,14 @@ export default function UploadSongPage() {
             {parsing && (
               <div className="flex items-center space-x-2 text-blue-600 bg-blue-50 p-3 rounded-xl">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">songs.parsing</span>
+                <span className="text-sm">{t('songs.parsing')}</span>
               </div>
             )}
 
             {parsed && (
               <div className="flex items-center space-x-2 text-green-600 bg-green-50 p-3 rounded-xl">
                 <Sparkles className="h-4 w-4" />
-                <span className="text-sm">songs.autoFilled</span>
+                <span className="text-sm">{t('songs.autoFilled')}</span>
               </div>
             )}
 
@@ -401,7 +414,7 @@ export default function UploadSongPage() {
                     setFormData({ ...formData, title: e.target.value })
                   }
                   required
-                  placeholder="{t('songs.titlePlaceholder')}"
+                  placeholder={t('songs.titlePlaceholder')}
                   className="h-11 rounded-xl input-focus"
                 />
               </div>
@@ -413,10 +426,117 @@ export default function UploadSongPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, artist: e.target.value })
                   }
-                  placeholder="{t('songs.artistPlaceholder')}"
+                  placeholder={t('songs.artistPlaceholder')}
                   className="h-11 rounded-xl input-focus"
                 />
               </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="key">{t('songs.key')}</Label>
+                <Input
+                  id="key"
+                  list="key-presets"
+                  value={formData.key}
+                  onChange={(e) =>
+                    setFormData({ ...formData, key: e.target.value })
+                  }
+                  placeholder={t('songs.keyPlaceholder')}
+                  className="h-11 rounded-xl input-focus"
+                />
+                <datalist id="key-presets">
+                  {KEY_PRESETS.map((k) => (
+                    <option key={k} value={k} />
+                  ))}
+                </datalist>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="timeSignature">{t('songs.timeSignature')}</Label>
+                <Input
+                  id="timeSignature"
+                  list="time-signature-presets"
+                  value={formData.timeSignature}
+                  onChange={(e) =>
+                    setFormData({ ...formData, timeSignature: e.target.value })
+                  }
+                  placeholder={t('songs.timeSignaturePlaceholder')}
+                  className="h-11 rounded-xl input-focus"
+                />
+                <datalist id="time-signature-presets">
+                  {TIME_SIGNATURE_PRESETS.map((ts) => (
+                    <option key={ts} value={ts} />
+                  ))}
+                </datalist>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="composer">{t('songs.composer')}</Label>
+                <Input
+                  id="composer"
+                  value={formData.composer}
+                  onChange={(e) =>
+                    setFormData({ ...formData, composer: e.target.value })
+                  }
+                  placeholder={t('songs.composerPlaceholder')}
+                  className="h-11 rounded-xl input-focus"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lyricist">{t('songs.lyricist')}</Label>
+                <Input
+                  id="lyricist"
+                  value={formData.lyricist}
+                  onChange={(e) =>
+                    setFormData({ ...formData, lyricist: e.target.value })
+                  }
+                  placeholder={t('songs.lyricistPlaceholder')}
+                  className="h-11 rounded-xl input-focus"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="team">{t('songs.team')}</Label>
+                <Input
+                  id="team"
+                  value={formData.team}
+                  onChange={(e) =>
+                    setFormData({ ...formData, team: e.target.value })
+                  }
+                  placeholder={t('songs.teamPlaceholder')}
+                  className="h-11 rounded-xl input-focus"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="album">{t('songs.album')}</Label>
+                <Input
+                  id="album"
+                  value={formData.album}
+                  onChange={(e) =>
+                    setFormData({ ...formData, album: e.target.value })
+                  }
+                  placeholder={t('songs.albumPlaceholder')}
+                  className="h-11 rounded-xl input-focus"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mvUrl">{t('songs.mvUrl')}</Label>
+              <Input
+                id="mvUrl"
+                type="url"
+                value={formData.mvUrl}
+                onChange={(e) =>
+                  setFormData({ ...formData, mvUrl: e.target.value })
+                }
+                placeholder={t('songs.mvUrlPlaceholder')}
+                className="h-11 rounded-xl input-focus"
+              />
             </div>
 
             <div className="space-y-2">
@@ -447,7 +567,7 @@ export default function UploadSongPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, lyrics: e.target.value })
                 }
-                placeholder="{t('songs.lyricsPlaceholder')}"
+                placeholder={t('songs.lyricsPlaceholder')}
                 rows={8}
                 className="rounded-xl input-focus"
               />
@@ -466,7 +586,7 @@ export default function UploadSongPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, notes: e.target.value })
                 }
-                placeholder="{t('songs.notesPlaceholder')}"
+                placeholder={t('songs.notesPlaceholder')}
                 rows={3}
                 className="rounded-xl input-focus"
               />

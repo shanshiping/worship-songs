@@ -71,16 +71,23 @@ model Message {
 
 // 歌曲表
 model Song {
-  id          String   @id @default(cuid())
-  title       String
-  artist      String?
-  categoryId  String
-  sheetMusic  String?  // 歌谱文件路径
-  audioFile   String?  // 音频文件路径
-  lyrics      String?  // 歌词
-  notes       String?  // 备注
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  title         String
+  artist        String?
+  categoryId    String
+  key           String?  // 调，如 C、G、Am
+  timeSignature String?  // 拍，如 4/4、6/8
+  composer      String?  // 作曲
+  lyricist      String?  // 作词
+  team          String?  // 团队（自由文本）
+  album         String?  // 专辑
+  mvUrl         String?  // MV 外链
+  sheetMusic    String?  // 歌谱文件路径
+  audioFile     String?  // 音频文件路径
+  lyrics        String?  // 歌词
+  notes         String?  // 备注
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   category Category @relation(fields: [categoryId], references: [id])
   meetings MeetingSong[]

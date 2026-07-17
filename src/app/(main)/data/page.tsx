@@ -255,7 +255,7 @@ export default function DataPage() {
               <Input
                 id="export-year"
                 type="number"
-                placeholder="{t('data.yearPlaceholder')}"
+                placeholder={t('data.yearPlaceholder')}
                 value={exportYear}
                 onChange={(e) => setExportYear(e.target.value)}
                 min="2000"

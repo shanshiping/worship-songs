@@ -3,6 +3,21 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
+export function normalizeOptional(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed === '' ? null : trimmed
+}
+
+export function isValidHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -66,7 +81,22 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { title, artist, categoryId, sheetMusic, audioFile, lyrics, notes } = body
+    const {
+      title,
+      artist,
+      categoryId,
+      key,
+      timeSignature,
+      composer,
+      lyricist,
+      team,
+      album,
+      mvUrl,
+      sheetMusic,
+      audioFile,
+      lyrics,
+      notes,
+    } = body
 
     if (!title || !categoryId) {
       return NextResponse.json(
@@ -75,15 +105,27 @@ export async function POST(request: Request) {
       )
     }
 
+    const normalizedMvUrl = normalizeOptional(mvUrl)
+    if (normalizedMvUrl && !isValidHttpUrl(normalizedMvUrl)) {
+      return NextResponse.json({ error: 'MV 链接格式不正确' }, { status: 400 })
+    }
+
     const song = await prisma.song.create({
       data: {
         title,
-        artist,
+        artist: normalizeOptional(artist),
         categoryId,
-        sheetMusic,
-        audioFile,
-        lyrics,
-        notes,
+        key: normalizeOptional(key),
+        timeSignature: normalizeOptional(timeSignature),
+        composer: normalizeOptional(composer),
+        lyricist: normalizeOptional(lyricist),
+        team: normalizeOptional(team),
+        album: normalizeOptional(album),
+        mvUrl: normalizedMvUrl,
+        sheetMusic: normalizeOptional(sheetMusic),
+        audioFile: normalizeOptional(audioFile),
+        lyrics: normalizeOptional(lyrics),
+        notes: normalizeOptional(notes),
       },
       include: {
         category: true,

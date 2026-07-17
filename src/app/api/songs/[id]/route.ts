@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { normalizeOptional, isValidHttpUrl } from '../route'
 
 export async function GET(
   request: Request,
@@ -62,18 +63,45 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await request.json()
-    const { title, artist, categoryId, sheetMusic, audioFile, lyrics, notes } = body
+    const {
+      title,
+      artist,
+      categoryId,
+      key,
+      timeSignature,
+      composer,
+      lyricist,
+      team,
+      album,
+      mvUrl,
+      sheetMusic,
+      audioFile,
+      lyrics,
+      notes,
+    } = body
+
+    const normalizedMvUrl = normalizeOptional(mvUrl)
+    if (normalizedMvUrl && !isValidHttpUrl(normalizedMvUrl)) {
+      return NextResponse.json({ error: 'MV 链接格式不正确' }, { status: 400 })
+    }
 
     const song = await prisma.song.update({
       where: { id },
       data: {
         title,
-        artist,
+        artist: normalizeOptional(artist),
         categoryId,
-        sheetMusic,
-        audioFile,
-        lyrics,
-        notes,
+        key: normalizeOptional(key),
+        timeSignature: normalizeOptional(timeSignature),
+        composer: normalizeOptional(composer),
+        lyricist: normalizeOptional(lyricist),
+        team: normalizeOptional(team),
+        album: normalizeOptional(album),
+        mvUrl: normalizedMvUrl,
+        sheetMusic: normalizeOptional(sheetMusic),
+        audioFile: normalizeOptional(audioFile),
+        lyrics: normalizeOptional(lyrics),
+        notes: normalizeOptional(notes),
       },
       include: {
         category: true,

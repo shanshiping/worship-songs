@@ -4,7 +4,6 @@ import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Calendar, Plus, Music, User } from 'lucide-react'
@@ -25,6 +24,11 @@ interface Meeting {
     }
   }>
 }
+
+const MONTH_VALUES = [
+  '01', '02', '03', '04', '05', '06',
+  '07', '08', '09', '10', '11', '12',
+] as const
 
 export default function MeetingsPage() {
   const { t, locale } = useI18n()
@@ -54,8 +58,8 @@ export default function MeetingsPage() {
         limit: '20',
       })
 
-      if (month) {
-        params.append('month', month)
+      if (year && month) {
+        params.append('month', `${year}-${month}`)
       } else if (year) {
         params.append('year', year)
       }
@@ -90,36 +94,44 @@ export default function MeetingsPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <select
-          value={year}
-          onChange={(e) => {
-            setYear(e.target.value)
-            setMonth('')
-            setPage(1)
-          }}
-          className="h-10 px-3 border rounded-md appearance-none bg-white"
-          aria-label={t('meetings.selectYear')}
-        >
-          <option value="">{t('meetings.allYears')}</option>
-          {years.map((y) => (
-            <option key={y} value={String(y)}>
-              {t('meetings.yearOption', { year: y })}
-            </option>
-          ))}
-        </select>
-
         <div className="flex items-center space-x-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
-          <Input
-            type="month"
+          <select
+            value={year}
+            onChange={(e) => {
+              const nextYear = e.target.value
+              setYear(nextYear)
+              if (!nextYear) setMonth('')
+              setPage(1)
+            }}
+            className="h-10 px-3 border rounded-md appearance-none bg-white"
+            aria-label={t('meetings.selectYear')}
+          >
+            <option value="">{t('meetings.allYears')}</option>
+            {years.map((y) => (
+              <option key={y} value={String(y)}>
+                {t('meetings.yearOption', { year: y })}
+              </option>
+            ))}
+          </select>
+
+          <select
             value={month}
             onChange={(e) => {
               setMonth(e.target.value)
-              setYear('')
               setPage(1)
             }}
-            className="w-48"
-          />
+            disabled={!year}
+            className="h-10 px-3 border rounded-md appearance-none bg-white disabled:opacity-50"
+            aria-label={t('meetings.selectMonth')}
+          >
+            <option value="">{t('meetings.allMonths')}</option>
+            {MONTH_VALUES.map((m) => (
+              <option key={m} value={m}>
+                {t('meetings.monthOption', { month: Number(m) })}
+              </option>
+            ))}
+          </select>
         </div>
 
         {(year || month) && (

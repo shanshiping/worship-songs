@@ -168,7 +168,7 @@ export default function TeamsPage() {
                   id="team-name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="{t('teams.namePlaceholder')}"
+                  placeholder={t('teams.namePlaceholder')}
                   required
                 />
               </div>
@@ -178,7 +178,7 @@ export default function TeamsPage() {
                   id="team-desc"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="{t('teams.descPlaceholder')}"
+                  placeholder={t('teams.descPlaceholder')}
                   rows={3}
                 />
               </div>

@@ -296,7 +296,7 @@ export default function TeamSettingsPage() {
                   id="teamDesc"
                   value={teamDescription}
                   onChange={(e) => setTeamDescription(e.target.value)}
-                  placeholder="{t('teams.descPlaceholder')}"
+                  placeholder={t('teams.descPlaceholder')}
                   disabled={!isOwner}
                   className="h-11 rounded-xl input-focus"
                 />
@@ -344,7 +344,7 @@ export default function TeamSettingsPage() {
                     type="email"
                     value={newMemberEmail}
                     onChange={(e) => setNewMemberEmail(e.target.value)}
-                    placeholder="{t('teams.memberEmailPlaceholder')}"
+                    placeholder={t('teams.memberEmailPlaceholder')}
                     required
                     className="pl-10 h-11 rounded-xl input-focus"
                   />

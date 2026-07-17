@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import {
   ArrowLeft, Edit, Trash, FileText, Music2, Calendar, Download,
   Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, Repeat,
-  Shuffle, Heart, Share2, ListMusic, Disc3, Mic2, Clock
+  Shuffle, Heart, Share2, ListMusic, Disc3, Mic2, Clock, Video, ExternalLink
 } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -22,6 +22,13 @@ interface Song {
   id: string
   title: string
   artist: string | null
+  key: string | null
+  timeSignature: string | null
+  composer: string | null
+  lyricist: string | null
+  team: string | null
+  album: string | null
+  mvUrl: string | null
   sheetMusic: string | null
   audioFile: string | null
   lyrics: string | null
@@ -543,6 +550,42 @@ export default function SongDetailPage() {
                   <span className="font-medium">{song.artist}</span>
                 </div>
               )}
+              {song.key && (
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                  <span className="text-sm text-muted-foreground">{t('songs.key')}</span>
+                  <span className="font-medium">{song.key}</span>
+                </div>
+              )}
+              {song.timeSignature && (
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                  <span className="text-sm text-muted-foreground">{t('songs.timeSignature')}</span>
+                  <span className="font-medium">{song.timeSignature}</span>
+                </div>
+              )}
+              {song.composer && (
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                  <span className="text-sm text-muted-foreground">{t('songs.composer')}</span>
+                  <span className="font-medium">{song.composer}</span>
+                </div>
+              )}
+              {song.lyricist && (
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                  <span className="text-sm text-muted-foreground">{t('songs.lyricist')}</span>
+                  <span className="font-medium">{song.lyricist}</span>
+                </div>
+              )}
+              {song.team && (
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                  <span className="text-sm text-muted-foreground">{t('songs.team')}</span>
+                  <span className="font-medium">{song.team}</span>
+                </div>
+              )}
+              {song.album && (
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                  <span className="text-sm text-muted-foreground">{t('songs.album')}</span>
+                  <span className="font-medium">{song.album}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                 <span className="text-sm text-muted-foreground">{t('songs.usageCount')}</span>
                 <div className="flex items-center space-x-1">
@@ -595,6 +638,20 @@ export default function SongDetailPage() {
                     <span className="text-sm font-medium">{t('songs.downloadAudio')}</span>
                   </div>
                   <Download className="h-4 w-4 text-muted-foreground" />
+                </a>
+              )}
+              {song.mvUrl && (
+                <a
+                  href={song.mvUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Video className="h-5 w-5 text-red-500" />
+                    <span className="text-sm font-medium">{t('songs.watchMv')}</span>
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
                 </a>
               )}
             </CardContent>

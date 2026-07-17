@@ -237,7 +237,7 @@ export default function TeamDetailPage() {
               <Input
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="{t('teams.messagePlaceholder')}"
+                placeholder={t('teams.messagePlaceholder')}
                 disabled={sending}
                 className="flex-1"
               />

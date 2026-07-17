@@ -271,7 +271,7 @@ export default function SongsPage() {
             {/* songs.addsongs.category */}
             <div className="flex space-x-2">
               <Input
-                placeholder="{t('songs.newCategoryPlaceholder')}"
+                placeholder={t('songs.newCategoryPlaceholder')}
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
                 onKeyPress={(e) => {
@@ -394,7 +394,7 @@ export default function SongsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="{t('songs.searchPlaceholder')}"
+            placeholder={t('songs.searchPlaceholder')}
             value={search}
             onChange={(e) => {
               setSearch(e.target.value)
@@ -432,7 +432,7 @@ export default function SongsPage() {
                   ? 'bg-white shadow-sm text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
-              title="{t('songs.cardView')}"
+              title={t('songs.cardView')}
             >
               <LayoutGrid className="h-4 w-4" />
             </button>
@@ -443,7 +443,7 @@ export default function SongsPage() {
                   ? 'bg-white shadow-sm text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
-              title="{t('songs.listView')}"
+              title={t('songs.listView')}
             >
               <List className="h-4 w-4" />
             </button>
@@ -533,16 +533,16 @@ export default function SongsPage() {
                     </div>
                     <div className="flex items-center space-x-3 text-xs text-muted-foreground">
                       {song.sheetMusic && (
-                        <div className="flex items-center" title="{t('songs.hasSheet')}">
+                        <div className="flex items-center" title={t('songs.hasSheet')}>
                           <FileText className="h-3 w-3" />
                         </div>
                       )}
                       {song.audioFile && (
-                        <div className="flex items-center" title="{t('songs.hasAudio')}">
+                        <div className="flex items-center" title={t('songs.hasAudio')}>
                           <Play className="h-3 w-3" />
                         </div>
                       )}
-                      <div className="flex items-center" title="{t('songs.usageCount')}">
+                      <div className="flex items-center" title={t('songs.usageCount')}>
                         <Calendar className="h-3 w-3 mr-1" />
                         {song._count.meetings}
                       </div>

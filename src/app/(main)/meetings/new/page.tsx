@@ -176,7 +176,7 @@ export default function NewMeetingPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, theme: e.target.value })
                   }
-                  placeholder="{t('meetings.themePlaceholder')}"
+                  placeholder={t('meetings.themePlaceholder')}
                 />
               </div>
               <div className="space-y-2">
@@ -187,7 +187,7 @@ export default function NewMeetingPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, speaker: e.target.value })
                   }
-                  placeholder="{t('meetings.speakerPlaceholder')}"
+                  placeholder={t('meetings.speakerPlaceholder')}
                 />
               </div>
               <div className="space-y-2">
@@ -198,7 +198,7 @@ export default function NewMeetingPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, leader: e.target.value })
                   }
-                  placeholder="{t('meetings.leaderPlaceholder')}"
+                  placeholder={t('meetings.leaderPlaceholder')}
                 />
               </div>
               <div className="space-y-2">
@@ -209,7 +209,7 @@ export default function NewMeetingPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, notes: e.target.value })
                   }
-                  placeholder="{t('meetings.notesPlaceholder')}"
+                  placeholder={t('meetings.notesPlaceholder')}
                   rows={3}
                 />
               </div>
@@ -226,7 +226,7 @@ export default function NewMeetingPage() {
                 <div className="relative mb-4">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="{t('meetings.searchSongs')}"
+                    placeholder={t('meetings.searchSongs')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
