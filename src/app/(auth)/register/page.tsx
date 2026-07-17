@@ -8,9 +8,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Music } from 'lucide-react'
+import { useI18n } from '@/components/providers/i18n-provider'
+import { LanguageSwitcher } from '@/components/language-switcher'
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { t } = useI18n()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -23,12 +26,12 @@ export default function RegisterPage() {
     setError('')
 
     if (password !== confirmPassword) {
-      setError('两次输入的密码不一致')
+      setError(t('auth.passwordMismatch'))
       return
     }
 
     if (password.length < 6) {
-      setError('密码长度至少为6位')
+      setError(t('auth.passwordTooShort'))
       return
     }
 
@@ -46,12 +49,13 @@ export default function RegisterPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || '注册失败')
+        throw new Error(data.error || t('auth.registerFailed'))
       }
 
       router.push('/login?registered=true')
-    } catch (err: any) {
-      setError(err.message || '注册失败，请稍后重试')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : t('auth.registerFailed')
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -59,6 +63,8 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <LanguageSwitcher className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-sm" />
+
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
@@ -66,8 +72,8 @@ export default function RegisterPage() {
               <Music className="w-8 h-8 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">创建账户</CardTitle>
-          <CardDescription>注册成为敬拜选歌平台用户</CardDescription>
+          <CardTitle className="text-2xl font-bold">{t('auth.registerTitle')}</CardTitle>
+          <CardDescription>{t('auth.registerSubtitle')}</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
@@ -77,44 +83,44 @@ export default function RegisterPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="name">姓名</Label>
+              <Label htmlFor="name">{t('auth.name')}</Label>
               <Input
                 id="name"
                 type="text"
-                placeholder="请输入您的姓名"
+                placeholder={t('auth.namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">邮箱</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="your@email.com"
+                placeholder={t('auth.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">密码</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="请输入密码（至少6位）"
+                placeholder={t('auth.passwordHint')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">确认密码</Label>
+              <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="请再次输入密码"
+                placeholder={t('auth.confirmPasswordPlaceholder')}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -123,12 +129,12 @@ export default function RegisterPage() {
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? '注册中...' : '注册'}
+              {loading ? t('auth.registering') : t('auth.register')}
             </Button>
             <p className="text-sm text-center text-muted-foreground">
-              已有账户？{' '}
+              {t('auth.haveAccount')}{' '}
               <Link href="/login" className="text-primary hover:underline">
-                立即登录
+                {t('auth.signInLink')}
               </Link>
             </p>
           </CardFooter>
