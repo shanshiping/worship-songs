@@ -1,5 +1,6 @@
 'use client'
 
+import { useI18n } from '@/components/providers/i18n-provider'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -20,6 +21,7 @@ interface ImportResult {
 }
 
 export default function DataPage() {
+  const { t } = useI18n()
   const permissions = usePermissions()
   const [importing, setImporting] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -29,7 +31,7 @@ export default function DataPage() {
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!permissions.canImportData) {
-      toast.error('权限不足，无法导入数据')
+      toast.error(t('data.noImportPermission'))
       return
     }
 
@@ -38,7 +40,7 @@ export default function DataPage() {
 
     const fileExt = file.name.split('.').pop()?.toLowerCase()
     if (fileExt !== 'xls' && fileExt !== 'xlsx') {
-      toast.error('请选择 Excel 文件（.xls 或 .xlsx）')
+      toast.error(t('data.selectExcel'))
       return
     }
 
@@ -59,13 +61,13 @@ export default function DataPage() {
 
       if (response.ok) {
         setResult(data)
-        toast.success('数据导入完成')
+        toast.success(t('data.importDone'))
       } else {
-        toast.error(data.error || '导入失败')
+        toast.error(data.error || t('data.importFailed'))
       }
     } catch (error) {
       console.error('Import error:', error)
-      toast.error('导入失败，请检查网络连接')
+      toast.error(t('data.importNetworkFailed'))
     } finally {
       setImporting(false)
       e.target.value = ''
@@ -74,7 +76,7 @@ export default function DataPage() {
 
   const handleExport = async () => {
     if (!permissions.canExportData) {
-      toast.error('权限不足，无法导出数据')
+      toast.error(t('data.noExportPermission'))
       return
     }
 
@@ -96,13 +98,13 @@ export default function DataPage() {
         a.click()
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
-        toast.success('数据导出成功')
+        toast.success(t('data.exportSuccess'))
       } else {
-        toast.error('导出失败')
+        toast.error(t('data.exportFailed'))
       }
     } catch (error) {
       console.error('Export error:', error)
-      toast.error('导出失败')
+      toast.error(t('data.exportFailed'))
     } finally {
       setExporting(false)
     }
@@ -113,33 +115,33 @@ export default function DataPage() {
       <div className="animate-fade-in">
         <div className="flex items-center space-x-2 mb-2">
           <Database className="h-5 w-5 text-primary" />
-          <span className="text-sm font-medium text-primary">数据管理</span>
+          <span className="text-sm font-medium text-primary">{t('data.badge')}</span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight">
-          <span className="gradient-text">数据管理</span>
+          <span className="gradient-text">{t('data.title')}</span>
         </h1>
         <p className="text-muted-foreground mt-1">
-          导入和导出聚会数据
+          {t('data.subtitle')}
         </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* 导入数据 */}
+        {/* data.importTitle */}
         <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '100ms' }}>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
                 <Upload className="h-4 w-4 text-white" />
               </div>
-              <span>导入数据</span>
+              <span>{t('data.importTitle')}</span>
             </CardTitle>
             <CardDescription>
-              从 Excel 文件导入聚会记录和歌曲数据
+              {t('data.importDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="import-file">选择 Excel 文件</Label>
+              <Label htmlFor="import-file">{t('data.selectFile')}</Label>
               <div className="relative">
                 <Input
                   id="import-file"
@@ -151,14 +153,14 @@ export default function DataPage() {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                支持 .xlsx 和 .xls 格式，每个 Sheet 代表一年的数据
+                {t('data.fileHint')}
               </p>
             </div>
 
             {importing && (
               <div className="flex items-center space-x-2 text-blue-600 bg-blue-50 p-3 rounded-xl">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span className="text-sm">正在导入，请稍候...</span>
+                <span className="text-sm">{t('data.importing')}</span>
               </div>
             )}
 
@@ -172,11 +174,11 @@ export default function DataPage() {
                 <div className="bg-gray-50 p-4 rounded-xl space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-white p-3 rounded-lg">
-                      <p className="text-xs text-muted-foreground">聚会记录</p>
+                      <p className="text-xs text-muted-foreground">{t('data.meetings')}</p>
                       <p className="text-2xl font-bold text-blue-600">{result.results.meetings}</p>
                     </div>
                     <div className="bg-white p-3 rounded-lg">
-                      <p className="text-xs text-muted-foreground">新增歌曲</p>
+                      <p className="text-xs text-muted-foreground">{t('data.newSongs')}</p>
                       <p className="text-2xl font-bold text-green-600">{result.results.songs}</p>
                     </div>
                   </div>
@@ -184,7 +186,7 @@ export default function DataPage() {
                   {result.results.skipped > 0 && (
                     <div className="flex items-center space-x-2 text-amber-600 bg-amber-50 p-2 rounded-lg">
                       <Info className="h-4 w-4" />
-                      <span className="text-sm">跳过 {result.results.skipped} 行无效数据</span>
+                      <span className="text-sm">{t('data.skipped', { count: result.results.skipped })}</span>
                     </div>
                   )}
 
@@ -196,10 +198,10 @@ export default function DataPage() {
                       >
                         <AlertCircle className="h-4 w-4" />
                         <span className="text-sm font-medium">
-                          {result.results.errors.length} 条错误
+                          {t('data.errors', { count: result.results.errors.length })}
                         </span>
                         <span className="text-xs">
-                          ({showErrors ? '点击收起' : '点击展开'})
+                          ({showErrors ? t('data.collapse') : t('data.expand')})
                         </span>
                       </button>
                       {showErrors && (
@@ -221,39 +223,39 @@ export default function DataPage() {
             )}
 
             <div className="bg-blue-50 p-4 rounded-xl">
-              <h4 className="font-medium text-blue-900 mb-2">导入格式说明</h4>
+              <h4 className="font-medium text-blue-900 mb-2">{t('data.formatTitle')}</h4>
               <ul className="text-sm text-blue-800 space-y-1">
-                <li>• 每个 Sheet 代表一年的数据</li>
-                <li>• 表头包含"时间"、"主题"、"讲员"、"主领"、"诗歌"等列</li>
-                <li>• 日期支持 Excel 日期格式或文本格式</li>
-                <li>• 诗歌列支持多列，每列一首诗歌</li>
-                <li>• 诗歌名称用 "+" 或换行分隔</li>
-                <li>• 自动过滤非歌曲内容（如"上午场"、数字等）</li>
+                <li>• {t('data.format1')}</li>
+                <li>• {t('data.format2')}</li>
+                <li>• {t('data.format3')}</li>
+                <li>• {t('data.format4')}</li>
+                <li>• {t('data.format5')}</li>
+                <li>• {t('data.format6')}</li>
               </ul>
             </div>
           </CardContent>
         </Card>
 
-        {/* 导出数据 */}
+        {/* data.exportTitle */}
         <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '200ms' }}>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
                 <Download className="h-4 w-4 text-white" />
               </div>
-              <span>导出数据</span>
+              <span>{t('data.exportTitle')}</span>
             </CardTitle>
             <CardDescription>
-              将聚会数据导出为 Excel 文件
+              {t('data.exportDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="export-year">选择年份（可选）</Label>
+              <Label htmlFor="export-year">{t('data.selectYear')}</Label>
               <Input
                 id="export-year"
                 type="number"
-                placeholder="留空导出所有年份"
+                placeholder="{t('data.yearPlaceholder')}"
                 value={exportYear}
                 onChange={(e) => setExportYear(e.target.value)}
                 min="2000"
@@ -270,29 +272,29 @@ export default function DataPage() {
               {exporting ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  导出中...
+                  {t('data.exporting')}
                 </>
               ) : (
                 <>
                   <FileSpreadsheet className="mr-2 h-4 w-4" />
-                  导出 Excel
+                  {t('data.exportExcel')}
                 </>
               )}
             </Button>
 
             <div className="bg-green-50 p-4 rounded-xl">
-              <h4 className="font-medium text-green-900 mb-2">导出说明</h4>
+              <h4 className="font-medium text-green-900 mb-2">{t('data.exportNotes')}</h4>
               <ul className="text-sm text-green-800 space-y-1">
-                <li>• 导出格式与原 Excel 格式兼容</li>
-                <li>• 每年一个 Sheet，方便查看和管理</li>
-                <li>• 包含聚会日期、主题、讲员、主领、诗歌等信息</li>
-                <li>• 可选择特定年份导出或导出所有数据</li>
+                <li>• {t('data.export1')}</li>
+                <li>• {t('data.export2')}</li>
+                <li>• {t('data.export3')}</li>
+                <li>• {t('data.export4')}</li>
               </ul>
             </div>
 
-            {/* 快速导出按钮 */}
+            {/* data.quickExport按钮 */}
             <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">快速导出</p>
+              <p className="text-sm font-medium text-muted-foreground">{t('data.quickExport')}</p>
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   variant="outline"
@@ -304,7 +306,7 @@ export default function DataPage() {
                   disabled={exporting}
                   className="rounded-lg"
                 >
-                  全部数据
+                  {t('data.allData')}
                 </Button>
                 <Button
                   variant="outline"
@@ -316,7 +318,7 @@ export default function DataPage() {
                   disabled={exporting}
                   className="rounded-lg"
                 >
-                  2025年
+                  {t('data.yearLabel', { year: 2025 })}
                 </Button>
                 <Button
                   variant="outline"
@@ -328,7 +330,7 @@ export default function DataPage() {
                   disabled={exporting}
                   className="rounded-lg"
                 >
-                  2024年
+                  {t('data.yearLabel', { year: 2024 })}
                 </Button>
                 <Button
                   variant="outline"
@@ -340,7 +342,7 @@ export default function DataPage() {
                   disabled={exporting}
                   className="rounded-lg"
                 >
-                  2023年
+                  {t('data.yearLabel', { year: 2023 })}
                 </Button>
               </div>
             </div>

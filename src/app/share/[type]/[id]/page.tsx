@@ -1,12 +1,13 @@
 'use client'
 
+import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Music, Calendar, User, FileText } from 'lucide-react'
 import { format } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
+import { enUS, zhCN } from 'date-fns/locale'
 
 interface SharedData {
   id: string
@@ -28,6 +29,8 @@ interface SharedData {
 }
 
 export default function SharePage() {
+  const { t, locale } = useI18n()
+  const dateLocale = locale === 'zh' ? zhCN : enUS
   const params = useParams()
   const searchParams = useSearchParams()
   const [data, setData] = useState<SharedData | null>(null)
@@ -49,11 +52,11 @@ export default function SharePage() {
         const result = await response.json()
         setData(result)
       } else {
-        setError('分享链接无效或已过期')
+        setError(t('share.invalid'))
       }
     } catch (error) {
       console.error('Failed to fetch shared data:', error)
-      setError('加载失败')
+      setError(t('share.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -89,10 +92,10 @@ export default function SharePage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">
-              {params.type === 'song' ? data.title : '聚会记录'}
+              {params.type === 'song' ? data.title : t('share.meetingRecord')}
             </CardTitle>
             <CardDescription>
-              由敬拜选歌平台分享
+              {t('share.sharedBy')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -100,18 +103,18 @@ export default function SharePage() {
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <Music className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium">歌曲信息</span>
+                  <span className="font-medium">{t('share.songInfo')}</span>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <span className="text-sm text-muted-foreground">分类</span>
+                    <span className="text-sm text-muted-foreground">{t('share.category')}</span>
                     <div className="mt-1">
                       <Badge>{data.category.name}</Badge>
                     </div>
                   </div>
                   {data.artist && (
                     <div>
-                      <span className="text-sm text-muted-foreground">歌手</span>
+                      <span className="text-sm text-muted-foreground">{t('share.artist')}</span>
                       <p className="mt-1">{data.artist}</p>
                     </div>
                   )}
@@ -123,32 +126,32 @@ export default function SharePage() {
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <Calendar className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium">聚会信息</span>
+                  <span className="font-medium">{t('share.meetingInfo')}</span>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <span className="text-sm text-muted-foreground">日期</span>
+                    <span className="text-sm text-muted-foreground">{t('share.date')}</span>
                     <p className="mt-1">
-                      {format(new Date(data.date), 'yyyy年MM月dd日', {
-                        locale: zhCN,
+                      {format(new Date(data.date), 'PPP', {
+                        locale: dateLocale,
                       })}
                     </p>
                   </div>
                   {data.theme && (
                     <div>
-                      <span className="text-sm text-muted-foreground">主题</span>
+                      <span className="text-sm text-muted-foreground">{t('share.theme')}</span>
                       <p className="mt-1">{data.theme}</p>
                     </div>
                   )}
                   {data.speaker && (
                     <div>
-                      <span className="text-sm text-muted-foreground">讲员</span>
+                      <span className="text-sm text-muted-foreground">{t('share.speaker')}</span>
                       <p className="mt-1">{data.speaker}</p>
                     </div>
                   )}
                   {data.leader && (
                     <div>
-                      <span className="text-sm text-muted-foreground">主领</span>
+                      <span className="text-sm text-muted-foreground">{t('share.leader')}</span>
                       <p className="mt-1">{data.leader}</p>
                     </div>
                   )}
@@ -158,7 +161,7 @@ export default function SharePage() {
                   <div>
                     <div className="flex items-center space-x-2 mb-3">
                       <Music className="h-5 w-5 text-muted-foreground" />
-                      <span className="font-medium">诗歌列表</span>
+                      <span className="font-medium">{t('share.songList')}</span>
                     </div>
                     <div className="space-y-2">
                       {data.songs.map((item) => (

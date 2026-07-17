@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Trophy, Medal, Award, Music } from 'lucide-react'
 import Link from 'next/link'
+import { useI18n } from '@/components/providers/i18n-provider'
 
 interface LeaderboardItem {
   rank: number
@@ -16,6 +17,7 @@ interface LeaderboardItem {
 }
 
 export default function LeaderboardPage() {
+  const { t } = useI18n()
   const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState('all')
@@ -53,16 +55,16 @@ export default function LeaderboardPage() {
   }
 
   const periodLabels: Record<string, string> = {
-    all: '全部时间',
-    year: '今年',
-    month: '本月',
+    all: t('leaderboard.allTime'),
+    year: t('leaderboard.thisYear'),
+    month: t('leaderboard.thisMonth'),
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">歌曲排行榜</h1>
-        <p className="text-muted-foreground">查看最受欢迎的歌曲</p>
+        <h1 className="text-3xl font-bold tracking-tight">{t('leaderboard.title')}</h1>
+        <p className="text-muted-foreground">{t('leaderboard.subtitle')}</p>
       </div>
 
       <div className="flex space-x-2">
@@ -89,15 +91,14 @@ export default function LeaderboardPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Trophy className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">暂无数据</p>
+            <p className="text-muted-foreground">{t('leaderboard.noData')}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              添加聚会记录后即可查看排行榜
+              {t('leaderboard.noDataHint')}
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
-          {/* Top 3 */}
           <div className="grid gap-4 md:grid-cols-3">
             {leaderboard.slice(0, 3).map((item) => (
               <Link key={item.id} href={`/songs/${item.id}`}>
@@ -118,7 +119,7 @@ export default function LeaderboardPage() {
                     <div className="flex items-center space-x-2">
                       <Music className="h-4 w-4 text-muted-foreground" />
                       <span className="text-2xl font-bold">{item.count}</span>
-                      <span className="text-muted-foreground">次使用</span>
+                      <span className="text-muted-foreground">{t('leaderboard.timesUsed')}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -126,12 +127,11 @@ export default function LeaderboardPage() {
             ))}
           </div>
 
-          {/* Rest */}
           <Card>
             <CardHeader>
-              <CardTitle>完整排行榜</CardTitle>
+              <CardTitle>{t('leaderboard.fullList')}</CardTitle>
               <CardDescription>
-                {periodLabels[period]}使用次数最多的歌曲
+                {t('leaderboard.periodDesc', { period: periodLabels[period] })}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -160,7 +160,7 @@ export default function LeaderboardPage() {
                       <div className="flex items-center space-x-1">
                         <Music className="h-4 w-4 text-muted-foreground" />
                         <span className="font-bold">{item.count}</span>
-                        <span className="text-sm text-muted-foreground">次</span>
+                        <span className="text-sm text-muted-foreground">{t('leaderboard.times')}</span>
                       </div>
                     </div>
                   </Link>
