@@ -1,5 +1,6 @@
 'use client'
 
+import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -8,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Edit, Trash, Music, User, Calendar, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
+import { enUS, zhCN } from 'date-fns/locale'
 import { ShareButton } from '@/components/share-button'
 import { usePermissions } from '@/hooks/use-permissions'
 import { toast } from 'sonner'
@@ -35,19 +36,19 @@ interface Meeting {
   }>
 }
 
-const meetingTypeLabels: Record<string, string> = {
-  MORNING: '上午聚会',
-  AFTERNOON: '下午聚会',
-  EVENING: '晚间聚会',
-}
-
-const meetingTypeColors: Record<string, string> = {
-  MORNING: 'from-amber-500 to-orange-500',
-  AFTERNOON: 'from-blue-500 to-indigo-500',
-  EVENING: 'from-purple-500 to-pink-500',
-}
-
 export default function MeetingDetailPage() {
+  const { t, locale } = useI18n()
+  const dateLocale = locale === 'zh' ? zhCN : enUS
+  const meetingTypeLabels: Record<string, string> = {
+    MORNING: t('meetings.morning'),
+    AFTERNOON: t('meetings.afternoon'),
+    EVENING: t('meetings.evening'),
+  }
+  const meetingTypeColors: Record<string, string> = {
+    MORNING: 'from-amber-500 to-orange-500',
+    AFTERNOON: 'from-blue-500 to-cyan-500',
+    EVENING: 'from-violet-500 to-purple-500',
+  }
   const params = useParams()
   const router = useRouter()
   const permissions = usePermissions()
@@ -67,12 +68,12 @@ export default function MeetingDetailPage() {
         const data = await response.json()
         setMeeting(data)
       } else {
-        toast.error('获取聚会详情失败')
+        toast.error(t('meetings.loadFailed'))
         router.push('/meetings')
       }
     } catch (error) {
       console.error('Failed to fetch meeting:', error)
-      toast.error('获取聚会详情失败')
+      toast.error(t('meetings.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -80,11 +81,11 @@ export default function MeetingDetailPage() {
 
   const handleDelete = async () => {
     if (!permissions.canDeleteMeeting) {
-      toast.error('权限不足，无法删除聚会记录')
+      toast.error(t('meetings.noPermissionDelete'))
       return
     }
 
-    if (!confirm('确定要删除这条聚会记录吗？此操作不可撤销。')) {
+    if (!confirm(t('meetings.deleteConfirm'))) {
       return
     }
 
@@ -96,15 +97,15 @@ export default function MeetingDetailPage() {
       })
 
       if (response.ok) {
-        toast.success('聚会记录已删除')
+        toast.success(t('meetings.deleted'))
         router.push('/meetings')
       } else {
         const data = await response.json()
-        toast.error(data.error || '删除失败')
+        toast.error(data.error || t('meetings.deleteFailed'))
       }
     } catch (error) {
       console.error('Failed to delete meeting:', error)
-      toast.error('删除失败')
+      toast.error(t('meetings.deleteFailed'))
     } finally {
       setDeleting(false)
     }
@@ -155,14 +156,14 @@ export default function MeetingDetailPage() {
           <Link href="/meetings">
             <Button variant="ghost" size="sm" className="rounded-xl">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              返回
+              {t('meetings.back')}
             </Button>
           </Link>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
               <span className="gradient-text">
-                {format(new Date(meeting.date), 'yyyy年MM月dd日 EEEE', {
-                  locale: zhCN,
+                {format(new Date(meeting.date), 'PPP', {
+                  locale: dateLocale,
                 })}
               </span>
             </h1>
@@ -177,7 +178,7 @@ export default function MeetingDetailPage() {
             <Link href={`/meetings/${meeting.id}/edit`}>
               <Button variant="outline" className="rounded-xl">
                 <Edit className="mr-2 h-4 w-4" />
-                编辑
+                {t('meetings.edit')}
               </Button>
             </Link>
           )}
@@ -189,26 +190,26 @@ export default function MeetingDetailPage() {
               className="rounded-xl"
             >
               <Trash className="mr-2 h-4 w-4" />
-              {deleting ? '删除中...' : '删除'}
+              {deleting ? t('meetings.deleting') : t('meetings.delete')}
             </Button>
           )}
         </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* 聚会信息 */}
+        {/* meetings.info */}
         <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '100ms' }}>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
                 <Calendar className="h-4 w-4 text-white" />
               </div>
-              <span>聚会信息</span>
+              <span>{t('meetings.info')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-              <span className="text-sm text-muted-foreground">类型</span>
+              <span className="text-sm text-muted-foreground">{t('meetings.typeLabel')}</span>
               <Badge
                 variant="secondary"
                 className={`bg-gradient-to-r ${meetingTypeColors[meeting.type] || 'from-gray-500 to-slate-500'} text-white border-0`}
@@ -217,7 +218,7 @@ export default function MeetingDetailPage() {
               </Badge>
             </div>
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-              <span className="text-sm text-muted-foreground">日期</span>
+              <span className="text-sm text-muted-foreground">{t('meetings.dateLabel')}</span>
               <div className="flex items-center space-x-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">
@@ -227,7 +228,7 @@ export default function MeetingDetailPage() {
             </div>
             {meeting.speaker && (
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                <span className="text-sm text-muted-foreground">讲员</span>
+                <span className="text-sm text-muted-foreground">{t('meetings.speakerLabel')}</span>
                 <div className="flex items-center space-x-2">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">{meeting.speaker}</span>
@@ -236,7 +237,7 @@ export default function MeetingDetailPage() {
             )}
             {meeting.leader && (
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                <span className="text-sm text-muted-foreground">主领</span>
+                <span className="text-sm text-muted-foreground">{t('meetings.leaderLabel')}</span>
                 <div className="flex items-center space-x-2">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">{meeting.leader}</span>
@@ -245,23 +246,23 @@ export default function MeetingDetailPage() {
             )}
             {meeting.notes && (
               <div className="p-3 bg-gray-50 rounded-xl">
-                <span className="text-sm text-muted-foreground">备注</span>
+                <span className="text-sm text-muted-foreground">{t('meetings.notes')}</span>
                 <p className="mt-1 text-sm">{meeting.notes}</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* 诗歌列表 */}
+        {/* meetings.songList */}
         <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '200ms' }}>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center">
                 <Music className="h-4 w-4 text-white" />
               </div>
-              <span>诗歌列表</span>
+              <span>{t('meetings.songList')}</span>
             </CardTitle>
-            <CardDescription>本次聚会使用的诗歌</CardDescription>
+            <CardDescription>{t('meetings.songListDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             {meeting.songs.length > 0 ? (
@@ -288,7 +289,7 @@ export default function MeetingDetailPage() {
                       </div>
                     </div>
                     <Badge variant="outline" className="rounded-lg">
-                      {item.song.category?.name || '未分类'}
+                      {item.song.category?.name || t('meetings.uncategorized')}
                     </Badge>
                   </Link>
                 ))}
@@ -296,7 +297,7 @@ export default function MeetingDetailPage() {
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
                 <Music className="h-12 w-12 mb-3 opacity-50" />
-                <p>暂无诗歌</p>
+                <p>{t('meetings.noSongs')}</p>
               </div>
             )}
           </CardContent>
