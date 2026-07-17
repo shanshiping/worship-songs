@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getErrorMessage } from '@/lib/errors'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import * as XLSX from 'xlsx'
@@ -218,10 +219,10 @@ export async function POST(request: Request) {
     // 遍历每个 Sheet
     for (const sheetName of workbook.SheetNames) {
       const sheet = workbook.Sheets[sheetName]
-      let data: any[][]
+      let data: unknown[][]
 
       try {
-        data = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1 })
+        data = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 })
       } catch (error) {
         results.errors.push(`Sheet "${sheetName}" 解析失败`)
         continue
@@ -334,8 +335,8 @@ export async function POST(request: Request) {
               },
             })
             results.meetings++
-          } catch (error: any) {
-            results.errors.push(`第 ${i + 1} 行: 创建聚会记录失败 - ${error.message}`)
+          } catch (error: unknown) {
+            results.errors.push(`第 ${i + 1} 行: 创建聚会记录失败 - ${getErrorMessage(error, '未知错误')}`)
             continue
           }
 
@@ -377,12 +378,12 @@ export async function POST(request: Request) {
                   order: k + 1,
                 },
               })
-            } catch (error: any) {
-              results.errors.push(`第 ${i + 1} 行, 歌曲 "${songTitle}": ${error.message}`)
+            } catch (error: unknown) {
+              results.errors.push(`第 ${i + 1} 行, 歌曲 "${songTitle}": ${getErrorMessage(error, '未知错误')}`)
             }
           }
-        } catch (error: any) {
-          results.errors.push(`第 ${i + 1} 行: ${error.message}`)
+        } catch (error: unknown) {
+          results.errors.push(`第 ${i + 1} 行: ${getErrorMessage(error, '未知错误')}`)
         }
       }
     }
@@ -396,10 +397,10 @@ export async function POST(request: Request) {
         skipped: results.skipped,
       },
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Import error:', error)
     return NextResponse.json(
-      { error: error.message || '导入失败，请检查文件格式' },
+      { error: getErrorMessage(error, '导入失败，请检查文件格式') },
       { status: 500 }
     )
   }

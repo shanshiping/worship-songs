@@ -51,10 +51,8 @@ export async function GET(request: Request) {
     // 验证 token（简化处理，实际应该验证数据库中的 token）
     // 这里我们直接返回数据
 
-    let data: any = null
-
     if (type === 'song') {
-      data = await prisma.song.findUnique({
+      const data = await prisma.song.findUnique({
         where: { id },
         include: {
           category: true,
@@ -71,8 +69,19 @@ export async function GET(request: Request) {
           },
         },
       })
-    } else if (type === 'meeting') {
-      data = await prisma.meeting.findUnique({
+
+      if (!data) {
+        return NextResponse.json(
+          { error: '数据不存在' },
+          { status: 404 }
+        )
+      }
+
+      return NextResponse.json(data)
+    }
+
+    if (type === 'meeting') {
+      const data = await prisma.meeting.findUnique({
         where: { id },
         include: {
           songs: {
@@ -85,16 +94,21 @@ export async function GET(request: Request) {
           },
         },
       })
+
+      if (!data) {
+        return NextResponse.json(
+          { error: '数据不存在' },
+          { status: 404 }
+        )
+      }
+
+      return NextResponse.json(data)
     }
 
-    if (!data) {
-      return NextResponse.json(
-        { error: '数据不存在' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json(data)
+    return NextResponse.json(
+      { error: '无效的分享类型' },
+      { status: 400 }
+    )
   } catch (error) {
     console.error('Share API error:', error)
     return NextResponse.json(

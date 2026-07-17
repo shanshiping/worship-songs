@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getErrorMessage } from '@/lib/errors'
 import { requirePermission } from '@/lib/server-permissions'
 import { PERMISSIONS } from '@/lib/permissions'
 
@@ -21,11 +22,12 @@ export async function GET() {
     })
 
     return NextResponse.json(users)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Get users error:', error)
+    const message = getErrorMessage(error, '获取用户列表失败')
     return NextResponse.json(
-      { error: error.message || '获取用户列表失败' },
-      { status: error.message === '请先登录' ? 401 : 403 }
+      { error: message },
+      { status: message === '请先登录' ? 401 : 403 }
     )
   }
 }
@@ -75,11 +77,12 @@ export async function PUT(request: Request) {
     })
 
     return NextResponse.json(user)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update user role error:', error)
+    const message = getErrorMessage(error, '更新用户角色失败')
     return NextResponse.json(
-      { error: error.message || '更新用户角色失败' },
-      { status: error.message === '请先登录' ? 401 : 403 }
+      { error: message },
+      { status: message === '请先登录' ? 401 : 403 }
     )
   }
 }

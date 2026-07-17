@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowLeft, Upload, FileText, Music, Loader2, Sparkles, X, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/errors'
 
 interface Category {
   id: string
@@ -108,27 +109,30 @@ export default function UploadSongPage() {
       if (response.ok) {
         const data = await response.json()
 
-        const updates: any = {}
+        setFormData((prev) => {
+          const updates: Partial<typeof prev> = {}
 
-        if (data.title && !formData.get('title')) {
-          updates.title = data.title
-        }
+          if (data.title && !prev.title) {
+            updates.title = data.title
+          }
 
-        if (data.artist && !formData.get('artist')) {
-          updates.artist = data.artist
-        }
+          if (data.artist && !prev.artist) {
+            updates.artist = data.artist
+          }
 
-        if (data.lyrics && !formData.get('lyrics')) {
-          updates.lyrics = data.lyrics
-        }
+          if (data.lyrics && !prev.lyrics) {
+            updates.lyrics = data.lyrics
+          }
 
-        if (Object.keys(updates).length > 0) {
-          setFormData(prev => ({ ...prev, ...updates }))
-          setParsed(true)
-          toast.success(t('songs.autoDetected'))
-        } else {
+          if (Object.keys(updates).length > 0) {
+            setParsed(true)
+            toast.success(t('songs.autoDetected'))
+            return { ...prev, ...updates }
+          }
+
           toast.info(t('songs.autoDetectNone'))
-        }
+          return prev
+        })
       }
     } catch (error) {
       console.error('File parse error:', error)
@@ -149,8 +153,8 @@ export default function UploadSongPage() {
       setSheetMusic(result)
       toast.success(t('songs.sheetUploadSuccess'))
       handleFileParse(file)
-    } catch (error: any) {
-      toast.error(error.message || t('songs.sheetUploadFailed'))
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, t('songs.sheetUploadFailed')))
     } finally {
       setUploadingSheet(false)
     }
@@ -167,8 +171,8 @@ export default function UploadSongPage() {
       setAudioFile(result)
       toast.success(t('songs.audioUploadSuccess'))
       handleFileParse(file)
-    } catch (error: any) {
-      toast.error(error.message || t('songs.audioUploadFailed'))
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, t('songs.audioUploadFailed')))
     } finally {
       setUploadingAudio(false)
     }
