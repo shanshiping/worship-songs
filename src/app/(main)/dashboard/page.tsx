@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Music, Calendar, Users, Trophy, TrendingUp, ArrowUpRight, Sparkles } from 'lucide-react'
 import Link from 'next/link'
+import { useI18n } from '@/components/providers/i18n-provider'
 
 interface DashboardStats {
   totalSongs: number
@@ -12,73 +13,8 @@ interface DashboardStats {
   topSongs: Array<{ title: string; count: number }>
 }
 
-const statCards = [
-  {
-    title: '歌曲总数',
-    icon: Music,
-    gradient: 'from-violet-500 to-purple-500',
-    bg: 'bg-violet-50',
-    iconColor: 'text-violet-600',
-    key: 'totalSongs' as const,
-  },
-  {
-    title: '聚会记录',
-    icon: Calendar,
-    gradient: 'from-blue-500 to-cyan-500',
-    bg: 'bg-blue-50',
-    iconColor: 'text-blue-600',
-    key: 'totalMeetings' as const,
-  },
-  {
-    title: '歌曲分类',
-    icon: Users,
-    gradient: 'from-emerald-500 to-teal-500',
-    bg: 'bg-emerald-50',
-    iconColor: 'text-emerald-600',
-    key: 'totalCategories' as const,
-  },
-  {
-    title: '最受欢迎',
-    icon: Trophy,
-    gradient: 'from-amber-500 to-orange-500',
-    bg: 'bg-amber-50',
-    iconColor: 'text-amber-600',
-    key: 'topSong',
-  },
-]
-
-const quickActions = [
-  {
-    title: '上传歌曲',
-    description: '添加新歌曲到系统',
-    href: '/songs/upload',
-    icon: Music,
-    gradient: 'from-pink-500 to-rose-500',
-  },
-  {
-    title: '新建聚会',
-    description: '记录聚会歌曲选择',
-    href: '/meetings/new',
-    icon: Calendar,
-    gradient: 'from-blue-500 to-indigo-500',
-  },
-  {
-    title: '导入数据',
-    description: '从 Excel 导入数据',
-    href: '/import',
-    icon: TrendingUp,
-    gradient: 'from-emerald-500 to-green-500',
-  },
-  {
-    title: '查看排行',
-    description: '查看热门歌曲排行',
-    href: '/leaderboard',
-    icon: Trophy,
-    gradient: 'from-amber-500 to-yellow-500',
-  },
-]
-
 export default function DashboardPage() {
+  const { t } = useI18n()
   const [stats, setStats] = useState<DashboardStats>({
     totalSongs: 0,
     totalMeetings: 0,
@@ -86,6 +22,72 @@ export default function DashboardPage() {
     topSongs: [],
   })
   const [loading, setLoading] = useState(true)
+
+  const statCards = [
+    {
+      title: t('dashboard.totalSongs'),
+      icon: Music,
+      gradient: 'from-violet-500 to-purple-500',
+      bg: 'bg-violet-50',
+      iconColor: 'text-violet-600',
+      key: 'totalSongs' as const,
+    },
+    {
+      title: t('dashboard.totalMeetings'),
+      icon: Calendar,
+      gradient: 'from-blue-500 to-cyan-500',
+      bg: 'bg-blue-50',
+      iconColor: 'text-blue-600',
+      key: 'totalMeetings' as const,
+    },
+    {
+      title: t('dashboard.totalCategories'),
+      icon: Users,
+      gradient: 'from-emerald-500 to-teal-500',
+      bg: 'bg-emerald-50',
+      iconColor: 'text-emerald-600',
+      key: 'totalCategories' as const,
+    },
+    {
+      title: t('dashboard.mostPopular'),
+      icon: Trophy,
+      gradient: 'from-amber-500 to-orange-500',
+      bg: 'bg-amber-50',
+      iconColor: 'text-amber-600',
+      key: 'topSong',
+    },
+  ]
+
+  const quickActions = [
+    {
+      title: t('dashboard.uploadSong'),
+      description: t('dashboard.uploadSongDesc'),
+      href: '/songs/upload',
+      icon: Music,
+      gradient: 'from-pink-500 to-rose-500',
+    },
+    {
+      title: t('dashboard.newMeeting'),
+      description: t('dashboard.newMeetingDesc'),
+      href: '/meetings/new',
+      icon: Calendar,
+      gradient: 'from-blue-500 to-indigo-500',
+    },
+    {
+      title: t('dashboard.importData'),
+      description: t('dashboard.importDataDesc'),
+      href: '/data',
+      icon: TrendingUp,
+      gradient: 'from-emerald-500 to-green-500',
+    },
+    {
+      title: t('dashboard.viewLeaderboard'),
+      description: t('dashboard.viewLeaderboardDesc'),
+      href: '/leaderboard',
+      icon: Trophy,
+      gradient: 'from-amber-500 to-yellow-500',
+    },
+  ]
 
   useEffect(() => {
     fetchDashboardData()
@@ -108,7 +110,6 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        {/* 骨架屏 */}
         <div className="space-y-2">
           <div className="h-8 w-48 skeleton rounded-lg" />
           <div className="h-4 w-64 skeleton rounded-lg" />
@@ -129,19 +130,17 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* 页面标题 */}
       <div className="animate-fade-in">
         <div className="flex items-center space-x-2 mb-2">
           <Sparkles className="h-5 w-5 text-primary" />
-          <span className="text-sm font-medium text-primary">欢迎回来</span>
+          <span className="text-sm font-medium text-primary">{t('dashboard.welcomeBack')}</span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight">
-          <span className="gradient-text">首页</span>
+          <span className="gradient-text">{t('dashboard.title')}</span>
         </h1>
-        <p className="text-muted-foreground mt-1">欢迎使用敬拜选歌平台，这里是您的数据概览</p>
+        <p className="text-muted-foreground mt-1">{t('dashboard.subtitle')}</p>
       </div>
 
-      {/* 统计卡片 */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((card, index) => (
           <Card
@@ -163,7 +162,7 @@ export default function DashboardPage() {
                 <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
                 <p className="text-3xl font-bold">
                   {card.key === 'topSong'
-                    ? (stats.topSongs[0]?.title || '暂无')
+                    ? (stats.topSongs[0]?.title || t('dashboard.none'))
                     : String(stats[card.key as keyof DashboardStats] || 0)
                   }
                 </p>
@@ -173,21 +172,19 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* 内容区域 */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* 热门歌曲排行 */}
         <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '400ms' }}>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">热门歌曲排行</CardTitle>
-                <CardDescription>使用次数最多的歌曲</CardDescription>
+                <CardTitle className="text-lg">{t('dashboard.topSongs')}</CardTitle>
+                <CardDescription>{t('dashboard.topSongsDesc')}</CardDescription>
               </div>
               <Link
                 href="/leaderboard"
                 className="text-sm text-primary hover:underline flex items-center"
               >
-                查看全部
+                {t('dashboard.viewAll')}
                 <ArrowUpRight className="h-4 w-4 ml-1" />
               </Link>
             </div>
@@ -219,7 +216,7 @@ export default function DashboardPage() {
                           {song.title}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          使用 {song.count} 次
+                          {t('dashboard.usedTimes', { count: song.count })}
                         </p>
                       </div>
                     </div>
@@ -239,22 +236,21 @@ export default function DashboardPage() {
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
                 <Trophy className="h-12 w-12 mb-3 opacity-50" />
-                <p>暂无数据</p>
-                <p className="text-sm">添加聚会记录后即可查看排行</p>
+                <p>{t('dashboard.noData')}</p>
+                <p className="text-sm">{t('dashboard.noDataHint')}</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* 快速操作 */}
         <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '500ms' }}>
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">快速操作</CardTitle>
-            <CardDescription>常用功能入口</CardDescription>
+            <CardTitle className="text-lg">{t('dashboard.quickActions')}</CardTitle>
+            <CardDescription>{t('dashboard.quickActionsDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              {quickActions.map((action, index) => (
+              {quickActions.map((action) => (
                 <Link
                   key={action.href}
                   href={action.href}
