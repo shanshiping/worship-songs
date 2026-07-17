@@ -1,5 +1,6 @@
 'use client'
 
+import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -35,17 +36,18 @@ interface Team {
   }>
 }
 
-const roleOptions = [
-  { value: 'ADMIN', label: '管理员', description: '可以管理成员和内容' },
-  { value: 'MEMBER', label: '成员', description: '可以查看和参与' },
-]
-
 export default function TeamSettingsPage() {
+  const { t } = useI18n()
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
   const [team, setTeam] = useState<Team | null>(null)
   const [loading, setLoading] = useState(true)
+
+  const roleOptions = [
+    { value: 'ADMIN', label: t('teams.admin'), description: t('teams.roleAdminDesc') },
+    { value: 'MEMBER', label: t('teams.member'), description: t('teams.roleMemberDesc') },
+  ]
   const [saving, setSaving] = useState(false)
   const [addingMember, setAddingMember] = useState(false)
   const [newMemberEmail, setNewMemberEmail] = useState('')
@@ -69,7 +71,7 @@ export default function TeamSettingsPage() {
         setTeamName(data.name)
         setTeamDescription(data.description || '')
       } else {
-        toast.error('获取团队信息失败')
+        toast.error(t('teams.loadFailed'))
         router.push('/teams')
       }
     } catch (error) {
@@ -79,11 +81,11 @@ export default function TeamSettingsPage() {
     }
   }
 
-  // 更新团队信息
+  // 更新teams.teamInfo
   const handleUpdateTeam = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!teamName.trim()) {
-      toast.error('请输入团队名称')
+      toast.error(t('teams.enterName'))
       return
     }
 
@@ -101,23 +103,23 @@ export default function TeamSettingsPage() {
       })
 
       if (response.ok) {
-        toast.success('团队信息已更新')
+        toast.success(t('teams.updated'))
       } else {
         const data = await response.json()
-        toast.error(data.error || '更新失败')
+        toast.error(data.error || t('teams.updateFailed'))
       }
     } catch (error) {
-      toast.error('更新失败')
+      toast.error(t('teams.updateFailed'))
     } finally {
       setSaving(false)
     }
   }
 
-  // 添加成员
+  // teams.addMember
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newMemberEmail.trim()) {
-      toast.error('请输入成员邮箱')
+      toast.error(t('teams.enterEmail'))
       return
     }
 
@@ -137,16 +139,16 @@ export default function TeamSettingsPage() {
       const data = await response.json()
 
       if (response.ok) {
-        toast.success('成员添加成功')
+        toast.success(t('teams.memberAdded'))
         setNewMemberEmail('')
         setNewMemberRole('MEMBER')
         // 刷新团队数据
         fetchTeam()
       } else {
-        toast.error(data.error || '添加失败')
+        toast.error(data.error || t('teams.addFailed'))
       }
     } catch (error) {
-      toast.error('添加失败')
+      toast.error(t('teams.addFailed'))
     } finally {
       setAddingMember(false)
     }
@@ -154,7 +156,7 @@ export default function TeamSettingsPage() {
 
   // 删除成员
   const handleRemoveMember = async (userId: string) => {
-    if (!confirm('确定要移除该成员吗？')) {
+    if (!confirm(t('teams.removeConfirm'))) {
       return
     }
 
@@ -166,18 +168,18 @@ export default function TeamSettingsPage() {
       })
 
       if (response.ok) {
-        toast.success('成员已移除')
+        toast.success(t('teams.memberRemoved'))
         fetchTeam()
       } else {
         const data = await response.json()
-        toast.error(data.error || '移除失败')
+        toast.error(data.error || t('teams.removeFailed'))
       }
     } catch (error) {
-      toast.error('移除失败')
+      toast.error(t('teams.removeFailed'))
     }
   }
 
-  // 更新成员角色
+  // 更新成员teams.role
   const handleUpdateRole = async (userId: string, newRole: string) => {
     try {
       const { id } = await params
@@ -192,14 +194,14 @@ export default function TeamSettingsPage() {
       })
 
       if (response.ok) {
-        toast.success('角色已更新')
+        toast.success(t('teams.roleUpdated'))
         fetchTeam()
       } else {
         const data = await response.json()
-        toast.error(data.error || '更新失败')
+        toast.error(data.error || t('teams.updateFailed'))
       }
     } catch (error) {
-      toast.error('更新失败')
+      toast.error(t('teams.updateFailed'))
     }
   }
 
@@ -217,11 +219,11 @@ export default function TeamSettingsPage() {
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'OWNER':
-        return '创建者'
+        return t('teams.owner')
       case 'ADMIN':
-        return '管理员'
+        return t('teams.admin')
       default:
-        return '成员'
+        return t('teams.member')
     }
   }
 
@@ -257,28 +259,28 @@ export default function TeamSettingsPage() {
         <Link href={`/teams/${team.id}`}>
           <Button variant="ghost" size="sm" className="rounded-xl">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            返回
+            {t('teams.back')}
           </Button>
         </Link>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            <span className="gradient-text">团队设置</span>
+            <span className="gradient-text">{t('teams.settingsTitle')}</span>
           </h1>
           <p className="text-muted-foreground">{team.name}</p>
         </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* 团队信息 */}
+        {/* teams.teamInfo */}
         <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '100ms' }}>
           <CardHeader>
-            <CardTitle>团队信息</CardTitle>
-            <CardDescription>修改团队名称和描述</CardDescription>
+            <CardTitle>{t('teams.teamInfo')}</CardTitle>
+            <CardDescription>{t('teams.teamInfoDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpdateTeam} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="teamName">团队名称 *</Label>
+                <Label htmlFor="teamName">{t('teams.nameRequired')}</Label>
                 <Input
                   id="teamName"
                   value={teamName}
@@ -289,12 +291,12 @@ export default function TeamSettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="teamDesc">团队描述</Label>
+                <Label htmlFor="teamDesc">{t('teams.desc')}</Label>
                 <Input
                   id="teamDesc"
                   value={teamDescription}
                   onChange={(e) => setTeamDescription(e.target.value)}
-                  placeholder="请输入团队描述（可选）"
+                  placeholder="{t('teams.descPlaceholder')}"
                   disabled={!isOwner}
                   className="h-11 rounded-xl input-focus"
                 />
@@ -308,12 +310,12 @@ export default function TeamSettingsPage() {
                   {saving ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      保存中...
+                      {t('teams.saving')}
                     </>
                   ) : (
                     <>
                       <Save className="mr-2 h-4 w-4" />
-                      保存修改
+                      {t('teams.saveChanges')}
                     </>
                   )}
                 </Button>
@@ -322,19 +324,19 @@ export default function TeamSettingsPage() {
           </CardContent>
         </Card>
 
-        {/* 添加成员 */}
+        {/* teams.addMember */}
         <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '200ms' }}>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <UserPlus className="h-5 w-5" />
-              <span>添加成员</span>
+              <span>{t('teams.addMember')}</span>
             </CardTitle>
-            <CardDescription>通过邮箱邀请新成员加入团队</CardDescription>
+            <CardDescription>{t('teams.addMemberDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAddMember} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="memberEmail">成员邮箱 *</Label>
+                <Label htmlFor="memberEmail">{t('teams.memberEmail')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -342,14 +344,14 @@ export default function TeamSettingsPage() {
                     type="email"
                     value={newMemberEmail}
                     onChange={(e) => setNewMemberEmail(e.target.value)}
-                    placeholder="请输入成员邮箱"
+                    placeholder="{t('teams.memberEmailPlaceholder')}"
                     required
                     className="pl-10 h-11 rounded-xl input-focus"
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="memberRole">角色</Label>
+                <Label htmlFor="memberRole">{t('teams.role')}</Label>
                 <select
                   id="memberRole"
                   value={newMemberRole}
@@ -371,12 +373,12 @@ export default function TeamSettingsPage() {
                 {addingMember ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    添加中...
+                    {t('teams.adding')}
                   </>
                 ) : (
                   <>
                     <UserPlus className="mr-2 h-4 w-4" />
-                    添加成员
+                    {t('teams.addMember')}
                   </>
                 )}
               </Button>
@@ -388,9 +390,9 @@ export default function TeamSettingsPage() {
       {/* 成员列表 */}
       <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '300ms' }}>
         <CardHeader>
-          <CardTitle>团队成员</CardTitle>
+          <CardTitle>{t('teams.membersTitle')}</CardTitle>
           <CardDescription>
-            共 {team.members.length} 名成员
+            {t('teams.membersTotal', { count: team.members.length })}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -406,9 +408,9 @@ export default function TeamSettingsPage() {
                   </div>
                   <div>
                     <p className="font-medium">
-                      {member.user.name || '未设置姓名'}
+                      {member.user.name || t('teams.noName')}
                       {member.userId === session?.user?.id && (
-                        <span className="text-xs text-muted-foreground ml-2">（我）</span>
+                        <span className="text-xs text-muted-foreground ml-2">{t('teams.me')}</span>
                       )}
                     </p>
                     <p className="text-sm text-muted-foreground">{member.user.email}</p>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -42,6 +43,7 @@ interface Category {
 type ViewMode = 'grid' | 'list'
 
 export default function SongsPage() {
+  const { t } = useI18n()
   const permissions = usePermissions()
   const [songs, setSongs] = useState<Song[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -53,7 +55,7 @@ export default function SongsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [totalSongs, setTotalSongs] = useState(0)
 
-  // 分类管理状态
+  // songs.categoryManager状态
   const [showCategoryManager, setShowCategoryManager] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [addingCategory, setAddingCategory] = useState(false)
@@ -116,7 +118,7 @@ export default function SongsPage() {
     localStorage.setItem('songsViewMode', mode)
   }
 
-  // 分类管理函数
+  // songs.categoryManager函数
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return
 
@@ -133,13 +135,13 @@ export default function SongsPage() {
         const newCategory = await response.json()
         setCategories([...categories, { ...newCategory, _count: { songs: 0 } }])
         setNewCategoryName('')
-        toast.success('分类已创建')
+        toast.success(t('songs.categoryCreated'))
       } else {
         const data = await response.json()
-        toast.error(data.error || '创建失败')
+        toast.error(data.error || t('songs.createFailed'))
       }
     } catch (error) {
-      toast.error('创建失败')
+      toast.error(t('songs.createFailed'))
     } finally {
       setAddingCategory(false)
     }
@@ -163,20 +165,20 @@ export default function SongsPage() {
         ))
         setEditingCategoryId(null)
         setEditingCategoryName('')
-        toast.success('分类已更新')
+        toast.success(t('songs.categoryUpdated'))
       } else {
         const data = await response.json()
-        toast.error(data.error || '更新失败')
+        toast.error(data.error || t('songs.updateFailed'))
       }
     } catch (error) {
-      toast.error('更新失败')
+      toast.error(t('songs.updateFailed'))
     } finally {
       setSavingCategory(false)
     }
   }
 
   const handleDeleteCategory = async (id: string) => {
-    if (!confirm('确定要删除此分类吗？该分类下的歌曲将变为"其他"分类。')) {
+    if (!confirm(t('songs.confirmDeleteCategory'))) {
       return
     }
 
@@ -189,14 +191,14 @@ export default function SongsPage() {
 
       if (response.ok) {
         setCategories(categories.filter(c => c.id !== id))
-        toast.success('分类已删除')
+        toast.success(t('songs.categoryDeleted'))
         fetchSongs() // 刷新歌曲列表
       } else {
         const data = await response.json()
-        toast.error(data.error || '删除失败')
+        toast.error(data.error || t('songs.deleteFailed'))
       }
     } catch (error) {
-      toast.error('删除失败')
+      toast.error(t('songs.deleteFailed'))
     } finally {
       setDeletingCategoryId(null)
     }
@@ -222,15 +224,15 @@ export default function SongsPage() {
         <div>
           <div className="flex items-center space-x-2 mb-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            <span className="text-sm font-medium text-primary">歌曲管理</span>
+            <span className="text-sm font-medium text-primary">{t('songs.title')}</span>
           </div>
           <h1 className="text-3xl font-bold tracking-tight">
             <span className="gradient-text">
-              {permissions.isLeaderOrAbove ? '管理所有歌曲' : '浏览歌曲列表'}
+              {permissions.isLeaderOrAbove ? t('songs.manageAll') : t('songs.browse')}
             </span>
           </h1>
           <p className="text-muted-foreground mt-1">
-            共 {totalSongs} 首歌曲 · {categories.length} 个分类
+            {t('songs.totalCount', { count: totalSongs, categories: categories.length })}
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -241,35 +243,35 @@ export default function SongsPage() {
               className="rounded-xl"
             >
               <FolderOpen className="mr-2 h-4 w-4" />
-              {showCategoryManager ? '关闭分类管理' : '管理分类'}
+              {showCategoryManager ? t('songs.closeCategoryManager') : t('songs.manageCategories')}
             </Button>
           )}
           {permissions.canCreateSong && (
             <Link href="/songs/upload">
               <Button className="rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25 btn-active">
                 <Plus className="mr-2 h-4 w-4" />
-                上传歌曲
+                {t('songs.uploadSong')}
               </Button>
             </Link>
           )}
         </div>
       </div>
 
-      {/* 分类管理 */}
+      {/* songs.categoryManager */}
       {showCategoryManager && permissions.isLeaderOrAbove && (
         <Card className="animate-fade-in border-0 shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <FolderOpen className="h-5 w-5" />
-              <span>分类管理</span>
+              <span>{t('songs.categoryManager')}</span>
             </CardTitle>
-            <CardDescription>管理歌曲分类，添加、编辑或删除分类</CardDescription>
+            <CardDescription>{t('songs.categoryManagerDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* 添加分类 */}
+            {/* songs.addsongs.category */}
             <div className="flex space-x-2">
               <Input
-                placeholder="输入新分类名称"
+                placeholder="{t('songs.newCategoryPlaceholder')}"
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
                 onKeyPress={(e) => {
@@ -287,11 +289,11 @@ export default function SongsPage() {
                 ) : (
                   <Plus className="h-4 w-4" />
                 )}
-                添加
+                {t('songs.add')}
               </Button>
             </div>
 
-            {/* 分类列表 */}
+            {/* songs.category列表 */}
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {categories.map((category) => (
                 <div
@@ -348,7 +350,7 @@ export default function SongsPage() {
                         <div>
                           <p className="font-medium text-sm">{category.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {category._count?.songs || 0} 首歌曲
+                            {t('songs.songsCount', { count: category._count?.songs || 0 })}
                           </p>
                         </div>
                       </div>
@@ -392,7 +394,7 @@ export default function SongsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="搜索歌曲名称或歌手..."
+            placeholder="{t('songs.searchPlaceholder')}"
             value={search}
             onChange={(e) => {
               setSearch(e.target.value)
@@ -412,7 +414,7 @@ export default function SongsPage() {
               }}
               className="h-11 pl-10 pr-4 border rounded-xl appearance-none bg-white input-focus"
             >
-              <option value="">所有分类</option>
+              <option value="">{t('songs.allCategories')}</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
@@ -430,7 +432,7 @@ export default function SongsPage() {
                   ? 'bg-white shadow-sm text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
-              title="卡片视图"
+              title="{t('songs.cardView')}"
             >
               <LayoutGrid className="h-4 w-4" />
             </button>
@@ -441,7 +443,7 @@ export default function SongsPage() {
                   ? 'bg-white shadow-sm text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
-              title="列表视图"
+              title="{t('songs.listView')}"
             >
               <List className="h-4 w-4" />
             </button>
@@ -479,20 +481,20 @@ export default function SongsPage() {
             <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
               <Music className="h-10 w-10 text-muted-foreground" />
             </div>
-            <p className="text-lg font-medium mb-2">暂无歌曲</p>
-            <p className="text-muted-foreground mb-6">上传第一首歌曲开始使用</p>
+            <p className="text-lg font-medium mb-2">{t('songs.noSongs')}</p>
+            <p className="text-muted-foreground mb-6">{t('songs.noSongsHint')}</p>
             {permissions.canCreateSong && (
               <Link href="/songs/upload">
                 <Button className="rounded-xl">
                   <Plus className="mr-2 h-4 w-4" />
-                  上传歌曲
+                  {t('songs.uploadSong')}
                 </Button>
               </Link>
             )}
           </CardContent>
         </Card>
       ) : viewMode === 'grid' ? (
-        /* 卡片视图 */
+        /* songs.cardView */
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {songs.map((song, index) => (
             <Link key={song.id} href={`/songs/${song.id}`}>
@@ -531,16 +533,16 @@ export default function SongsPage() {
                     </div>
                     <div className="flex items-center space-x-3 text-xs text-muted-foreground">
                       {song.sheetMusic && (
-                        <div className="flex items-center" title="有歌谱">
+                        <div className="flex items-center" title="{t('songs.hasSheet')}">
                           <FileText className="h-3 w-3" />
                         </div>
                       )}
                       {song.audioFile && (
-                        <div className="flex items-center" title="有音频">
+                        <div className="flex items-center" title="{t('songs.hasAudio')}">
                           <Play className="h-3 w-3" />
                         </div>
                       )}
-                      <div className="flex items-center" title="使用次数">
+                      <div className="flex items-center" title="{t('songs.usageCount')}">
                         <Calendar className="h-3 w-3 mr-1" />
                         {song._count.meetings}
                       </div>
@@ -552,14 +554,14 @@ export default function SongsPage() {
           ))}
         </div>
       ) : (
-        /* 列表视图 */
+        /* songs.listView */
         <div className="space-y-2">
           <div className="hidden md:grid md:grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-muted-foreground">
-            <div className="col-span-4">歌曲名称</div>
-            <div className="col-span-2">分类</div>
-            <div className="col-span-2">歌手</div>
-            <div className="col-span-2">使用次数</div>
-            <div className="col-span-2">附件</div>
+            <div className="col-span-4">{t('songs.songTitle')}</div>
+            <div className="col-span-2">{t('songs.category')}</div>
+            <div className="col-span-2">{t('songs.artist')}</div>
+            <div className="col-span-2">{t('songs.usageCount')}</div>
+            <div className="col-span-2">{t('songs.attachments')}</div>
           </div>
 
           {songs.map((song, index) => (
@@ -601,7 +603,7 @@ export default function SongsPage() {
                 <div className="md:col-span-2 hidden md:block">
                   <div className="flex items-center space-x-1">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{song._count.meetings} 次</span>
+                    <span className="text-sm">{t('songs.times', { count: song._count.meetings })}</span>
                   </div>
                 </div>
 
@@ -610,13 +612,13 @@ export default function SongsPage() {
                     {song.sheetMusic && (
                       <Badge variant="outline" className="text-xs">
                         <FileText className="h-3 w-3 mr-1" />
-                        歌谱
+                        {t('songs.sheet')}
                       </Badge>
                     )}
                     {song.audioFile && (
                       <Badge variant="outline" className="text-xs">
                         <Play className="h-3 w-3 mr-1" />
-                        音频
+                        {t('songs.audio')}
                       </Badge>
                     )}
                   </div>
@@ -644,7 +646,7 @@ export default function SongsPage() {
             disabled={page === 1}
             className="rounded-lg"
           >
-            上一页
+            {t('songs.prevPage')}
           </Button>
           <div className="flex items-center space-x-1">
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -670,7 +672,7 @@ export default function SongsPage() {
             disabled={page === totalPages}
             className="rounded-lg"
           >
-            下一页
+            {t('songs.nextPage')}
           </Button>
         </div>
       )}

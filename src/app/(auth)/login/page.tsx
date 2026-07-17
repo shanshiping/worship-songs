@@ -7,17 +7,20 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Music, Phone, Mail, Lock, Eye, EyeOff, Sparkles, ArrowRight } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Music, Phone, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
+import { useI18n } from '@/components/providers/i18n-provider'
+import { LanguageSwitcher } from '@/components/language-switcher'
 
 type LoginMethod = 'email' | 'phone'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { t } = useI18n()
   const [loginMethod, setLoginMethod] = useState<LoginMethod>('email')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('admin@worship.com')
+  const [password, setPassword] = useState('admin123')
   const [phone, setPhone] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
@@ -51,7 +54,7 @@ export default function LoginPage() {
 
   const handleSendCode = async () => {
     if (!phone || phone.length < 11) {
-      toast.error('请输入正确的手机号')
+      toast.error(t('auth.invalidPhone'))
       return
     }
 
@@ -66,13 +69,13 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok) {
-        toast.success('验证码已发送')
+        toast.success(t('auth.codeSent'))
         setCountdown(60)
       } else {
-        toast.error(data.error || '发送失败')
+        toast.error(data.error || t('auth.sendFailed'))
       }
-    } catch (error) {
-      toast.error('发送失败')
+    } catch {
+      toast.error(t('auth.sendFailed'))
     } finally {
       setSendingCode(false)
     }
@@ -103,12 +106,12 @@ export default function LoginPage() {
           localStorage.removeItem('remember_me')
         }
 
-        toast.success('登录成功')
+        toast.success(t('auth.loginSuccess'))
         router.push('/dashboard')
         router.refresh()
       }
-    } catch (err) {
-      setError('登录失败，请稍后重试')
+    } catch {
+      setError(t('auth.loginFailed'))
     } finally {
       setLoading(false)
     }
@@ -129,12 +132,12 @@ export default function LoginPage() {
       if (result?.error) {
         setError(result.error)
       } else {
-        toast.success('登录成功')
+        toast.success(t('auth.loginSuccess'))
         router.push('/dashboard')
         router.refresh()
       }
-    } catch (err) {
-      setError('登录失败，请稍后重试')
+    } catch {
+      setError(t('auth.loginFailed'))
     } finally {
       setLoading(false)
     }
@@ -142,25 +145,24 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center gradient-bg p-4">
-      {/* 背景装饰 */}
+      <LanguageSwitcher className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-sm" />
+
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md animate-scale-in">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary/80 shadow-xl mb-4">
             <Music className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold gradient-text">敬拜选歌平台</h1>
-          <p className="text-muted-foreground mt-2">登录您的账户以继续</p>
+          <h1 className="text-3xl font-bold gradient-text">{t('auth.loginTitle')}</h1>
+          <p className="text-muted-foreground mt-2">{t('auth.loginSubtitle')}</p>
         </div>
 
         <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-md">
           <CardContent className="p-6">
-            {/* 登录方式切换 */}
             <div className="flex rounded-xl bg-gray-100 p-1 mb-6">
               <button
                 type="button"
@@ -172,7 +174,7 @@ export default function LoginPage() {
                 }`}
               >
                 <Mail className="mr-2 h-4 w-4" />
-                邮箱登录
+                {t('auth.emailLogin')}
               </button>
               <button
                 type="button"
@@ -184,7 +186,7 @@ export default function LoginPage() {
                 }`}
               >
                 <Phone className="mr-2 h-4 w-4" />
-                手机登录
+                {t('auth.phoneLogin')}
               </button>
             </div>
 
@@ -196,13 +198,13 @@ export default function LoginPage() {
                   </div>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">邮箱</Label>
+                  <Label htmlFor="email" className="text-sm font-medium">{t('auth.email')}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="email"
                       type="email"
-                      placeholder="your@email.com"
+                      placeholder={t('auth.emailPlaceholder')}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -211,13 +213,13 @@ export default function LoginPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium">密码</Label>
+                  <Label htmlFor="password" className="text-sm font-medium">{t('auth.password')}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="请输入密码"
+                      placeholder={t('auth.passwordPlaceholder')}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -241,7 +243,7 @@ export default function LoginPage() {
                     className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                   />
                   <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
-                    记住密码
+                    {t('auth.rememberPassword')}
                   </Label>
                 </div>
                 <Button
@@ -252,11 +254,11 @@ export default function LoginPage() {
                   {loading ? (
                     <div className="flex items-center space-x-2">
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>登录中...</span>
+                      <span>{t('auth.loggingIn')}</span>
                     </div>
                   ) : (
                     <div className="flex items-center space-x-2">
-                      <span>登录</span>
+                      <span>{t('auth.login')}</span>
                       <ArrowRight className="h-4 w-4" />
                     </div>
                   )}
@@ -270,13 +272,13 @@ export default function LoginPage() {
                   </div>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-sm font-medium">手机号</Label>
+                  <Label htmlFor="phone" className="text-sm font-medium">{t('auth.phone')}</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="phone"
                       type="tel"
-                      placeholder="请输入手机号"
+                      placeholder={t('auth.phonePlaceholder')}
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       required
@@ -286,14 +288,14 @@ export default function LoginPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="code" className="text-sm font-medium">验证码</Label>
+                  <Label htmlFor="code" className="text-sm font-medium">{t('auth.code')}</Label>
                   <div className="flex space-x-2">
                     <div className="relative flex-1">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="code"
                         type="text"
-                        placeholder="请输入验证码"
+                        placeholder={t('auth.codePlaceholder')}
                         value={verificationCode}
                         onChange={(e) => setVerificationCode(e.target.value)}
                         required
@@ -308,7 +310,11 @@ export default function LoginPage() {
                       disabled={sendingCode || countdown > 0}
                       className="h-11 rounded-xl px-4 whitespace-nowrap"
                     >
-                      {sendingCode ? '发送中...' : countdown > 0 ? `${countdown}s` : '获取验证码'}
+                      {sendingCode
+                        ? t('auth.sending')
+                        : countdown > 0
+                          ? `${countdown}s`
+                          : t('auth.sendCode')}
                     </Button>
                   </div>
                 </div>
@@ -320,11 +326,11 @@ export default function LoginPage() {
                   {loading ? (
                     <div className="flex items-center space-x-2">
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>登录中...</span>
+                      <span>{t('auth.loggingIn')}</span>
                     </div>
                   ) : (
                     <div className="flex items-center space-x-2">
-                      <span>登录</span>
+                      <span>{t('auth.login')}</span>
                       <ArrowRight className="h-4 w-4" />
                     </div>
                   )}
@@ -334,20 +340,17 @@ export default function LoginPage() {
 
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
-                还没有账户？{' '}
+                {t('auth.noAccount')}{' '}
                 <Link href="/register" className="text-primary hover:underline font-medium">
-                  立即注册
+                  {t('auth.registerNow')}
                 </Link>
               </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* 底部信息 */}
         <div className="mt-8 text-center">
-          <p className="text-xs text-muted-foreground">
-            登录即表示您同意我们的服务条款和隐私政策
-          </p>
+          <p className="text-xs text-muted-foreground">{t('auth.terms')}</p>
         </div>
       </div>
     </div>

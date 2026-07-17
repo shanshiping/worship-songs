@@ -9,7 +9,6 @@ import {
   Calendar,
   Trophy,
   Settings,
-  Upload,
   LogOut,
   Users,
   Shield,
@@ -20,63 +19,66 @@ import {
 import { Button } from '@/components/ui/button'
 import { signOut } from 'next-auth/react'
 import { usePermissions } from '@/hooks/use-permissions'
+import { useI18n } from '@/components/providers/i18n-provider'
+import { LanguageSwitcher } from '@/components/language-switcher'
 
 export function Sidebar() {
   const pathname = usePathname()
   const permissions = usePermissions()
+  const { t } = useI18n()
 
   const menuItems = [
     {
-      title: '首页',
+      title: t('nav.dashboard'),
       href: '/dashboard',
       icon: LayoutDashboard,
       show: true,
       gradient: 'from-violet-500 to-purple-500',
     },
     {
-      title: '歌曲管理',
+      title: t('nav.songs'),
       href: '/songs',
       icon: Music,
       show: true,
       gradient: 'from-pink-500 to-rose-500',
     },
     {
-      title: '聚会记录',
+      title: t('nav.meetings'),
       href: '/meetings',
       icon: Calendar,
       show: true,
       gradient: 'from-blue-500 to-cyan-500',
     },
     {
-      title: '歌曲排行榜',
+      title: t('nav.leaderboard'),
       href: '/leaderboard',
       icon: Trophy,
       show: true,
       gradient: 'from-amber-500 to-orange-500',
     },
     {
-      title: '团队协作',
+      title: t('nav.teams'),
       href: '/teams',
       icon: MessageCircle,
       show: true,
       gradient: 'from-emerald-500 to-teal-500',
     },
     {
-      title: '数据管理',
+      title: t('nav.data'),
       href: '/data',
       icon: Database,
       show: permissions.isLeaderOrAbove,
       gradient: 'from-indigo-500 to-blue-500',
     },
     {
-      title: '用户管理',
+      title: t('nav.adminUsers'),
       href: '/admin/users',
       icon: Users,
       show: permissions.isSuperAdmin,
       gradient: 'from-red-500 to-orange-500',
     },
     {
-      title: '设置',
+      title: t('nav.settings'),
       href: '/settings',
       icon: Settings,
       show: true,
@@ -87,7 +89,6 @@ export function Sidebar() {
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 z-50">
       <div className="flex flex-col flex-grow bg-sidebar overflow-hidden">
-        {/* Logo 区域 */}
         <div className="relative px-6 pt-6 pb-4">
           <div className="absolute inset-0 bg-gradient-to-b from-sidebar-primary/20 to-transparent" />
           <div className="relative flex items-center space-x-3">
@@ -95,29 +96,27 @@ export function Sidebar() {
               <Music className="h-5 w-5 text-sidebar-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-sidebar-foreground">敬拜选歌</h1>
+              <h1 className="text-lg font-bold text-sidebar-foreground">{t('brand.name')}</h1>
               <p className="text-xs text-sidebar-foreground/60">Worship Songs</p>
             </div>
           </div>
         </div>
 
-        {/* 用户角色标识 */}
         <div className="mx-4 mb-4">
           <div className="flex items-center space-x-2 px-3 py-2 bg-sidebar-accent/50 rounded-lg border border-sidebar-border/50">
             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-sidebar-primary to-sidebar-primary/80 flex items-center justify-center">
               <Shield className="h-3 w-3 text-sidebar-primary-foreground" />
             </div>
             <span className="text-xs font-medium text-sidebar-foreground/80">
-              {permissions.isSuperAdmin && '超级管理员'}
-              {permissions.isAdmin && !permissions.isSuperAdmin && '管理员'}
-              {permissions.isLeader && !permissions.isAdmin && '领队'}
-              {permissions.isMember && !permissions.isLeader && '成员'}
+              {permissions.isSuperAdmin && t('roles.SUPER_ADMIN')}
+              {permissions.isAdmin && !permissions.isSuperAdmin && t('roles.ADMIN')}
+              {permissions.isLeader && !permissions.isAdmin && t('roles.LEADER')}
+              {permissions.isMember && !permissions.isLeader && t('roles.MEMBER')}
             </span>
             <Sparkles className="h-3 w-3 text-sidebar-primary ml-auto" />
           </div>
         </div>
 
-        {/* 导航菜单 */}
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
           {menuItems
             .filter((item) => item.show)
@@ -159,8 +158,8 @@ export function Sidebar() {
             })}
         </nav>
 
-        {/* 退出按钮 */}
-        <div className="p-4 mt-auto">
+        <div className="p-4 mt-auto space-y-3">
+          <LanguageSwitcher className="w-full justify-center bg-sidebar-accent/30" />
           <Button
             variant="ghost"
             className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 rounded-xl"
@@ -169,7 +168,7 @@ export function Sidebar() {
             <div className="w-8 h-8 rounded-lg bg-sidebar-accent/50 flex items-center justify-center mr-3">
               <LogOut className="h-4 w-4" />
             </div>
-            退出登录
+            {t('nav.signOut')}
           </Button>
         </div>
       </div>

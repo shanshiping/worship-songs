@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Share2, Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { useI18n } from '@/components/providers/i18n-provider'
 
 interface ShareButtonProps {
   type: 'song' | 'meeting'
@@ -11,6 +12,7 @@ interface ShareButtonProps {
 }
 
 export function ShareButton({ type, id }: ShareButtonProps) {
+  const { t } = useI18n()
   const [sharing, setSharing] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -28,19 +30,16 @@ export function ShareButton({ type, id }: ShareButtonProps) {
 
       if (response.ok) {
         const data = await response.json()
-
-        // 复制到剪贴板
         await navigator.clipboard.writeText(data.url)
         setCopied(true)
-        toast.success('分享链接已复制到剪贴板')
-
+        toast.success(t('share.copySuccess'))
         setTimeout(() => setCopied(false), 2000)
       } else {
-        toast.error('创建分享链接失败')
+        toast.error(t('share.createFailed'))
       }
     } catch (error) {
       console.error('Share error:', error)
-      toast.error('分享失败')
+      toast.error(t('share.failed'))
     } finally {
       setSharing(false)
     }
@@ -56,12 +55,12 @@ export function ShareButton({ type, id }: ShareButtonProps) {
       {copied ? (
         <>
           <Check className="mr-2 h-4 w-4" />
-          已复制
+          {t('share.copied')}
         </>
       ) : (
         <>
           <Share2 className="mr-2 h-4 w-4" />
-          {sharing ? '分享中...' : '分享'}
+          {sharing ? t('share.sharing') : t('share.share')}
         </>
       )}
     </Button>

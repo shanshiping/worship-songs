@@ -1,5 +1,6 @@
 'use client'
 
+import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -35,6 +36,7 @@ interface UploadedFile {
 }
 
 export default function EditSongPage() {
+  const { t } = useI18n()
   const params = useParams()
   const router = useRouter()
   const [song, setSong] = useState<Song | null>(null)
@@ -80,7 +82,7 @@ export default function EditSongPage() {
         if (songData.sheetMusic) {
           setSheetMusic({
             path: songData.sheetMusic,
-            name: '现有歌谱',
+            name: t('songs.existingSheet'),
             size: 0,
             type: 'application/pdf',
           })
@@ -88,13 +90,13 @@ export default function EditSongPage() {
         if (songData.audioFile) {
           setAudioFile({
             path: songData.audioFile,
-            name: '现有音频',
+            name: t('songs.existingAudio'),
             size: 0,
             type: 'audio/mpeg',
           })
         }
       } else {
-        toast.error('歌曲不存在')
+        toast.error(t('songs.songNotFound'))
         router.push('/songs')
         return
       }
@@ -105,7 +107,7 @@ export default function EditSongPage() {
       }
     } catch (error) {
       console.error('Failed to fetch data:', error)
-      toast.error('加载失败')
+      toast.error(t('songs.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -124,13 +126,13 @@ export default function EditSongPage() {
 
     if (!response.ok) {
       const data = await response.json()
-      throw new Error(data.error || '上传失败')
+      throw new Error(data.error || t('songs.uploadFailed'))
     }
 
     return response.json()
   }
 
-  // 处理歌谱文件变化
+  // 处理songs.sheetFile变化
   const handleSheetMusicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -139,15 +141,15 @@ export default function EditSongPage() {
     try {
       const result = await uploadFile(file, 'sheet')
       setSheetMusic(result)
-      toast.success('歌谱上传成功')
+      toast.success(t('songs.sheetUploadSuccess'))
     } catch (error: any) {
-      toast.error(error.message || '歌谱上传失败')
+      toast.error(error.message || t('songs.sheetUploadFailed'))
     } finally {
       setUploadingSheet(false)
     }
   }
 
-  // 处理音频文件变化
+  // 处理songs.audioFile变化
   const handleAudioFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -156,9 +158,9 @@ export default function EditSongPage() {
     try {
       const result = await uploadFile(file, 'audio')
       setAudioFile(result)
-      toast.success('音频上传成功')
+      toast.success(t('songs.audioUploadSuccess'))
     } catch (error: any) {
-      toast.error(error.message || '音频上传失败')
+      toast.error(error.message || t('songs.audioUploadFailed'))
     } finally {
       setUploadingAudio(false)
     }
@@ -177,12 +179,12 @@ export default function EditSongPage() {
     e.preventDefault()
 
     if (!formData.title.trim()) {
-      toast.error('请输入歌曲名称')
+      toast.error(t('songs.enterTitle'))
       return
     }
 
     if (!formData.categoryId) {
-      toast.error('请选择分类')
+      toast.error(t('songs.selectCategoryError'))
       return
     }
 
@@ -203,15 +205,15 @@ export default function EditSongPage() {
       })
 
       if (response.ok) {
-        toast.success('歌曲更新成功')
+        toast.success(t('songs.updateSuccess'))
         router.push(`/songs/${id}`)
       } else {
         const data = await response.json()
-        toast.error(data.error || '更新失败')
+        toast.error(data.error || t('songs.updateFailed'))
       }
     } catch (error) {
       console.error('Failed to update song:', error)
-      toast.error('更新失败')
+      toast.error(t('songs.updateFailed'))
     } finally {
       setSaving(false)
     }
@@ -258,12 +260,12 @@ export default function EditSongPage() {
         <Link href={`/songs/${song.id}`}>
           <Button variant="ghost" size="sm" className="rounded-xl">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            返回
+            {t('songs.back')}
           </Button>
         </Link>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            <span className="gradient-text">编辑歌曲</span>
+            <span className="gradient-text">{t('songs.editTitle')}</span>
           </h1>
           <p className="text-muted-foreground">{song.title}</p>
         </div>
@@ -271,8 +273,8 @@ export default function EditSongPage() {
 
       <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '100ms' }}>
         <CardHeader>
-          <CardTitle>歌曲信息</CardTitle>
-          <CardDescription>修改歌曲基本信息</CardDescription>
+          <CardTitle>{t('songs.songInfo')}</CardTitle>
+          <CardDescription>{t('songs.editDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -280,7 +282,7 @@ export default function EditSongPage() {
             <div className="grid gap-4 md:grid-cols-2">
               {/* 歌谱上传 */}
               <div className="space-y-2">
-                <Label htmlFor="sheetMusic">歌谱文件</Label>
+                <Label htmlFor="sheetMusic">{t('songs.sheetFile')}</Label>
                 {sheetMusic ? (
                   <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-xl">
                     <div className="flex items-center space-x-3">
@@ -321,13 +323,13 @@ export default function EditSongPage() {
                       {uploadingSheet ? (
                         <div className="flex items-center space-x-2 text-muted-foreground">
                           <Loader2 className="h-5 w-5 animate-spin" />
-                          <span>上传中...</span>
+                          <span>songs.uploading</span>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center space-y-2 text-muted-foreground">
                           <FileText className="h-8 w-8" />
-                          <span className="text-sm">点击上传歌谱</span>
-                          <span className="text-xs">支持图片和 PDF</span>
+                          <span className="text-sm">songs.clickUploadSheet</span>
+                          <span className="text-xs">songs.dropSheetHint</span>
                         </div>
                       )}
                     </label>
@@ -337,7 +339,7 @@ export default function EditSongPage() {
 
               {/* 音频上传 */}
               <div className="space-y-2">
-                <Label htmlFor="audioFile">音频文件</Label>
+                <Label htmlFor="audioFile">{t('songs.audioFile')}</Label>
                 {audioFile ? (
                   <div className="flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-xl">
                     <div className="flex items-center space-x-3">
@@ -378,13 +380,13 @@ export default function EditSongPage() {
                       {uploadingAudio ? (
                         <div className="flex items-center space-x-2 text-muted-foreground">
                           <Loader2 className="h-5 w-5 animate-spin" />
-                          <span>上传中...</span>
+                          <span>songs.uploading</span>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center space-y-2 text-muted-foreground">
                           <Music className="h-8 w-8" />
-                          <span className="text-sm">点击上传音频</span>
-                          <span className="text-xs">支持 MP3, WAV</span>
+                          <span className="text-sm">songs.clickUploadAudio</span>
+                          <span className="text-xs">songs.dropAudioHint</span>
                         </div>
                       )}
                     </label>
@@ -393,10 +395,10 @@ export default function EditSongPage() {
               </div>
             </div>
 
-            {/* 歌曲信息 */}
+            {/* songs.songInfo */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="title">歌曲名称 *</Label>
+                <Label htmlFor="title">{t('songs.titleRequired')}</Label>
                 <Input
                   id="title"
                   value={formData.title}
@@ -404,26 +406,26 @@ export default function EditSongPage() {
                     setFormData({ ...formData, title: e.target.value })
                   }
                   required
-                  placeholder="请输入歌曲名称"
+                  placeholder="{t('songs.titlePlaceholder')}"
                   className="h-11 rounded-xl input-focus"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="artist">歌手/作者</Label>
+                <Label htmlFor="artist">{t('songs.artistLabel')}</Label>
                 <Input
                   id="artist"
                   value={formData.artist}
                   onChange={(e) =>
                     setFormData({ ...formData, artist: e.target.value })
                   }
-                  placeholder="请输入歌手或作者"
+                  placeholder="{t('songs.artistPlaceholder')}"
                   className="h-11 rounded-xl input-focus"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">分类 *</Label>
+              <Label htmlFor="category">{t('songs.categoryRequired')}</Label>
               <select
                 id="category"
                 value={formData.categoryId}
@@ -433,7 +435,7 @@ export default function EditSongPage() {
                 required
                 className="w-full h-11 px-3 border rounded-xl input-focus"
               >
-                <option value="">请选择分类</option>
+                <option value="">{t('songs.selectCategory')}</option>
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
@@ -443,33 +445,33 @@ export default function EditSongPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="lyrics">歌词</Label>
+              <Label htmlFor="lyrics">{t('songs.lyrics')}</Label>
               <Textarea
                 id="lyrics"
                 value={formData.lyrics}
                 onChange={(e) =>
                   setFormData({ ...formData, lyrics: e.target.value })
                 }
-                placeholder="请输入歌词（可选）"
+                placeholder="{t('songs.lyricsPlaceholderEdit')}"
                 rows={8}
                 className="rounded-xl input-focus"
               />
               {formData.lyrics && (
                 <p className="text-xs text-muted-foreground">
-                  共 {formData.lyrics.split('\n').length} 行
+                  {t('songs.lyricsLines', { count: formData.lyrics.split('\n').length })}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notes">备注</Label>
+              <Label htmlFor="notes">{t('songs.notes')}</Label>
               <Textarea
                 id="notes"
                 value={formData.notes}
                 onChange={(e) =>
                   setFormData({ ...formData, notes: e.target.value })
                 }
-                placeholder="请输入备注（可选）"
+                placeholder="{t('songs.notesPlaceholder')}"
                 rows={3}
                 className="rounded-xl input-focus"
               />
@@ -478,7 +480,7 @@ export default function EditSongPage() {
             <div className="flex justify-end space-x-4">
               <Link href={`/songs/${song.id}`}>
                 <Button variant="outline" type="button" className="rounded-xl">
-                  取消
+                  {t('common.cancel')}
                 </Button>
               </Link>
               <Button
@@ -489,12 +491,12 @@ export default function EditSongPage() {
                 {saving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    保存中...
+                    {t('songs.saving')}
                   </>
                 ) : (
                   <>
                     <Save className="mr-2 h-4 w-4" />
-                    保存修改
+                    {t('songs.saveChanges')}
                   </>
                 )}
               </Button>

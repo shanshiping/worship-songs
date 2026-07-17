@@ -1,5 +1,6 @@
 'use client'
 
+import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -8,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Calendar, Plus, Music, User } from 'lucide-react'
 import { format } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
+import { enUS, zhCN } from 'date-fns/locale'
 
 interface Meeting {
   id: string
@@ -25,13 +26,14 @@ interface Meeting {
   }>
 }
 
-const meetingTypeLabels: Record<string, string> = {
-  MORNING: '上午聚会',
-  AFTERNOON: '下午聚会',
-  EVENING: '晚间聚会',
-}
-
 export default function MeetingsPage() {
+  const { t, locale } = useI18n()
+  const dateLocale = locale === 'zh' ? zhCN : enUS
+  const meetingTypeLabels: Record<string, string> = {
+    MORNING: t('meetings.morning'),
+    AFTERNOON: t('meetings.afternoon'),
+    EVENING: t('meetings.evening'),
+  }
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [loading, setLoading] = useState(true)
   const [month, setMonth] = useState('')
@@ -69,13 +71,13 @@ export default function MeetingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">聚会记录</h1>
-          <p className="text-muted-foreground">管理所有聚会记录</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('meetings.title')}</h1>
+          <p className="text-muted-foreground">{t('meetings.subtitle')}</p>
         </div>
         <Link href="/meetings/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            新建聚会
+            {t('meetings.newMeeting')}
           </Button>
         </Link>
       </div>
@@ -101,7 +103,7 @@ export default function MeetingsPage() {
               setPage(1)
             }}
           >
-            清除筛选
+            {t('meetings.clearFilters')}
           </Button>
         )}
       </div>
@@ -114,9 +116,9 @@ export default function MeetingsPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">暂无聚会记录</p>
+            <p className="text-muted-foreground">{t('meetings.noMeetings')}</p>
             <Link href="/meetings/new" className="mt-4">
-              <Button variant="outline">创建第一个聚会</Button>
+              <Button variant="outline">{t('meetings.createFirst')}</Button>
             </Link>
           </CardContent>
         </Card>
@@ -129,8 +131,8 @@ export default function MeetingsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <CardTitle className="text-lg">
-                        {format(new Date(meeting.date), 'yyyy年MM月dd日 EEEE', {
-                          locale: zhCN,
+                        {format(new Date(meeting.date), 'PPP', {
+                          locale: dateLocale,
                         })}
                       </CardTitle>
                       {meeting.theme && (
@@ -149,18 +151,18 @@ export default function MeetingsPage() {
                     {meeting.speaker && (
                       <div className="flex items-center">
                         <User className="mr-1 h-4 w-4" />
-                        讲员: {meeting.speaker}
+                        {t('meetings.speaker', { name: meeting.speaker })}
                       </div>
                     )}
                     {meeting.leader && (
                       <div className="flex items-center">
                         <User className="mr-1 h-4 w-4" />
-                        主领: {meeting.leader}
+                        {t('meetings.leader', { name: meeting.leader })}
                       </div>
                     )}
                     <div className="flex items-center">
                       <Music className="mr-1 h-4 w-4" />
-                      {meeting.songs.length} 首诗歌
+                      {t('meetings.songCount', { count: meeting.songs.length })}
                     </div>
                   </div>
                   {meeting.songs.length > 0 && (
@@ -192,10 +194,10 @@ export default function MeetingsPage() {
             onClick={() => setPage(page - 1)}
             disabled={page === 1}
           >
-            上一页
+            {t('meetings.prevPage')}
           </Button>
           <span className="text-sm text-muted-foreground">
-            第 {page} 页，共 {totalPages} 页
+            {t('meetings.pageOf', { page, total: totalPages })}
           </span>
           <Button
             variant="outline"
@@ -203,7 +205,7 @@ export default function MeetingsPage() {
             onClick={() => setPage(page + 1)}
             disabled={page === totalPages}
           >
-            下一页
+            {t('meetings.nextPage')}
           </Button>
         </div>
       )}

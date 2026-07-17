@@ -1,5 +1,6 @@
 'use client'
 
+import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -12,7 +13,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
+import { enUS, zhCN } from 'date-fns/locale'
 import { ShareButton } from '@/components/share-button'
 import { usePermissions } from '@/hooks/use-permissions'
 import { toast } from 'sonner'
@@ -40,6 +41,8 @@ interface Song {
 }
 
 export default function SongDetailPage() {
+  const { t, locale } = useI18n()
+  const dateLocale = locale === 'zh' ? zhCN : enUS
   const params = useParams()
   const router = useRouter()
   const permissions = usePermissions()
@@ -88,11 +91,11 @@ export default function SongDetailPage() {
 
   const handleDelete = async () => {
     if (!permissions.canDeleteSong) {
-      toast.error('权限不足，无法删除歌曲')
+      toast.error(t('songs.noPermissionDelete'))
       return
     }
 
-    if (!confirm('确定要删除这首歌曲吗？此操作不可撤销。')) {
+    if (!confirm(t('songs.deleteConfirm'))) {
       return
     }
 
@@ -104,15 +107,15 @@ export default function SongDetailPage() {
       })
 
       if (response.ok) {
-        toast.success('歌曲已删除')
+        toast.success(t('songs.deleted'))
         router.push('/songs')
       } else {
         const data = await response.json()
-        toast.error(data.error || '删除失败')
+        toast.error(data.error || t('songs.deleteFailed'))
       }
     } catch (error) {
       console.error('Failed to delete song:', error)
-      toast.error('删除失败')
+      toast.error(t('songs.deleteFailed'))
     } finally {
       setDeleting(false)
     }
@@ -184,7 +187,7 @@ export default function SongDetailPage() {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`
   }
 
-  // 解析歌词
+  // 解析songs.lyrics
   const parseLyrics = (lyrics: string) => {
     if (!lyrics) return []
     const lines = lyrics.split('\n').filter(line => line.trim())
@@ -194,20 +197,20 @@ export default function SongDetailPage() {
     }))
   }
 
-  // 更新当前歌词行
+  // 更新当前songs.lyrics行
   const updateCurrentLyric = () => {
     if (!song?.lyrics) return
     const lines = parseLyrics(song.lyrics)
     if (lines.length === 0) return
 
-    // 根据时间计算当前歌词行（假设每行歌词平均 5 秒）
+    // 根据时间计算当前songs.lyrics行（假设每行songs.lyrics平均 5 秒）
     const avgTimePerLine = duration / lines.length
     const newIndex = Math.floor(currentTime / avgTimePerLine)
 
     if (newIndex !== currentLyricIndex && newIndex >= 0 && newIndex < lines.length) {
       setCurrentLyricIndex(newIndex)
 
-      // 滚动到当前歌词
+      // 滚动到当前songs.lyrics
       if (lyricsRef.current) {
         const lyricElement = lyricsRef.current.children[newIndex] as HTMLElement
         if (lyricElement) {
@@ -220,7 +223,7 @@ export default function SongDetailPage() {
     }
   }
 
-  // 获取分类颜色
+  // 获取songs.category颜色
   const getCategoryColor = (categoryName: string) => {
     const colors: Record<string, string> = {
       '敬拜赞美': 'from-pink-500 to-rose-500',
@@ -278,7 +281,7 @@ export default function SongDetailPage() {
           <Link href="/songs">
             <Button variant="ghost" size="sm" className="rounded-xl">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              返回
+              {t('songs.back')}
             </Button>
           </Link>
           <div>
@@ -302,7 +305,7 @@ export default function SongDetailPage() {
             <Link href={`/songs/${song.id}/edit`}>
               <Button variant="outline" className="rounded-xl">
                 <Edit className="mr-2 h-4 w-4" />
-                编辑
+                {t('songs.edit')}
               </Button>
             </Link>
           )}
@@ -314,7 +317,7 @@ export default function SongDetailPage() {
               className="rounded-xl"
             >
               <Trash className="mr-2 h-4 w-4" />
-              {deleting ? '删除中...' : '删除'}
+              {deleting ? t('songs.deleting') : t('songs.delete')}
             </Button>
           )}
         </div>
@@ -469,7 +472,7 @@ export default function SongDetailPage() {
             </Card>
           )}
 
-          {/* 歌词显示 */}
+          {/* songs.lyrics显示 */}
           {song.lyrics && (
             <Card className="animate-fade-in border-0 shadow-lg" style={{ animationDelay: '300ms' }}>
               <CardHeader className="pb-3">
@@ -478,7 +481,7 @@ export default function SongDetailPage() {
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
                       <ListMusic className="h-4 w-4 text-white" />
                     </div>
-                    <span>歌词</span>
+                    <span>{t('songs.lyrics')}</span>
                   </CardTitle>
                   <Button
                     variant="ghost"
@@ -486,7 +489,7 @@ export default function SongDetailPage() {
                     onClick={() => setShowLyrics(!showLyrics)}
                     className="rounded-lg"
                   >
-                    {showLyrics ? '收起' : '展开'}
+                    {showLyrics ? t('songs.collapseLyrics') : t('songs.expandLyrics')}
                   </Button>
                 </div>
               </CardHeader>
@@ -515,55 +518,55 @@ export default function SongDetailPage() {
           )}
         </div>
 
-        {/* 右侧：歌曲信息和使用记录 */}
+        {/* 右侧：songs.songInfo和songs.usageHistory */}
         <div className="space-y-6">
-          {/* 歌曲信息 */}
+          {/* songs.songInfo */}
           <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '200ms' }}>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
                   <FileText className="h-4 w-4 text-white" />
                 </div>
-                <span>歌曲信息</span>
+                <span>{t('songs.songInfo')}</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                <span className="text-sm text-muted-foreground">分类</span>
+                <span className="text-sm text-muted-foreground">{t('songs.category')}</span>
                 <Badge variant="secondary" className="rounded-lg">
                   {song.category.name}
                 </Badge>
               </div>
               {song.artist && (
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                  <span className="text-sm text-muted-foreground">歌手</span>
+                  <span className="text-sm text-muted-foreground">{t('songs.artist')}</span>
                   <span className="font-medium">{song.artist}</span>
                 </div>
               )}
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                <span className="text-sm text-muted-foreground">使用次数</span>
+                <span className="text-sm text-muted-foreground">{t('songs.usageCount')}</span>
                 <div className="flex items-center space-x-1">
                   <Music2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{song.meetings.length} 次</span>
+                  <span className="font-medium">{t('songs.times', { count: song.meetings.length })}</span>
                 </div>
               </div>
               {song.notes && (
                 <div className="p-3 bg-gray-50 rounded-xl">
-                  <span className="text-sm text-muted-foreground">备注</span>
+                  <span className="text-sm text-muted-foreground">{t('songs.notes')}</span>
                   <p className="mt-1 text-sm">{song.notes}</p>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* 附件 */}
+          {/* songs.attachments */}
           <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '300ms' }}>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
                   <FileText className="h-4 w-4 text-white" />
                 </div>
-                <span>附件</span>
+                <span>{t('songs.attachments')}</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -576,7 +579,7 @@ export default function SongDetailPage() {
                 >
                   <div className="flex items-center space-x-3">
                     <FileText className="h-5 w-5 text-blue-500" />
-                    <span className="text-sm font-medium">查看歌谱</span>
+                    <span className="text-sm font-medium">{t('songs.viewSheet')}</span>
                   </div>
                   <Download className="h-4 w-4 text-muted-foreground" />
                 </a>
@@ -589,7 +592,7 @@ export default function SongDetailPage() {
                 >
                   <div className="flex items-center space-x-3">
                     <Music2 className="h-5 w-5 text-purple-500" />
-                    <span className="text-sm font-medium">下载音频</span>
+                    <span className="text-sm font-medium">{t('songs.downloadAudio')}</span>
                   </div>
                   <Download className="h-4 w-4 text-muted-foreground" />
                 </a>
@@ -597,16 +600,16 @@ export default function SongDetailPage() {
             </CardContent>
           </Card>
 
-          {/* 使用记录 */}
+          {/* songs.usageHistory */}
           <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '400ms' }}>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
                   <Calendar className="h-4 w-4 text-white" />
                 </div>
-                <span>使用记录</span>
+                <span>{t('songs.usageHistory')}</span>
               </CardTitle>
-              <CardDescription>最近使用记录</CardDescription>
+              <CardDescription>{t('songs.recentUsage')}</CardDescription>
             </CardHeader>
             <CardContent>
               {song.meetings.length > 0 ? (
@@ -623,8 +626,8 @@ export default function SongDetailPage() {
                         </div>
                         <div>
                           <p className="text-sm font-medium group-hover:text-primary transition-colors">
-                            {format(new Date(item.meeting.date), 'yyyy年MM月dd日', {
-                              locale: zhCN,
+                            {format(new Date(item.meeting.date), 'PPP', {
+                              locale: dateLocale,
                             })}
                           </p>
                           {item.meeting.theme && (
@@ -645,7 +648,7 @@ export default function SongDetailPage() {
               ) : (
                 <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
                   <Calendar className="h-8 w-8 mb-2 opacity-50" />
-                  <p className="text-sm">暂无使用记录</p>
+                  <p className="text-sm">{t('songs.noUsage')}</p>
                 </div>
               )}
             </CardContent>

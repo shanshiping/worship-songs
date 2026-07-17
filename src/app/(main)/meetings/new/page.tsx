@@ -1,5 +1,6 @@
 'use client'
 
+import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -26,6 +27,7 @@ interface Category {
 }
 
 export default function NewMeetingPage() {
+  const { t } = useI18n()
   const router = useRouter()
   const [songs, setSongs] = useState<Song[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -100,11 +102,11 @@ export default function NewMeetingPage() {
         router.push('/meetings')
       } else {
         const data = await response.json()
-        alert(data.error || '创建失败')
+        alert(data.error || t('meetings.createFailed'))
       }
     } catch (error) {
       console.error('Failed to create meeting:', error)
-      alert('创建失败')
+      alert(t('meetings.createFailed'))
     } finally {
       setLoading(false)
     }
@@ -122,12 +124,12 @@ export default function NewMeetingPage() {
         <Link href="/meetings">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            返回
+            {t('common.back')}
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">新建聚会</h1>
-          <p className="text-muted-foreground">创建新的聚会记录</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('meetings.newTitle')}</h1>
+          <p className="text-muted-foreground">{t('meetings.newSubtitle')}</p>
         </div>
       </div>
 
@@ -135,12 +137,12 @@ export default function NewMeetingPage() {
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle>聚会信息</CardTitle>
-              <CardDescription>填写聚会基本信息</CardDescription>
+              <CardTitle>{t('meetings.info')}</CardTitle>
+              <CardDescription>{t('meetings.infoDesc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="date">日期 *</Label>
+                <Label htmlFor="date">{t('meetings.date')}</Label>
                 <Input
                   id="date"
                   type="date"
@@ -152,7 +154,7 @@ export default function NewMeetingPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="type">类型</Label>
+                <Label htmlFor="type">{t('meetings.type')}</Label>
                 <select
                   id="type"
                   value={formData.type}
@@ -161,53 +163,53 @@ export default function NewMeetingPage() {
                   }
                   className="w-full px-3 py-2 border rounded-md"
                 >
-                  <option value="MORNING">上午聚会</option>
-                  <option value="AFTERNOON">下午聚会</option>
-                  <option value="EVENING">晚间聚会</option>
+                  <option value="MORNING">{t('meetings.morning')}</option>
+                  <option value="AFTERNOON">{t('meetings.afternoon')}</option>
+                  <option value="EVENING">{t('meetings.evening')}</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="theme">主题</Label>
+                <Label htmlFor="theme">{t('meetings.theme')}</Label>
                 <Input
                   id="theme"
                   value={formData.theme}
                   onChange={(e) =>
                     setFormData({ ...formData, theme: e.target.value })
                   }
-                  placeholder="请输入聚会主题"
+                  placeholder="{t('meetings.themePlaceholder')}"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="speaker">讲员</Label>
+                <Label htmlFor="speaker">{t('meetings.speakerLabel')}</Label>
                 <Input
                   id="speaker"
                   value={formData.speaker}
                   onChange={(e) =>
                     setFormData({ ...formData, speaker: e.target.value })
                   }
-                  placeholder="请输入讲员姓名"
+                  placeholder="{t('meetings.speakerPlaceholder')}"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="leader">主领</Label>
+                <Label htmlFor="leader">{t('meetings.leaderLabel')}</Label>
                 <Input
                   id="leader"
                   value={formData.leader}
                   onChange={(e) =>
                     setFormData({ ...formData, leader: e.target.value })
                   }
-                  placeholder="请输入主领姓名"
+                  placeholder="{t('meetings.leaderPlaceholder')}"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="notes">备注</Label>
+                <Label htmlFor="notes">{t('meetings.notes')}</Label>
                 <Textarea
                   id="notes"
                   value={formData.notes}
                   onChange={(e) =>
                     setFormData({ ...formData, notes: e.target.value })
                   }
-                  placeholder="请输入备注（可选）"
+                  placeholder="{t('meetings.notesPlaceholder')}"
                   rows={3}
                 />
               </div>
@@ -217,14 +219,14 @@ export default function NewMeetingPage() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>选择诗歌</CardTitle>
-                <CardDescription>搜索并添加诗歌到本次聚会</CardDescription>
+                <CardTitle>{t('meetings.selectSongs')}</CardTitle>
+                <CardDescription>{t('meetings.selectSongsDesc')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="relative mb-4">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="搜索诗歌..."
+                    placeholder="{t('meetings.searchSongs')}"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -254,9 +256,9 @@ export default function NewMeetingPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>已选诗歌</CardTitle>
+                <CardTitle>{t('meetings.selectedSongs')}</CardTitle>
                 <CardDescription>
-                  已选择 {selectedSongs.length} 首诗歌
+                  {t('meetings.selectedCount', { count: selectedSongs.length })}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -292,7 +294,7 @@ export default function NewMeetingPage() {
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-center py-4">
-                    请从左侧选择诗歌
+                    {t('meetings.selectFromLeft')}
                   </p>
                 )}
               </CardContent>
@@ -303,11 +305,11 @@ export default function NewMeetingPage() {
         <div className="flex justify-end space-x-4">
           <Link href="/meetings">
             <Button variant="outline" type="button">
-              取消
+              {t('common.cancel')}
             </Button>
           </Link>
           <Button type="submit" disabled={loading}>
-            {loading ? '创建中...' : '创建聚会'}
+            {loading ? t('meetings.creating') : t('meetings.create')}
           </Button>
         </div>
       </form>

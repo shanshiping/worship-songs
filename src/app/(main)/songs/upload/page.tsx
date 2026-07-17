@@ -1,5 +1,6 @@
 'use client'
 
+import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -24,6 +25,7 @@ interface UploadedFile {
 }
 
 export default function UploadSongPage() {
+  const { t } = useI18n()
   const router = useRouter()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
@@ -70,7 +72,7 @@ export default function UploadSongPage() {
 
     if (!response.ok) {
       const data = await response.json()
-      throw new Error(data.error || '上传失败')
+      throw new Error(data.error || t('songs.uploadFailed'))
     }
 
     return response.json()
@@ -110,20 +112,20 @@ export default function UploadSongPage() {
         if (Object.keys(updates).length > 0) {
           setFormData(prev => ({ ...prev, ...updates }))
           setParsed(true)
-          toast.success('已自动识别文件信息')
+          toast.success(t('songs.autoDetected'))
         } else {
-          toast.info('未能从文件中识别出更多信息')
+          toast.info(t('songs.autoDetectNone'))
         }
       }
     } catch (error) {
       console.error('File parse error:', error)
-      toast.error('文件解析失败')
+      toast.error(t('songs.parseFailed'))
     } finally {
       setParsing(false)
     }
   }
 
-  // 处理歌谱文件变化
+  // 处理songs.sheetFile变化
   const handleSheetMusicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -132,16 +134,16 @@ export default function UploadSongPage() {
     try {
       const result = await uploadFile(file, 'sheet')
       setSheetMusic(result)
-      toast.success('歌谱上传成功')
+      toast.success(t('songs.sheetUploadSuccess'))
       handleFileParse(file)
     } catch (error: any) {
-      toast.error(error.message || '歌谱上传失败')
+      toast.error(error.message || t('songs.sheetUploadFailed'))
     } finally {
       setUploadingSheet(false)
     }
   }
 
-  // 处理音频文件变化
+  // 处理songs.audioFile变化
   const handleAudioFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -150,10 +152,10 @@ export default function UploadSongPage() {
     try {
       const result = await uploadFile(file, 'audio')
       setAudioFile(result)
-      toast.success('音频上传成功')
+      toast.success(t('songs.audioUploadSuccess'))
       handleFileParse(file)
     } catch (error: any) {
-      toast.error(error.message || '音频上传失败')
+      toast.error(error.message || t('songs.audioUploadFailed'))
     } finally {
       setUploadingAudio(false)
     }
@@ -172,12 +174,12 @@ export default function UploadSongPage() {
     e.preventDefault()
 
     if (!formData.title.trim()) {
-      toast.error('请输入歌曲名称')
+      toast.error(t('songs.enterTitle'))
       return
     }
 
     if (!formData.categoryId) {
-      toast.error('请选择分类')
+      toast.error(t('songs.selectCategoryError'))
       return
     }
 
@@ -198,15 +200,15 @@ export default function UploadSongPage() {
       })
 
       if (response.ok) {
-        toast.success('歌曲上传成功')
+        toast.success(t('songs.uploadSuccess'))
         router.push('/songs')
       } else {
         const data = await response.json()
-        toast.error(data.error || '上传失败')
+        toast.error(data.error || t('songs.uploadFailed'))
       }
     } catch (error) {
       console.error('Failed to upload song:', error)
-      toast.error('上传失败')
+      toast.error(t('songs.uploadFailed'))
     } finally {
       setLoading(false)
     }
@@ -224,14 +226,14 @@ export default function UploadSongPage() {
         <Link href="/songs">
           <Button variant="ghost" size="sm" className="rounded-xl">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            返回
+            {t('songs.back')}
           </Button>
         </Link>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            <span className="gradient-text">上传歌曲</span>
+            <span className="gradient-text">{t('songs.uploadTitle')}</span>
           </h1>
-          <p className="text-muted-foreground">添加新歌曲到系统</p>
+          <p className="text-muted-foreground">{t('songs.uploadSubtitle')}</p>
         </div>
       </div>
 
@@ -243,9 +245,9 @@ export default function UploadSongPage() {
               <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="font-medium text-blue-900">智能识别功能</p>
+              <p className="font-medium text-blue-900">{t('songs.smartDetect')}</p>
               <p className="text-sm text-blue-700 mt-1">
-                上传歌谱（PDF）或音频文件后，系统会自动识别歌曲名称、歌手和歌词信息并填充到表单中。
+                {t('songs.smartDetectDesc')}
               </p>
             </div>
           </div>
@@ -254,9 +256,9 @@ export default function UploadSongPage() {
 
       <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '200ms' }}>
         <CardHeader>
-          <CardTitle>歌曲信息</CardTitle>
+          <CardTitle>{t('songs.songInfo')}</CardTitle>
           <CardDescription>
-            填写歌曲基本信息，或上传文件自动识别
+            {t('songs.songInfoDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -265,7 +267,7 @@ export default function UploadSongPage() {
             <div className="grid gap-4 md:grid-cols-2">
               {/* 歌谱上传 */}
               <div className="space-y-2">
-                <Label htmlFor="sheetMusic">歌谱文件</Label>
+                <Label htmlFor="sheetMusic">{t('songs.sheetFile')}</Label>
                 {sheetMusic ? (
                   <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-xl">
                     <div className="flex items-center space-x-3">
@@ -304,13 +306,13 @@ export default function UploadSongPage() {
                       {uploadingSheet ? (
                         <div className="flex items-center space-x-2 text-muted-foreground">
                           <Loader2 className="h-5 w-5 animate-spin" />
-                          <span>上传中...</span>
+                          <span>songs.uploading</span>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center space-y-2 text-muted-foreground">
                           <FileText className="h-8 w-8" />
-                          <span className="text-sm">点击或拖拽上传歌谱</span>
-                          <span className="text-xs">支持图片和 PDF</span>
+                          <span className="text-sm">songs.dropSheet</span>
+                          <span className="text-xs">songs.dropSheetHint</span>
                         </div>
                       )}
                     </label>
@@ -320,7 +322,7 @@ export default function UploadSongPage() {
 
               {/* 音频上传 */}
               <div className="space-y-2">
-                <Label htmlFor="audioFile">音频文件</Label>
+                <Label htmlFor="audioFile">{t('songs.audioFile')}</Label>
                 {audioFile ? (
                   <div className="flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-xl">
                     <div className="flex items-center space-x-3">
@@ -359,13 +361,13 @@ export default function UploadSongPage() {
                       {uploadingAudio ? (
                         <div className="flex items-center space-x-2 text-muted-foreground">
                           <Loader2 className="h-5 w-5 animate-spin" />
-                          <span>上传中...</span>
+                          <span>songs.uploading</span>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center space-y-2 text-muted-foreground">
                           <Music className="h-8 w-8" />
-                          <span className="text-sm">点击或拖拽上传音频</span>
-                          <span className="text-xs">支持 MP3, WAV</span>
+                          <span className="text-sm">songs.dropAudio</span>
+                          <span className="text-xs">songs.dropAudioHint</span>
                         </div>
                       )}
                     </label>
@@ -377,21 +379,21 @@ export default function UploadSongPage() {
             {parsing && (
               <div className="flex items-center space-x-2 text-blue-600 bg-blue-50 p-3 rounded-xl">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">正在解析文件内容...</span>
+                <span className="text-sm">songs.parsing</span>
               </div>
             )}
 
             {parsed && (
               <div className="flex items-center space-x-2 text-green-600 bg-green-50 p-3 rounded-xl">
                 <Sparkles className="h-4 w-4" />
-                <span className="text-sm">已自动识别并填充信息，请检查并修改</span>
+                <span className="text-sm">songs.autoFilled</span>
               </div>
             )}
 
-            {/* 歌曲信息 */}
+            {/* songs.songInfo */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="title">歌曲名称 *</Label>
+                <Label htmlFor="title">{t('songs.titleRequired')}</Label>
                 <Input
                   id="title"
                   value={formData.title}
@@ -399,26 +401,26 @@ export default function UploadSongPage() {
                     setFormData({ ...formData, title: e.target.value })
                   }
                   required
-                  placeholder="请输入歌曲名称"
+                  placeholder="{t('songs.titlePlaceholder')}"
                   className="h-11 rounded-xl input-focus"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="artist">歌手/作者</Label>
+                <Label htmlFor="artist">{t('songs.artistLabel')}</Label>
                 <Input
                   id="artist"
                   value={formData.artist}
                   onChange={(e) =>
                     setFormData({ ...formData, artist: e.target.value })
                   }
-                  placeholder="请输入歌手或作者"
+                  placeholder="{t('songs.artistPlaceholder')}"
                   className="h-11 rounded-xl input-focus"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">分类 *</Label>
+              <Label htmlFor="category">{t('songs.categoryRequired')}</Label>
               <select
                 id="category"
                 value={formData.categoryId}
@@ -428,7 +430,7 @@ export default function UploadSongPage() {
                 required
                 className="w-full h-11 px-3 border rounded-xl input-focus"
               >
-                <option value="">请选择分类</option>
+                <option value="">{t('songs.selectCategory')}</option>
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
@@ -438,33 +440,33 @@ export default function UploadSongPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="lyrics">歌词</Label>
+              <Label htmlFor="lyrics">{t('songs.lyrics')}</Label>
               <Textarea
                 id="lyrics"
                 value={formData.lyrics}
                 onChange={(e) =>
                   setFormData({ ...formData, lyrics: e.target.value })
                 }
-                placeholder="请输入歌词（可选，上传 PDF 文件可自动识别）"
+                placeholder="{t('songs.lyricsPlaceholder')}"
                 rows={8}
                 className="rounded-xl input-focus"
               />
               {formData.lyrics && (
                 <p className="text-xs text-muted-foreground">
-                  共 {formData.lyrics.split('\n').length} 行
+                  {t('songs.lyricsLines', { count: formData.lyrics.split('\n').length })}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notes">备注</Label>
+              <Label htmlFor="notes">{t('songs.notes')}</Label>
               <Textarea
                 id="notes"
                 value={formData.notes}
                 onChange={(e) =>
                   setFormData({ ...formData, notes: e.target.value })
                 }
-                placeholder="请输入备注（可选）"
+                placeholder="{t('songs.notesPlaceholder')}"
                 rows={3}
                 className="rounded-xl input-focus"
               />
@@ -473,7 +475,7 @@ export default function UploadSongPage() {
             <div className="flex justify-end space-x-4">
               <Link href="/songs">
                 <Button variant="outline" type="button" className="rounded-xl">
-                  取消
+                  {t('common.cancel')}
                 </Button>
               </Link>
               <Button
@@ -484,12 +486,12 @@ export default function UploadSongPage() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    上传中...
+                    {t('songs.uploading')}
                   </>
                 ) : (
                   <>
                     <Upload className="mr-2 h-4 w-4" />
-                    上传歌曲
+                    {t('songs.uploadTitle')}
                   </>
                 )}
               </Button>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -18,13 +19,6 @@ interface User {
   createdAt: string
 }
 
-const roleOptions = [
-  { value: 'SUPER_ADMIN', label: '超级管理员', description: '所有权限' },
-  { value: 'ADMIN', label: '管理员', description: '编辑、上传、下载、删除' },
-  { value: 'LEADER', label: '领队', description: '编辑、上传、下载' },
-  { value: 'MEMBER', label: '成员', description: '只能下载' },
-]
-
 const roleColors: Record<string, string> = {
   SUPER_ADMIN: 'bg-red-500',
   ADMIN: 'bg-orange-500',
@@ -32,19 +26,27 @@ const roleColors: Record<string, string> = {
   MEMBER: 'bg-gray-500',
 }
 
-const roleLabels: Record<string, string> = {
-  SUPER_ADMIN: '超级管理员',
-  ADMIN: '管理员',
-  LEADER: '领队',
-  MEMBER: '成员',
-}
-
 export default function UsersPage() {
+  const { t } = useI18n()
   const { data: session, status } = useSession()
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState<string | null>(null)
+
+  const roleOptions = [
+    { value: 'SUPER_ADMIN', label: t('roles.SUPER_ADMIN'), description: t('admin.roleSuperAdminDesc') },
+    { value: 'ADMIN', label: t('roles.ADMIN'), description: t('admin.roleAdminDesc') },
+    { value: 'LEADER', label: t('roles.LEADER'), description: t('admin.roleLeaderDesc') },
+    { value: 'MEMBER', label: t('roles.MEMBER'), description: t('admin.roleMemberDesc') },
+  ]
+
+  const roleLabels: Record<string, string> = {
+    SUPER_ADMIN: t('roles.SUPER_ADMIN'),
+    ADMIN: t('roles.ADMIN'),
+    LEADER: t('roles.LEADER'),
+    MEMBER: t('roles.MEMBER'),
+  }
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -53,7 +55,7 @@ export default function UsersPage() {
     }
 
     if (session?.user?.role !== 'SUPER_ADMIN') {
-      toast.error('权限不足，只有超级管理员可以访问此页面')
+      toast.error(t('admin.noAccess'))
       router.push('/dashboard')
       return
     }
@@ -69,11 +71,11 @@ export default function UsersPage() {
         setUsers(data)
       } else {
         const data = await response.json()
-        toast.error(data.error || '获取用户列表失败')
+        toast.error(data.error || t('admin.loadFailed'))
       }
     } catch (error) {
       console.error('Failed to fetch users:', error)
-      toast.error('获取用户列表失败')
+      toast.error(t('admin.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -81,7 +83,7 @@ export default function UsersPage() {
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     if (userId === session?.user?.id) {
-      toast.error('不能修改自己的角色')
+      toast.error(t('admin.cannotChangeSelf'))
       return
     }
 
@@ -99,14 +101,14 @@ export default function UsersPage() {
       if (response.ok) {
         const updatedUser = await response.json()
         setUsers(users.map(u => u.id === userId ? { ...u, role: updatedUser.role } : u))
-        toast.success('用户角色已更新')
+        toast.success(t('admin.roleUpdated'))
       } else {
         const data = await response.json()
-        toast.error(data.error || '更新失败')
+        toast.error(data.error || t('admin.updateFailed'))
       }
     } catch (error) {
       console.error('Failed to update user role:', error)
-      toast.error('更新失败')
+      toast.error(t('admin.updateFailed'))
     } finally {
       setUpdating(null)
     }
@@ -126,12 +128,12 @@ export default function UsersPage() {
         <Link href="/dashboard">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            返回
+            {t('admin.back')}
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">用户管理</h1>
-          <p className="text-muted-foreground">管理用户角色和权限</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('admin.title')}</h1>
+          <p className="text-muted-foreground">{t('admin.subtitle')}</p>
         </div>
       </div>
 
@@ -147,7 +149,7 @@ export default function UsersPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">{role.description}</p>
               <Badge className={`mt-2 ${roleColors[role.value]} text-white`}>
-                {users.filter(u => u.role === role.value).length} 人
+                {t('admin.people', { count: users.filter(u => u.role === role.value).length })}
               </Badge>
             </CardContent>
           </Card>
@@ -158,10 +160,10 @@ export default function UsersPage() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Users className="mr-2 h-5 w-5" />
-            用户列表
+            {t('admin.userList')}
           </CardTitle>
           <CardDescription>
-            点击下拉菜单修改用户角色
+            {t('admin.userListDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -176,7 +178,7 @@ export default function UsersPage() {
                     {user.name?.charAt(0) || user.email.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-medium">{user.name || '未设置姓名'}</p>
+                    <p className="font-medium">{user.name || t('admin.noName')}</p>
                     <p className="text-sm text-muted-foreground">{user.email}</p>
                   </div>
                 </div>
@@ -200,7 +202,7 @@ export default function UsersPage() {
                       ))}
                     </select>
                   ) : (
-                    <span className="text-sm text-muted-foreground">（当前用户）</span>
+                    <span className="text-sm text-muted-foreground">{t('admin.currentUser')}</span>
                   )}
                 </div>
               </div>
