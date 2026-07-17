@@ -1,5 +1,6 @@
 'use client'
 
+import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -10,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Send, Users, Crown, Shield, User, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
+import { enUS, zhCN } from 'date-fns/locale'
 import { toast } from 'sonner'
 
 interface Team {
@@ -47,6 +48,8 @@ interface Team {
 }
 
 export default function TeamDetailPage() {
+  const { t, locale } = useI18n()
+  const dateLocale = locale === 'zh' ? zhCN : enUS
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
@@ -72,7 +75,7 @@ export default function TeamDetailPage() {
         const data = await response.json()
         setTeam(data)
       } else {
-        toast.error('获取团队信息失败')
+        toast.error(t('teams.loadFailed'))
         router.push('/teams')
       }
     } catch (error) {
@@ -106,10 +109,10 @@ export default function TeamDetailPage() {
         } : null)
         setMessage('')
       } else {
-        toast.error('发送失败')
+        toast.error(t('teams.sendFailed'))
       }
     } catch (error) {
-      toast.error('发送失败')
+      toast.error(t('teams.sendFailed'))
     } finally {
       setSending(false)
     }
@@ -129,11 +132,11 @@ export default function TeamDetailPage() {
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'OWNER':
-        return '创建者'
+        return t('teams.owner')
       case 'ADMIN':
-        return '管理员'
+        return t('teams.admin')
       default:
-        return '成员'
+        return t('teams.member')
     }
   }
 
@@ -172,7 +175,7 @@ export default function TeamDetailPage() {
           onClick={() => setShowMembers(!showMembers)}
         >
           <Users className="mr-2 h-4 w-4" />
-          {team.members.length} 人
+          {t('teams.membersCount', { count: team.members.length })}
         </Button>
       </div>
 
@@ -184,8 +187,8 @@ export default function TeamDetailPage() {
             {team.messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                 <MessageCircle className="h-12 w-12 mb-4" />
-                <p>暂无消息</p>
-                <p className="text-sm">发送第一条消息开始聊天</p>
+                <p>{t('teams.noMessages')}</p>
+                <p className="text-sm">{t('teams.noMessagesHint')}</p>
               </div>
             ) : (
               team.messages.map((msg) => {
@@ -204,7 +207,7 @@ export default function TeamDetailPage() {
                       <div>
                         {!isOwn && (
                           <p className="text-xs text-muted-foreground mb-1 px-1">
-                            {msg.user.name || '匿名'}
+                            {msg.user.name || t('teams.anonymous')}
                           </p>
                         )}
                         <div
@@ -234,7 +237,7 @@ export default function TeamDetailPage() {
               <Input
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="输入消息..."
+                placeholder="{t('teams.messagePlaceholder')}"
                 disabled={sending}
                 className="flex-1"
               />
@@ -249,7 +252,7 @@ export default function TeamDetailPage() {
         {showMembers && (
           <div className="w-64 border-l bg-white overflow-y-auto">
             <div className="p-4">
-              <h3 className="font-semibold mb-4">团队成员</h3>
+              <h3 className="font-semibold mb-4">{t('teams.teamMembers')}</h3>
               <div className="space-y-3">
                 {team.members.map((member) => (
                   <div
@@ -261,7 +264,7 @@ export default function TeamDetailPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
-                        {member.user.name || '未设置姓名'}
+                        {member.user.name || t('teams.noName')}
                       </p>
                       <div className="flex items-center space-x-1">
                         {getRoleIcon(member.role)}

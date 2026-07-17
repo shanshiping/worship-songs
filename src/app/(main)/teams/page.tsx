@@ -1,5 +1,6 @@
 'use client'
 
+import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -40,6 +41,7 @@ interface Team {
 }
 
 export default function TeamsPage() {
+  const { t } = useI18n()
   const { data: session, status } = useSession()
   const router = useRouter()
   const [teams, setTeams] = useState<Team[]>([])
@@ -78,7 +80,7 @@ export default function TeamsPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.name.trim()) {
-      toast.error('请输入团队名称')
+      toast.error(t('teams.enterName'))
       return
     }
 
@@ -96,13 +98,13 @@ export default function TeamsPage() {
         setTeams([newTeam, ...teams])
         setShowCreateForm(false)
         setFormData({ name: '', description: '' })
-        toast.success('团队创建成功')
+        toast.success(t('teams.createSuccess'))
       } else {
         const data = await response.json()
-        toast.error(data.error || '创建失败')
+        toast.error(data.error || t('teams.createFailed'))
       }
     } catch (error) {
-      toast.error('创建失败')
+      toast.error(t('teams.createFailed'))
     } finally {
       setCreating(false)
     }
@@ -122,11 +124,11 @@ export default function TeamsPage() {
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'OWNER':
-        return '创建者'
+        return t('teams.owner')
       case 'ADMIN':
-        return '管理员'
+        return t('teams.admin')
       default:
-        return '成员'
+        return t('teams.member')
     }
   }
 
@@ -142,54 +144,54 @@ export default function TeamsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">团队管理</h1>
-          <p className="text-muted-foreground">管理您的团队</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('teams.title')}</h1>
+          <p className="text-muted-foreground">{t('teams.subtitle')}</p>
         </div>
         <Button onClick={() => setShowCreateForm(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          创建团队
+          {t('teams.createTeam')}
         </Button>
       </div>
 
-      {/* 创建团队表单 */}
+      {/* teams.createTeam表单 */}
       {showCreateForm && (
         <Card>
           <CardHeader>
-            <CardTitle>创建新团队</CardTitle>
-            <CardDescription>创建一个团队来协作管理歌曲</CardDescription>
+            <CardTitle>{t('teams.createNew')}</CardTitle>
+            <CardDescription>{t('teams.createDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="team-name">团队名称 *</Label>
+                <Label htmlFor="team-name">{t('teams.nameRequired')}</Label>
                 <Input
                   id="team-name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="请输入团队名称"
+                  placeholder="{t('teams.namePlaceholder')}"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="team-desc">团队描述</Label>
+                <Label htmlFor="team-desc">{t('teams.desc')}</Label>
                 <Textarea
                   id="team-desc"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="请输入团队描述（可选）"
+                  placeholder="{t('teams.descPlaceholder')}"
                   rows={3}
                 />
               </div>
               <div className="flex space-x-2">
                 <Button type="submit" disabled={creating}>
-                  {creating ? '创建中...' : '创建'}
+                  {creating ? t('teams.creating') : t('teams.create')}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setShowCreateForm(false)}
                 >
-                  取消
+                  {t('teams.cancel')}
                 </Button>
               </div>
             </form>
@@ -202,9 +204,9 @@ export default function TeamsPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">暂无团队</p>
+            <p className="text-muted-foreground">{t('teams.noTeams')}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              创建第一个团队开始协作
+              {t('teams.noTeamsHint')}
             </p>
           </CardContent>
         </Card>
@@ -223,7 +225,7 @@ export default function TeamsPage() {
                     )}
                   </div>
                   <Badge variant="secondary">
-                    {team._count.members} 人
+                    {t('teams.membersCount', { count: team._count.members })}
                   </Badge>
                 </div>
               </CardHeader>
@@ -251,7 +253,7 @@ export default function TeamsPage() {
                   <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                     <div className="flex items-center">
                       <MessageCircle className="mr-1 h-4 w-4" />
-                      {team._count.messages} 条消息
+                      {t('teams.messagesCount', { count: team._count.messages })}
                     </div>
                   </div>
 
@@ -259,7 +261,7 @@ export default function TeamsPage() {
                   <div className="flex space-x-2">
                     <Link href={`/teams/${team.id}`} className="flex-1">
                       <Button variant="outline" className="w-full" size="sm">
-                        进入团队
+                        {t('teams.enterTeam')}
                       </Button>
                     </Link>
                     {team.ownerId === session?.user?.id && (
