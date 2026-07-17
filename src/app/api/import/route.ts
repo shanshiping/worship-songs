@@ -301,13 +301,18 @@ export async function POST(request: Request) {
           const speaker = speakerIndex >= 0 ? String(row[speakerIndex] || '').trim() : null
           const leader = leaderIndex >= 0 ? String(row[leaderIndex] || '').trim() : null
 
-          // 解析诗歌
+          // 解析诗歌（同行可能多列重复同一首歌，按出现顺序去重）
+          const seenTitles = new Set<string>()
           const songNames: string[] = []
           for (let j = songStartIndex; j < row.length; j++) {
             const cellValue = String(row[j] || '').trim()
             if (cellValue && cellValue !== '') {
-              const songs = parseSongNames(cellValue)
-              songNames.push(...songs)
+              for (const title of parseSongNames(cellValue)) {
+                if (!seenTitles.has(title)) {
+                  seenTitles.add(title)
+                  songNames.push(title)
+                }
+              }
             }
           }
 
@@ -355,11 +360,20 @@ export async function POST(request: Request) {
                 results.songs++
               }
 
-              // 创建关联
-              await prisma.meetingSong.create({
-                data: {
+              // 创建关联（upsert 避免 meetingId+songId 唯一约束冲突）
+              await prisma.meetingSong.upsert({
+                where: {
+                  meetingId_songId: {
+                    meetingId: meeting.id,
+                    songId: song.id,
+                  },
+                },
+                create: {
                   meetingId: meeting.id,
                   songId: song.id,
+                  order: k + 1,
+                },
+                update: {
                   order: k + 1,
                 },
               })
