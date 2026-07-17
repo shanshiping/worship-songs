@@ -5,11 +5,23 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-function createPrismaClient() {
+function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL
+
   if (!connectionString) {
-    // 在构建时如果没有 DATABASE_URL，返回一个模拟客户端
-    return new PrismaClient() as any
+    // Prisma 7 requires an adapter — empty `new PrismaClient()` throws.
+    // Use a proxy so Next.js can import this module at build time;
+    // any real query fails with a clear message.
+    return new Proxy({} as PrismaClient, {
+      get(_target, prop) {
+        if (prop === 'then' || prop === 'catch' || prop === 'finally') {
+          return undefined
+        }
+        throw new Error(
+          'DATABASE_URL is not set. Create a .env file with your PostgreSQL connection string.'
+        )
+      },
+    })
   }
 
   const adapter = new PrismaPg(connectionString)
