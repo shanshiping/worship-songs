@@ -1,0 +1,56 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "search": "Search",
+    "confirm": "Confirm",
+    "back": "Back",
+    "create": "Create",
+    "upload": "Upload",
+    "download": "Download",
+    "success": "Success",
+    "error": "Something went wrong",
+    "actions": "Actions"
+  },
+  "brand": {
+    "name": "Worship Songs",
+    "short": "WS",
+    "tagline": "Worship song selection platform"
+  },
+  "nav": {
+    "dashboard": "Home",
+    "songs": "Songs",
+    "meetings": "Meetings",
+    "leaderboard": "Leaderboard",
+    "teams": "Teams",
+    "data": "Data",
+    "adminUsers": "Users",
+    "settings": "Settings",
+    "profile": "Profile",
+    "signOut": "Sign out",
+    "searchPlaceholder": "Search songs, meetings..."
+  },
+  "roles": {
+    "SUPER_ADMIN": "Super Admin",
+    "ADMIN": "Admin",
+    "LEADER": "Leader",
+    "MEMBER": "Member"
+  },
+  "lang": {
+    "en": "EN",
+    "zh": "中文"
+  },
+  "auth": {},
+  "dashboard": {},
+  "songs": {},
+  "meetings": {},
+  "teams": {},
+  "leaderboard": {},
+  "data": {},
+  "settings": {},
+  "admin": {},
+  "share": {}
+}

@@ -1,0 +1,56 @@
+{
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "loading": "加载中...",
+    "search": "搜索",
+    "confirm": "确认",
+    "back": "返回",
+    "create": "创建",
+    "upload": "上传",
+    "download": "下载",
+    "success": "成功",
+    "error": "出错了",
+    "actions": "操作"
+  },
+  "brand": {
+    "name": "敬拜选歌",
+    "short": "敬",
+    "tagline": "敬拜团队选歌记录和参考平台"
+  },
+  "nav": {
+    "dashboard": "首页",
+    "songs": "歌曲管理",
+    "meetings": "聚会记录",
+    "leaderboard": "歌曲排行榜",
+    "teams": "团队协作",
+    "data": "数据管理",
+    "adminUsers": "用户管理",
+    "settings": "设置",
+    "profile": "个人资料",
+    "signOut": "退出登录",
+    "searchPlaceholder": "搜索歌曲、聚会..."
+  },
+  "roles": {
+    "SUPER_ADMIN": "超级管理员",
+    "ADMIN": "管理员",
+    "LEADER": "领队",
+    "MEMBER": "成员"
+  },
+  "lang": {
+    "en": "EN",
+    "zh": "中文"
+  },
+  "auth": {},
+  "dashboard": {},
+  "songs": {},
+  "meetings": {},
+  "teams": {},
+  "leaderboard": {},
+  "data": {},
+  "settings": {},
+  "admin": {},
+  "share": {}
+}
