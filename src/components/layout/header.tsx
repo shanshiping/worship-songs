@@ -14,9 +14,12 @@ import { signOut } from 'next-auth/react'
 import { LogOut, Settings, User, Bell, Search } from 'lucide-react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
+import { useI18n } from '@/components/providers/i18n-provider'
+import { LanguageSwitcher } from '@/components/language-switcher'
 
 export function Header() {
   const { data: session } = useSession()
+  const { t } = useI18n()
 
   const userInitials = session?.user?.name
     ? session.user.name
@@ -30,33 +33,31 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200/50">
       <div className="flex items-center justify-between h-16 px-4 md:px-6">
-        {/* 移动端 Logo */}
         <div className="md:hidden flex items-center space-x-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">敬</span>
+            <span className="text-white font-bold text-sm">{t('brand.short')}</span>
           </div>
-          <span className="text-lg font-bold gradient-text">敬拜选歌</span>
+          <span className="text-lg font-bold gradient-text">{t('brand.name')}</span>
         </div>
 
-        {/* 搜索栏 */}
         <div className="hidden md:flex flex-1 max-w-md">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="搜索歌曲、聚会..."
+              placeholder={t('nav.searchPlaceholder')}
               className="pl-10 bg-gray-50/50 border-gray-200/50 focus:bg-white input-focus"
             />
           </div>
         </div>
 
         <div className="flex items-center space-x-3">
-          {/* 通知按钮 */}
+          <LanguageSwitcher />
+
           <button className="relative p-2 rounded-xl hover:bg-gray-100/50 transition-colors">
             <Bell className="h-5 w-5 text-gray-600" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
           </button>
 
-          {/* 用户菜单 */}
           <DropdownMenu>
             <DropdownMenuTrigger>
               <div className="relative h-10 w-10 rounded-xl cursor-pointer hover:opacity-80 transition-opacity ring-2 ring-gray-200/50 hover:ring-primary/30 transition-all">
@@ -90,7 +91,7 @@ export function Header() {
                   <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center mr-3">
                     <User className="h-4 w-4 text-blue-600" />
                   </div>
-                  <span>个人资料</span>
+                  <span>{t('nav.profile')}</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem className="rounded-lg cursor-pointer">
@@ -98,7 +99,7 @@ export function Header() {
                   <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center mr-3">
                     <Settings className="h-4 w-4 text-purple-600" />
                   </div>
-                  <span>设置</span>
+                  <span>{t('nav.settings')}</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -109,7 +110,7 @@ export function Header() {
                 <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center mr-3">
                   <LogOut className="h-4 w-4 text-red-600" />
                 </div>
-                <span>退出登录</span>
+                <span>{t('nav.signOut')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
