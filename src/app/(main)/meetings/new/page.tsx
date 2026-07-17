@@ -32,8 +32,13 @@ export default function NewMeetingPage() {
   const [songs, setSongs] = useState<Song[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
+  const [searching, setSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSongs, setSelectedSongs] = useState<Song[]>([])
+  const [manualTitle, setManualTitle] = useState('')
+  const [manualArtist, setManualArtist] = useState('')
+  const [manualCategoryId, setManualCategoryId] = useState('')
+  const [addingManual, setAddingManual] = useState(false)
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     theme: '',
@@ -44,19 +49,39 @@ export default function NewMeetingPage() {
   })
 
   useEffect(() => {
-    fetchSongs()
     fetchCategories()
   }, [])
 
-  const fetchSongs = async () => {
+  useEffect(() => {
+    setSearching(true)
+    const timer = setTimeout(() => {
+      fetchSongs(searchQuery)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      setManualTitle(searchQuery.trim())
+    }
+  }, [searchQuery])
+
+  const fetchSongs = async (search: string) => {
+    setSearching(true)
     try {
-      const response = await fetch('/api/songs?limit=100')
+      const params = new URLSearchParams({ limit: '50' })
+      if (search.trim()) {
+        params.set('search', search.trim())
+      }
+      const response = await fetch(`/api/songs?${params}`)
       if (response.ok) {
         const data = await response.json()
         setSongs(data.songs)
       }
     } catch (error) {
       console.error('Failed to fetch songs:', error)
+    } finally {
+      setSearching(false)
     }
   }
 
@@ -66,6 +91,9 @@ export default function NewMeetingPage() {
       if (response.ok) {
         const data = await response.json()
         setCategories(data)
+        if (data.length > 0) {
+          setManualCategoryId(data[0].id)
+        }
       }
     } catch (error) {
       console.error('Failed to fetch categories:', error)
@@ -80,6 +108,40 @@ export default function NewMeetingPage() {
 
   const handleRemoveSong = (songId: string) => {
     setSelectedSongs(selectedSongs.filter((s) => s.id !== songId))
+  }
+
+  const handleManualAdd = async () => {
+    const title = manualTitle.trim()
+    if (!title || !manualCategoryId) return
+
+    setAddingManual(true)
+    try {
+      const response = await fetch('/api/songs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          artist: manualArtist.trim() || null,
+          categoryId: manualCategoryId,
+        }),
+      })
+
+      if (response.ok) {
+        const song = await response.json()
+        handleAddSong(song)
+        setSearchQuery('')
+        setManualTitle('')
+        setManualArtist('')
+      } else {
+        const data = await response.json()
+        alert(data.error || t('meetings.manualAddFailed'))
+      }
+    } catch (error) {
+      console.error('Failed to add song:', error)
+      alert(t('meetings.manualAddFailed'))
+    } finally {
+      setAddingManual(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -112,11 +174,8 @@ export default function NewMeetingPage() {
     }
   }
 
-  const filteredSongs = songs.filter(
-    (song) =>
-      song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      song.artist?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const showManualAdd =
+    searchQuery.trim().length > 0 && songs.length === 0 && !searching
 
   return (
     <div className="space-y-6">
@@ -233,23 +292,89 @@ export default function NewMeetingPage() {
                   />
                 </div>
                 <div className="max-h-64 overflow-y-auto space-y-2">
-                  {filteredSongs.map((song) => (
-                    <div
-                      key={song.id}
-                      className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-md cursor-pointer"
-                      onClick={() => handleAddSong(song)}
-                    >
-                      <div>
-                        <p className="font-medium">{song.title}</p>
-                        {song.artist && (
-                          <p className="text-sm text-muted-foreground">
-                            {song.artist}
-                          </p>
-                        )}
+                  {searching ? (
+                    <p className="text-muted-foreground text-center py-4 text-sm">
+                      {t('meetings.searching')}
+                    </p>
+                  ) : songs.length > 0 ? (
+                    songs.map((song) => (
+                      <div
+                        key={song.id}
+                        className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-md cursor-pointer"
+                        onClick={() => handleAddSong(song)}
+                      >
+                        <div>
+                          <p className="font-medium">{song.title}</p>
+                          {song.artist && (
+                            <p className="text-sm text-muted-foreground">
+                              {song.artist}
+                            </p>
+                          )}
+                        </div>
+                        <Badge variant="outline">{song.category.name}</Badge>
                       </div>
-                      <Badge variant="outline">{song.category.name}</Badge>
+                    ))
+                  ) : showManualAdd ? (
+                    <div className="space-y-3 border rounded-md p-3 bg-gray-50">
+                      <p className="text-sm text-muted-foreground">
+                        {t('meetings.noSearchResults')}
+                      </p>
+                      <p className="text-sm font-medium">
+                        {t('meetings.manualAddHint')}
+                      </p>
+                      <div className="space-y-2">
+                        <Label htmlFor="manualTitle">{t('meetings.manualTitle')}</Label>
+                        <Input
+                          id="manualTitle"
+                          value={manualTitle}
+                          onChange={(e) => setManualTitle(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="manualArtist">{t('meetings.manualArtist')}</Label>
+                        <Input
+                          id="manualArtist"
+                          value={manualArtist}
+                          onChange={(e) => setManualArtist(e.target.value)}
+                          placeholder={t('meetings.manualArtistPlaceholder')}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="manualCategory">{t('meetings.manualCategory')}</Label>
+                        <select
+                          id="manualCategory"
+                          value={manualCategoryId}
+                          onChange={(e) => setManualCategoryId(e.target.value)}
+                          className="w-full px-3 py-2 border rounded-md bg-white"
+                        >
+                          {categories.length === 0 ? (
+                            <option value="">{t('meetings.manualCategoryPlaceholder')}</option>
+                          ) : (
+                            categories.map((cat) => (
+                              <option key={cat.id} value={cat.id}>
+                                {cat.name}
+                              </option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleManualAdd}
+                        disabled={
+                          addingManual ||
+                          !manualTitle.trim() ||
+                          !manualCategoryId
+                        }
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        {addingManual
+                          ? t('meetings.manualAdding')
+                          : t('meetings.manualAdd')}
+                      </Button>
                     </div>
-                  ))}
+                  ) : null}
                 </div>
               </CardContent>
             </Card>
@@ -285,6 +410,7 @@ export default function NewMeetingPage() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          type="button"
                           onClick={() => handleRemoveSong(song.id)}
                         >
                           <X className="h-4 w-4" />
