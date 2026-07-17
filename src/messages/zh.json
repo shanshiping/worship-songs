@@ -31,7 +31,10 @@
     "settings": "设置",
     "profile": "个人资料",
     "signOut": "退出登录",
-    "searchPlaceholder": "搜索歌曲、聚会..."
+    "searchPlaceholder": "搜索歌曲、聚会...",
+    "openMenu": "打开菜单",
+    "closeMenu": "关闭菜单",
+    "skipToContent": "跳到主要内容"
   },
   "roles": {
     "SUPER_ADMIN": "超级管理员",
@@ -308,6 +311,12 @@
     "allMonths": "全部月份",
     "monthOption": "{month} 月",
     "selectMonth": "选择月份",
+    "selectMonthYear": "选择年月",
+    "monthYearLabel": "{year} 年 {month} 月",
+    "wholeYear": "整年",
+    "wholeYearLabel": "{year} 年全年",
+    "prevYear": "上一年",
+    "nextYear": "下一年",
     "noMeetings": "暂无聚会记录",
     "createFirst": "创建第一个聚会",
     "speaker": "讲员: {name}",

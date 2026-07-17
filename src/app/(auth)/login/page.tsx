@@ -8,10 +8,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
-import { Music, Phone, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { Phone, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { useI18n } from '@/components/providers/i18n-provider'
 import { LanguageSwitcher } from '@/components/language-switcher'
+import { BrandLogo } from '@/components/brand-logo'
 
 type LoginMethod = 'email' | 'phone'
 
@@ -144,33 +145,33 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center gradient-bg p-4">
-      <LanguageSwitcher className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-sm" />
+    <div className="relative flex min-h-screen items-center justify-center gradient-bg p-4">
+      <LanguageSwitcher className="absolute top-4 right-4 z-10 bg-card/80 backdrop-blur-sm" />
 
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 h-96 w-96 rounded-full bg-accent/40 blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md animate-scale-in">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary/80 shadow-xl mb-4">
-            <Music className="w-10 h-10 text-white" />
+        <div className="mb-8 text-center">
+          <div className="mb-4 flex justify-center">
+            <BrandLogo priority className="h-20 w-auto" />
           </div>
-          <h1 className="text-3xl font-bold gradient-text">{t('auth.loginTitle')}</h1>
-          <p className="text-muted-foreground mt-2">{t('auth.loginSubtitle')}</p>
+          <h1 className="text-3xl font-bold text-foreground">{t('auth.loginTitle')}</h1>
+          <p className="mt-2 text-muted-foreground">{t('auth.loginSubtitle')}</p>
         </div>
 
-        <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-md">
+        <Card className="border-0 bg-card/80 shadow-xl backdrop-blur-md">
           <CardContent className="p-6">
-            <div className="flex rounded-xl bg-gray-100 p-1 mb-6">
+            <div className="mb-6 flex rounded-xl bg-muted p-1">
               <button
                 type="button"
                 onClick={() => setLoginMethod('email')}
-                className={`flex-1 flex items-center justify-center py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex flex-1 items-center justify-center rounded-lg py-2.5 text-sm font-medium transition-all duration-200 ${
                   loginMethod === 'email'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <Mail className="mr-2 h-4 w-4" />
@@ -179,10 +180,10 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setLoginMethod('phone')}
-                className={`flex-1 flex items-center justify-center py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex flex-1 items-center justify-center rounded-lg py-2.5 text-sm font-medium transition-all duration-200 ${
                   loginMethod === 'phone'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <Phone className="mr-2 h-4 w-4" />

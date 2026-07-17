@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -11,15 +12,18 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { signOut } from 'next-auth/react'
-import { LogOut, Settings, User, Bell, Search } from 'lucide-react'
+import { LogOut, Menu, Settings, User } from 'lucide-react'
 import Link from 'next/link'
-import { Input } from '@/components/ui/input'
 import { useI18n } from '@/components/providers/i18n-provider'
 import { LanguageSwitcher } from '@/components/language-switcher'
+import { BrandLogo } from '@/components/brand-logo'
+import { MobileNav } from '@/components/layout/mobile-nav'
+import { Button } from '@/components/ui/button'
 
 export function Header() {
   const { data: session } = useSession()
   const { t } = useI18n()
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   const userInitials = session?.user?.name
     ? session.user.name
@@ -31,91 +35,91 @@ export function Header() {
     : 'U'
 
   return (
-    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200/50">
-      <div className="flex items-center justify-between h-16 px-4 md:px-6">
-        <div className="md:hidden flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">{t('brand.short')}</span>
+    <>
+      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
+        <div className="flex h-16 items-center justify-between px-4 md:px-6">
+          <div className="flex items-center gap-2 md:hidden">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="min-h-11 min-w-11"
+              aria-label={t('nav.openMenu')}
+              onClick={() => setMobileOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <BrandLogo className="h-8" />
           </div>
-          <span className="text-lg font-bold gradient-text">{t('brand.name')}</span>
-        </div>
 
-        <div className="hidden md:flex flex-1 max-w-md">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t('nav.searchPlaceholder')}
-              className="pl-10 bg-gray-50/50 border-gray-200/50 focus:bg-white input-focus"
-            />
-          </div>
-        </div>
+          <div className="hidden flex-1 md:block" />
 
-        <div className="flex items-center space-x-3">
-          <LanguageSwitcher />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <LanguageSwitcher />
 
-          <button className="relative p-2 rounded-xl hover:bg-gray-100/50 transition-colors">
-            <Bell className="h-5 w-5 text-gray-600" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-          </button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <div className="relative h-10 w-10 rounded-xl cursor-pointer hover:opacity-80 transition-opacity ring-2 ring-gray-200/50 hover:ring-primary/30 transition-all">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={''} alt={session?.user?.name || ''} />
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-white font-semibold">
-                    {userInitials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 rounded-xl" align="end">
-              <DropdownMenuLabel className="font-normal p-4">
-                <div className="flex items-center space-x-3">
-                  <Avatar className="h-12 w-12">
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={session?.user?.name || t('nav.profile')}
+              >
+                <div className="relative h-10 w-10 cursor-pointer rounded-xl ring-2 ring-border transition-opacity hover:opacity-80 hover:ring-primary/30">
+                  <Avatar className="h-10 w-10">
                     <AvatarImage src={''} alt={session?.user?.name || ''} />
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-white font-semibold text-lg">
+                    <AvatarFallback className="bg-primary font-semibold text-primary-foreground">
                       {userInitials}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <p className="text-sm font-semibold">{session?.user?.name}</p>
-                    <p className="text-xs text-muted-foreground">{session?.user?.email}</p>
-                  </div>
                 </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="rounded-lg cursor-pointer">
-                <Link href="/settings" className="flex items-center px-4 py-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center mr-3">
-                    <User className="h-4 w-4 text-blue-600" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-64 rounded-xl" align="end">
+                <DropdownMenuLabel className="p-4 font-normal">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={''} alt={session?.user?.name || ''} />
+                      <AvatarFallback className="bg-primary text-lg font-semibold text-primary-foreground">
+                        {userInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-semibold">{session?.user?.name}</p>
+                      <p className="text-xs text-muted-foreground">{session?.user?.email}</p>
+                    </div>
                   </div>
-                  <span>{t('nav.profile')}</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="rounded-lg cursor-pointer">
-                <Link href="/settings" className="flex items-center px-4 py-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center mr-3">
-                    <Settings className="h-4 w-4 text-purple-600" />
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer rounded-lg">
+                  <Link href="/settings" className="flex w-full items-center px-2 py-2">
+                    <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                      <User className="h-4 w-4 text-foreground" />
+                    </div>
+                    <span>{t('nav.profile')}</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer rounded-lg">
+                  <Link href="/settings" className="flex w-full items-center px-2 py-2">
+                    <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                      <Settings className="h-4 w-4 text-foreground" />
+                    </div>
+                    <span>{t('nav.settings')}</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  className="cursor-pointer rounded-lg px-2 py-2"
+                >
+                  <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                    <LogOut className="h-4 w-4 text-destructive" />
                   </div>
-                  <span>{t('nav.settings')}</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => signOut({ callbackUrl: '/login' })}
-                className="rounded-lg cursor-pointer px-4 py-2.5"
-              >
-                <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center mr-3">
-                  <LogOut className="h-4 w-4 text-red-600" />
-                </div>
-                <span>{t('nav.signOut')}</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <span>{t('nav.signOut')}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      <MobileNav open={mobileOpen} onOpenChange={setMobileOpen} />
+    </>
   )
 }

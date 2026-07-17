@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  Music, Plus, Search, FileText, Music2, Filter, Sparkles,
+  Music, Plus, Search, FileText, Music2, Filter,
   LayoutGrid, List, Play, Calendar, ChevronRight, FolderOpen,
   Edit, Trash, X, Check, Loader2
 } from 'lucide-react'
@@ -204,32 +204,14 @@ export default function SongsPage() {
     }
   }
 
-  const categoryColors: Record<string, string> = {
-    '敬拜赞美': 'from-pink-500 to-rose-500',
-    '诗歌': 'from-violet-500 to-purple-500',
-    '圣诞诗歌': 'from-red-500 to-green-500',
-    '复活节诗歌': 'from-amber-500 to-yellow-500',
-    '圣餐诗歌': 'from-blue-500 to-indigo-500',
-    '其他': 'from-gray-500 to-slate-500',
-  }
-
-  const getCategoryColor = (categoryName: string) => {
-    return categoryColors[categoryName] || 'from-gray-500 to-slate-500'
-  }
-
   return (
     <div className="space-y-6">
       {/* 页面标题 */}
       <div className="flex items-center justify-between animate-fade-in">
         <div>
-          <div className="flex items-center space-x-2 mb-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <span className="text-sm font-medium text-primary">{t('songs.title')}</span>
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            <span className="gradient-text">
-              {permissions.isLeaderOrAbove ? t('songs.manageAll') : t('songs.browse')}
-            </span>
+          <p className="mb-2 text-sm font-medium text-primary">{t('songs.title')}</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            {permissions.isLeaderOrAbove ? t('songs.manageAll') : t('songs.browse')}
           </h1>
           <p className="text-muted-foreground mt-1">
             {t('songs.totalCount', { count: totalSongs, categories: categories.length })}
@@ -248,7 +230,7 @@ export default function SongsPage() {
           )}
           {permissions.canCreateSong && (
             <Link href="/songs/upload">
-              <Button className="rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25 btn-active">
+              <Button className="rounded-xl btn-active">
                 <Plus className="mr-2 h-4 w-4" />
                 {t('songs.uploadSong')}
               </Button>
@@ -343,9 +325,9 @@ export default function SongsPage() {
                     <>
                       <div className="flex items-center space-x-3">
                         <div
-                          className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getCategoryColor(category.name)} flex items-center justify-center`}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted"
                         >
-                          <FolderOpen className="h-4 w-4 text-white" />
+                          <FolderOpen className="h-4 w-4 text-foreground" />
                         </div>
                         <div>
                           <p className="font-medium text-sm">{category.name}</p>
@@ -513,9 +495,9 @@ export default function SongsPage() {
                       )}
                     </div>
                     <div
-                      className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getCategoryColor(song.category.name)} flex items-center justify-center flex-shrink-0 ml-3 shadow-lg`}
+                      className="ml-3 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-muted"
                     >
-                      <Music className="h-6 w-6 text-white" />
+                      <Music className="h-6 w-6 text-foreground" />
                     </div>
                   </div>
 
@@ -572,9 +554,9 @@ export default function SongsPage() {
               >
                 <div className="md:col-span-4 flex items-center space-x-3">
                   <div
-                    className={`w-10 h-10 rounded-lg bg-gradient-to-br ${getCategoryColor(song.category.name)} flex items-center justify-center flex-shrink-0`}
+                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-muted"
                   >
-                    <Music className="h-5 w-5 text-white" />
+                    <Music className="h-5 w-5 text-foreground" />
                   </div>
                   <div className="min-w-0">
                     <p className="font-medium group-hover:text-primary transition-colors truncate">
