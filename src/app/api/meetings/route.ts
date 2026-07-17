@@ -9,6 +9,9 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
     const month = searchParams.get('month')
+    const yearParam = searchParams.get('year')
+    const year =
+      yearParam && /^\d{4}$/.test(yearParam) ? parseInt(yearParam, 10) : null
 
     const where: any = {}
 
@@ -21,9 +24,14 @@ export async function GET(request: Request) {
         gte: startDate,
         lt: endDate,
       }
+    } else if (year !== null) {
+      where.date = {
+        gte: new Date(`${year}-01-01`),
+        lte: new Date(`${year}-12-31`),
+      }
     }
 
-    const [meetings, total] = await Promise.all([
+    const [meetings, total, allMeetings] = await Promise.all([
       prisma.meeting.findMany({
         where,
         include: {
@@ -41,7 +49,14 @@ export async function GET(request: Request) {
         take: limit,
       }),
       prisma.meeting.count({ where }),
+      prisma.meeting.findMany({
+        select: { date: true },
+      }),
     ])
+
+    const years = [
+      ...new Set(allMeetings.map((m) => m.date.getFullYear())),
+    ].sort((a, b) => b - a)
 
     return NextResponse.json({
       meetings,
@@ -51,6 +66,7 @@ export async function GET(request: Request) {
         total,
         pages: Math.ceil(total / limit),
       },
+      years,
     })
   } catch (error) {
     console.error('Meetings API error:', error)

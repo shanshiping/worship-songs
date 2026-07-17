@@ -36,13 +36,15 @@ export default function MeetingsPage() {
   }
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [loading, setLoading] = useState(true)
+  const [year, setYear] = useState('')
+  const [years, setYears] = useState<number[]>([])
   const [month, setMonth] = useState('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
     fetchMeetings()
-  }, [month, page])
+  }, [year, month, page])
 
   const fetchMeetings = async () => {
     setLoading(true)
@@ -52,13 +54,18 @@ export default function MeetingsPage() {
         limit: '20',
       })
 
-      if (month) params.append('month', month)
+      if (month) {
+        params.append('month', month)
+      } else if (year) {
+        params.append('year', year)
+      }
 
       const response = await fetch(`/api/meetings?${params}`)
       if (response.ok) {
         const data = await response.json()
         setMeetings(data.meetings)
         setTotalPages(data.pagination.pages)
+        setYears(data.years || [])
       }
     } catch (error) {
       console.error('Failed to fetch meetings:', error)
@@ -82,7 +89,25 @@ export default function MeetingsPage() {
         </Link>
       </div>
 
-      <div className="flex items-center space-x-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <select
+          value={year}
+          onChange={(e) => {
+            setYear(e.target.value)
+            setMonth('')
+            setPage(1)
+          }}
+          className="h-10 px-3 border rounded-md appearance-none bg-white"
+          aria-label={t('meetings.selectYear')}
+        >
+          <option value="">{t('meetings.allYears')}</option>
+          {years.map((y) => (
+            <option key={y} value={String(y)}>
+              {t('meetings.yearOption', { year: y })}
+            </option>
+          ))}
+        </select>
+
         <div className="flex items-center space-x-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <Input
@@ -90,15 +115,18 @@ export default function MeetingsPage() {
             value={month}
             onChange={(e) => {
               setMonth(e.target.value)
+              setYear('')
               setPage(1)
             }}
             className="w-48"
           />
         </div>
-        {month && (
+
+        {(year || month) && (
           <Button
             variant="ghost"
             onClick={() => {
+              setYear('')
               setMonth('')
               setPage(1)
             }}

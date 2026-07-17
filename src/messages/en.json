@@ -332,7 +332,10 @@
     "songList": "Song list",
     "songListDesc": "Songs used in this meeting",
     "uncategorized": "Uncategorized",
-    "noSongs": "No songs"
+    "noSongs": "No songs",
+    "allYears": "All years",
+    "yearOption": "{year}",
+    "selectYear": "Select year"
   },
   "teams": {
     "title": "Teams",
