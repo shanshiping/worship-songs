@@ -261,7 +261,7 @@ export default function SongsPage() {
               style={{ animationDelay: `${index * 50}ms` }}
             >
               <CardContent className="p-6">
-                <Link href={`/songs/${song.id}`} className="block group">
+                <Link href={`/songs/${song.id}`} className="block group mb-3">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg group-hover:text-primary transition-colors line-clamp-1">
@@ -277,29 +277,29 @@ export default function SongsPage() {
                   </div>
 
                   {song.lyrics && (
-                    <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+                    <p className="text-xs text-muted-foreground line-clamp-2">
                       {song.lyrics.split('\n')[0]}
                     </p>
                   )}
+                </Link>
 
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex flex-wrap gap-1">
-                      <SongTagBadges
-                        tags={song.tags}
-                        onTagClick={handleSongTagClick}
-                        onUncategorizedClick={handleUncategorizedClick}
-                      />
-                    </div>
-                    <div className="flex items-center space-x-3 text-xs text-muted-foreground shrink-0">
-                      {song.sheetMusic && <FileText className="h-3 w-3" />}
-                      {song.audioFile && <Play className="h-3 w-3" />}
-                      <div className="flex items-center">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        {song._count.meetings}
-                      </div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap gap-1">
+                    <SongTagBadges
+                      tags={song.tags}
+                      onTagClick={handleSongTagClick}
+                      onUncategorizedClick={handleUncategorizedClick}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-3 text-xs text-muted-foreground shrink-0">
+                    {song.sheetMusic && <FileText className="h-3 w-3" />}
+                    {song.audioFile && <Play className="h-3 w-3" />}
+                    <div className="flex items-center">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      {song._count.meetings}
                     </div>
                   </div>
-                </Link>
+                </div>
                 {canAddToPlaylist && (
                   <Button
                     variant="ghost"

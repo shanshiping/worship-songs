@@ -383,6 +383,11 @@ export default function SongDetailPage() {
                   </div>
                 )}
               </div>
+              {permissions.canEditSong && (
+                <p className="mt-4 text-center text-sm font-medium text-white/90">
+                  {t('songs.editTagsHint')}
+                </p>
+              )}
             </div>
           </Card>
 
