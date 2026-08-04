@@ -30,6 +30,11 @@ export function usePermissions() {
       canEditCategory: hasPermission(role, 'category:edit'),
       canDeleteCategory: hasPermission(role, 'category:delete'),
 
+      // 歌单权限
+      canCreatePlaylist: hasPermission(role, 'playlist:create'),
+      canEditPlaylist: hasPermission(role, 'playlist:edit'),
+      canDeletePlaylist: hasPermission(role, 'playlist:delete'),
+
       // 用户管理权限
       canManageUsers: hasPermission(role, 'user:manage'),
 

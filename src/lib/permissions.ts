@@ -23,10 +23,15 @@ export const PERMISSIONS = {
   MEETING_DELETE: 'meeting:delete',
   MEETING_DOWNLOAD: 'meeting:download',
 
-  // 分类权限
+  // 分类权限（遗留，UI 已改用固定标签）
   CATEGORY_CREATE: 'category:create',
   CATEGORY_EDIT: 'category:edit',
   CATEGORY_DELETE: 'category:delete',
+
+  // 歌单权限
+  PLAYLIST_CREATE: 'playlist:create',
+  PLAYLIST_EDIT: 'playlist:edit',
+  PLAYLIST_DELETE: 'playlist:delete',
 
   // 用户管理权限
   USER_MANAGE: 'user:manage',
@@ -54,6 +59,9 @@ const rolePermissions: Record<Role, Permission[]> = {
     PERMISSIONS.CATEGORY_CREATE,
     PERMISSIONS.CATEGORY_EDIT,
     PERMISSIONS.CATEGORY_DELETE,
+    PERMISSIONS.PLAYLIST_CREATE,
+    PERMISSIONS.PLAYLIST_EDIT,
+    PERMISSIONS.PLAYLIST_DELETE,
     PERMISSIONS.DATA_IMPORT,
     PERMISSIONS.DATA_EXPORT,
   ],
@@ -67,6 +75,9 @@ const rolePermissions: Record<Role, Permission[]> = {
     PERMISSIONS.MEETING_DOWNLOAD,
     PERMISSIONS.CATEGORY_CREATE,
     PERMISSIONS.CATEGORY_EDIT,
+    PERMISSIONS.PLAYLIST_CREATE,
+    PERMISSIONS.PLAYLIST_EDIT,
+    PERMISSIONS.PLAYLIST_DELETE,
     PERMISSIONS.DATA_IMPORT,
     PERMISSIONS.DATA_EXPORT,
   ],
