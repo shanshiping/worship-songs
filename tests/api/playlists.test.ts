@@ -9,8 +9,8 @@ vi.mock('@/lib/prisma', async () => {
 vi.mock('next-auth', () => ({ getServerSession: vi.fn() }))
 vi.mock('@/lib/auth', () => ({ authOptions: {} }))
 
-import { GET, POST } from '@/app/api/playlists/route'
-import { DELETE, PUT } from '@/app/api/playlists/[id]/route'
+import { GET as GETList, POST } from '@/app/api/playlists/route'
+import { DELETE, GET, PUT } from '@/app/api/playlists/[id]/route'
 import { getServerSession } from 'next-auth'
 
 const params = { params: Promise.resolve({ id: 'p1' }) }
@@ -27,7 +27,7 @@ describe('/api/playlists', () => {
     ])
     mockPrisma.playlist.count.mockResolvedValue(1)
 
-    const res = await GET(jsonRequest('http://localhost/api/playlists'))
+    const res = await GETList(jsonRequest('http://localhost/api/playlists'))
     const { status, body } = await readJson<{
       playlists: unknown[]
       pagination: { total: number }
@@ -85,6 +85,35 @@ describe('/api/playlists/[id]', () => {
   beforeEach(() => {
     resetPrismaMock()
     vi.mocked(getServerSession).mockReset()
+  })
+
+  it('GET returns 404 when missing', async () => {
+    mockPrisma.playlist.findUnique.mockResolvedValue(null)
+
+    const res = await GET(
+      jsonRequest('http://localhost/api/playlists/p1'),
+      params
+    )
+    const { status } = await readJson(res)
+    expect(status).toBe(404)
+  })
+
+  it('GET returns playlist', async () => {
+    mockPrisma.playlist.findUnique.mockResolvedValue({
+      id: 'p1',
+      title: '主日',
+      songs: [],
+      createdBy: { id: 'u1', name: 'Leader', email: 'leader@test.com' },
+    })
+
+    const res = await GET(
+      jsonRequest('http://localhost/api/playlists/p1'),
+      params
+    )
+    const { status, body } = await readJson<{ id: string; title: string }>(res)
+    expect(status).toBe(200)
+    expect(body.id).toBe('p1')
+    expect(body.title).toBe('主日')
   })
 
   it('PUT returns 403 when non-owner LEADER', async () => {
