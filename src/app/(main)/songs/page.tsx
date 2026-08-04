@@ -5,15 +5,14 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  Music, Plus, Search, FileText, Music2, Filter,
-  LayoutGrid, List, Play, Calendar, ChevronRight, FolderOpen,
-  Edit, Trash, X, Check, Loader2
+  Music, Plus, Search, FileText, LayoutGrid, List, Play, Calendar, ChevronRight, ListMusic,
 } from 'lucide-react'
 import { usePermissions } from '@/hooks/use-permissions'
-import { toast } from 'sonner'
+import { TagMultiSelect, SongTagBadges, type TagItem } from '@/components/tag-multi-select'
+import { AddToPlaylistDialog } from '@/components/add-to-playlist-dialog'
 
 interface Song {
   id: string
@@ -22,22 +21,11 @@ interface Song {
   sheetMusic: string | null
   audioFile: string | null
   lyrics: string | null
-  category: {
-    id: string
-    name: string
-  }
+  tags: Array<{ tag: TagItem }>
   _count: {
     meetings: number
   }
   createdAt: string
-}
-
-interface Category {
-  id: string
-  name: string
-  _count?: {
-    songs: number
-  }
 }
 
 type ViewMode = 'grid' | 'list'
@@ -46,26 +34,28 @@ export default function SongsPage() {
   const { t } = useI18n()
   const permissions = usePermissions()
   const [songs, setSongs] = useState<Song[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
+  const [typeTags, setTypeTags] = useState<TagItem[]>([])
+  const [styleTags, setStyleTags] = useState<TagItem[]>([])
+  const [selectedTypeIds, setSelectedTypeIds] = useState<string[]>([])
+  const [selectedStyleIds, setSelectedStyleIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [totalSongs, setTotalSongs] = useState(0)
+  const [addToPlaylistSongId, setAddToPlaylistSongId] = useState<string | null>(null)
 
-  // songs.categoryManager状态
-  const [showCategoryManager, setShowCategoryManager] = useState(false)
-  const [newCategoryName, setNewCategoryName] = useState('')
-  const [addingCategory, setAddingCategory] = useState(false)
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
-  const [editingCategoryName, setEditingCategoryName] = useState('')
-  const [savingCategory, setSavingCategory] = useState(false)
-  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null)
+  const canAddToPlaylist = permissions.canEditPlaylist || permissions.canCreatePlaylist
+
+  const openAddToPlaylist = (event: React.MouseEvent, songId: string) => {
+    event.preventDefault()
+    event.stopPropagation()
+    setAddToPlaylistSongId(songId)
+  }
 
   useEffect(() => {
-    fetchCategories()
+    fetchTags()
     const savedViewMode = localStorage.getItem('songsViewMode') as ViewMode
     if (savedViewMode) {
       setViewMode(savedViewMode)
@@ -74,17 +64,19 @@ export default function SongsPage() {
 
   useEffect(() => {
     fetchSongs()
-  }, [search, selectedCategory, page])
+  }, [search, selectedTypeIds, selectedStyleIds, page])
 
-  const fetchCategories = async () => {
+  const fetchTags = async () => {
     try {
-      const response = await fetch('/api/categories')
+      const response = await fetch('/api/tags')
       if (response.ok) {
         const data = await response.json()
-        setCategories(data)
+        const tags = (data.tags || []) as TagItem[]
+        setTypeTags(tags.filter((tag) => tag.kind === 'TYPE'))
+        setStyleTags(tags.filter((tag) => tag.kind === 'STYLE'))
       }
     } catch (error) {
-      console.error('Failed to fetch categories:', error)
+      console.error('Failed to fetch tags:', error)
     }
   }
 
@@ -97,7 +89,9 @@ export default function SongsPage() {
       })
 
       if (search) params.append('search', search)
-      if (selectedCategory) params.append('category', selectedCategory)
+      for (const id of [...selectedTypeIds, ...selectedStyleIds]) {
+        params.append('tagIds', id)
+      }
 
       const response = await fetch(`/api/songs?${params}`)
       if (response.ok) {
@@ -118,95 +112,8 @@ export default function SongsPage() {
     localStorage.setItem('songsViewMode', mode)
   }
 
-  // songs.categoryManager函数
-  const handleAddCategory = async () => {
-    if (!newCategoryName.trim()) return
-
-    setAddingCategory(true)
-    try {
-      const response = await fetch('/api/categories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ name: newCategoryName.trim() }),
-      })
-
-      if (response.ok) {
-        const newCategory = await response.json()
-        setCategories([...categories, { ...newCategory, _count: { songs: 0 } }])
-        setNewCategoryName('')
-        toast.success(t('songs.categoryCreated'))
-      } else {
-        const data = await response.json()
-        toast.error(data.error || t('songs.createFailed'))
-      }
-    } catch (error) {
-      toast.error(t('songs.createFailed'))
-    } finally {
-      setAddingCategory(false)
-    }
-  }
-
-  const handleUpdateCategory = async (id: string) => {
-    if (!editingCategoryName.trim()) return
-
-    setSavingCategory(true)
-    try {
-      const response = await fetch(`/api/categories/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ name: editingCategoryName.trim() }),
-      })
-
-      if (response.ok) {
-        setCategories(categories.map(c =>
-          c.id === id ? { ...c, name: editingCategoryName.trim() } : c
-        ))
-        setEditingCategoryId(null)
-        setEditingCategoryName('')
-        toast.success(t('songs.categoryUpdated'))
-      } else {
-        const data = await response.json()
-        toast.error(data.error || t('songs.updateFailed'))
-      }
-    } catch (error) {
-      toast.error(t('songs.updateFailed'))
-    } finally {
-      setSavingCategory(false)
-    }
-  }
-
-  const handleDeleteCategory = async (id: string) => {
-    if (!confirm(t('songs.confirmDeleteCategory'))) {
-      return
-    }
-
-    setDeletingCategoryId(id)
-    try {
-      const response = await fetch(`/api/categories/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      })
-
-      if (response.ok) {
-        setCategories(categories.filter(c => c.id !== id))
-        toast.success(t('songs.categoryDeleted'))
-        fetchSongs() // 刷新歌曲列表
-      } else {
-        const data = await response.json()
-        toast.error(data.error || t('songs.deleteFailed'))
-      }
-    } catch (error) {
-      toast.error(t('songs.deleteFailed'))
-    } finally {
-      setDeletingCategoryId(null)
-    }
-  }
-
   return (
     <div className="space-y-6">
-      {/* 页面标题 */}
       <div className="flex items-center justify-between animate-fade-in">
         <div>
           <p className="mb-2 text-sm font-medium text-primary">{t('songs.title')}</p>
@@ -214,20 +121,10 @@ export default function SongsPage() {
             {permissions.isLeaderOrAbove ? t('songs.manageAll') : t('songs.browse')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {t('songs.totalCount', { count: totalSongs, categories: categories.length })}
+            {t('songs.totalCount', { count: totalSongs, categories: typeTags.length })}
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          {permissions.isLeaderOrAbove && (
-            <Button
-              variant="outline"
-              onClick={() => setShowCategoryManager(!showCategoryManager)}
-              className="rounded-xl"
-            >
-              <FolderOpen className="mr-2 h-4 w-4" />
-              {showCategoryManager ? t('songs.closeCategoryManager') : t('songs.manageCategories')}
-            </Button>
-          )}
           {permissions.canCreateSong && (
             <Link href="/songs/upload">
               <Button className="rounded-xl btn-active">
@@ -239,173 +136,20 @@ export default function SongsPage() {
         </div>
       </div>
 
-      {/* songs.categoryManager */}
-      {showCategoryManager && permissions.isLeaderOrAbove && (
-        <Card className="animate-fade-in border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <FolderOpen className="h-5 w-5" />
-              <span>{t('songs.categoryManager')}</span>
-            </CardTitle>
-            <CardDescription>{t('songs.categoryManagerDesc')}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* songs.addsongs.category */}
-            <div className="flex space-x-2">
-              <Input
-                placeholder={t('songs.newCategoryPlaceholder')}
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') handleAddCategory()
-                }}
-                className="h-10 rounded-xl input-focus"
-              />
-              <Button
-                onClick={handleAddCategory}
-                disabled={addingCategory || !newCategoryName.trim()}
-                className="rounded-xl"
-              >
-                {addingCategory ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-                {t('songs.add')}
-              </Button>
-            </div>
-
-            {/* songs.category列表 */}
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {categories.map((category) => (
-                <div
-                  key={category.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
-                >
-                  {editingCategoryId === category.id ? (
-                    <div className="flex items-center space-x-2 flex-1">
-                      <Input
-                        value={editingCategoryName}
-                        onChange={(e) => setEditingCategoryName(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') handleUpdateCategory(category.id)
-                          if (e.key === 'Escape') {
-                            setEditingCategoryId(null)
-                            setEditingCategoryName('')
-                          }
-                        }}
-                        className="h-8 text-sm rounded-lg input-focus"
-                        autoFocus
-                      />
-                      <Button
-                        size="sm"
-                        onClick={() => handleUpdateCategory(category.id)}
-                        disabled={savingCategory}
-                        className="h-8 rounded-lg"
-                      >
-                        {savingCategory ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Check className="h-3 w-3" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEditingCategoryId(null)
-                          setEditingCategoryName('')
-                        }}
-                        className="h-8 rounded-lg"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center space-x-3">
-                        <div
-                          className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted"
-                        >
-                          <FolderOpen className="h-4 w-4 text-foreground" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">{category.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {t('songs.songsCount', { count: category._count?.songs || 0 })}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingCategoryId(category.id)
-                            setEditingCategoryName(category.name)
-                          }}
-                          className="h-8 w-8 p-0 rounded-lg"
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteCategory(category.id)}
-                          disabled={deletingCategoryId === category.id}
-                          className="h-8 w-8 p-0 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          {deletingCategoryId === category.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Trash className="h-3 w-3" />
-                          )}
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 搜索、筛选和视图切换 */}
-      <div className="flex flex-col md:flex-row gap-4 animate-fade-in" style={{ animationDelay: '100ms' }}>
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={t('songs.searchPlaceholder')}
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value)
-              setPage(1)
-            }}
-            className="pl-10 h-11 rounded-xl input-focus"
-          />
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <select
-              value={selectedCategory}
+      <div className="space-y-4 animate-fade-in" style={{ animationDelay: '100ms' }}>
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t('songs.searchPlaceholder')}
+              value={search}
               onChange={(e) => {
-                setSelectedCategory(e.target.value)
+                setSearch(e.target.value)
                 setPage(1)
               }}
-              className="h-11 pl-10 pr-4 border rounded-xl appearance-none bg-white input-focus"
-            >
-              <option value="">{t('songs.allCategories')}</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
+              className="pl-10 h-11 rounded-xl input-focus"
+            />
           </div>
-
-          {/* 视图切换按钮 */}
           <div className="flex items-center bg-gray-100 rounded-xl p-1">
             <button
               onClick={() => handleViewModeChange('grid')}
@@ -431,9 +175,27 @@ export default function SongsPage() {
             </button>
           </div>
         </div>
+
+        <TagMultiSelect
+          label={t('songs.typeTags')}
+          tags={typeTags}
+          selectedIds={selectedTypeIds}
+          onChange={(ids) => {
+            setSelectedTypeIds(ids)
+            setPage(1)
+          }}
+        />
+        <TagMultiSelect
+          label={t('songs.styleTags')}
+          tags={styleTags}
+          selectedIds={selectedStyleIds}
+          onChange={(ids) => {
+            setSelectedStyleIds(ids)
+            setPage(1)
+          }}
+        />
       </div>
 
-      {/* 歌曲列表 */}
       {loading ? (
         viewMode === 'grid' ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -442,10 +204,6 @@ export default function SongsPage() {
                 <CardContent className="p-6">
                   <div className="h-6 w-32 skeleton rounded mb-3" />
                   <div className="h-4 w-24 skeleton rounded mb-4" />
-                  <div className="flex space-x-2">
-                    <div className="h-6 w-16 skeleton rounded" />
-                    <div className="h-6 w-16 skeleton rounded" />
-                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -476,7 +234,6 @@ export default function SongsPage() {
           </CardContent>
         </Card>
       ) : viewMode === 'grid' ? (
-        /* songs.cardView */
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {songs.map((song, index) => (
             <Link key={song.id} href={`/songs/${song.id}`}>
@@ -494,9 +251,7 @@ export default function SongsPage() {
                         <p className="text-sm text-muted-foreground mt-1">{song.artist}</p>
                       )}
                     </div>
-                    <div
-                      className="ml-3 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-muted"
-                    >
+                    <div className="ml-3 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-muted">
                       <Music className="h-6 w-6 text-foreground" />
                     </div>
                   </div>
@@ -507,42 +262,42 @@ export default function SongsPage() {
                     </p>
                   )}
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary" className="rounded-lg text-xs">
-                        {song.category.name}
-                      </Badge>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-wrap gap-1">
+                      <SongTagBadges tags={song.tags} />
                     </div>
-                    <div className="flex items-center space-x-3 text-xs text-muted-foreground">
-                      {song.sheetMusic && (
-                        <div className="flex items-center" title={t('songs.hasSheet')}>
-                          <FileText className="h-3 w-3" />
-                        </div>
-                      )}
-                      {song.audioFile && (
-                        <div className="flex items-center" title={t('songs.hasAudio')}>
-                          <Play className="h-3 w-3" />
-                        </div>
-                      )}
-                      <div className="flex items-center" title={t('songs.usageCount')}>
+                    <div className="flex items-center space-x-3 text-xs text-muted-foreground shrink-0">
+                      {song.sheetMusic && <FileText className="h-3 w-3" />}
+                      {song.audioFile && <Play className="h-3 w-3" />}
+                      <div className="flex items-center">
                         <Calendar className="h-3 w-3 mr-1" />
                         {song._count.meetings}
                       </div>
                     </div>
                   </div>
+                  {canAddToPlaylist && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-3 w-full justify-center rounded-lg"
+                      onClick={(e) => openAddToPlaylist(e, song.id)}
+                    >
+                      <ListMusic className="mr-2 h-4 w-4" />
+                      {t('playlists.addToPlaylist')}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </Link>
           ))}
         </div>
       ) : (
-        /* songs.listView */
         <div className="space-y-2">
           <div className="hidden md:grid md:grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-muted-foreground">
             <div className="col-span-4">{t('songs.songTitle')}</div>
-            <div className="col-span-2">{t('songs.category')}</div>
+            <div className="col-span-3">{t('songs.tags')}</div>
             <div className="col-span-2">{t('songs.artist')}</div>
-            <div className="col-span-2">{t('songs.usageCount')}</div>
+            <div className="col-span-1">{t('songs.usageCount')}</div>
             <div className="col-span-2">{t('songs.attachments')}</div>
           </div>
 
@@ -553,27 +308,16 @@ export default function SongsPage() {
                 style={{ animationDelay: `${index * 30}ms` }}
               >
                 <div className="md:col-span-4 flex items-center space-x-3">
-                  <div
-                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-muted"
-                  >
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
                     <Music className="h-5 w-5 text-foreground" />
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-medium group-hover:text-primary transition-colors truncate">
-                      {song.title}
-                    </p>
-                    {song.lyrics && (
-                      <p className="text-xs text-muted-foreground truncate md:hidden">
-                        {song.lyrics.split('\n')[0]}
-                      </p>
-                    )}
-                  </div>
+                  <p className="font-medium group-hover:text-primary transition-colors truncate">
+                    {song.title}
+                  </p>
                 </div>
 
-                <div className="md:col-span-2 hidden md:block">
-                  <Badge variant="secondary" className="rounded-lg text-xs">
-                    {song.category.name}
-                  </Badge>
+                <div className="md:col-span-3 hidden md:flex flex-wrap gap-1">
+                  <SongTagBadges tags={song.tags} />
                 </div>
 
                 <div className="md:col-span-2 hidden md:block">
@@ -582,34 +326,50 @@ export default function SongsPage() {
                   </p>
                 </div>
 
-                <div className="md:col-span-2 hidden md:block">
-                  <div className="flex items-center space-x-1">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{t('songs.times', { count: song._count.meetings })}</span>
-                  </div>
+                <div className="md:col-span-1 hidden md:block">
+                  <span className="text-sm">{song._count.meetings}</span>
                 </div>
 
-                <div className="md:col-span-2 hidden md:block">
-                  <div className="flex items-center space-x-2">
-                    {song.sheetMusic && (
-                      <Badge variant="outline" className="text-xs">
-                        <FileText className="h-3 w-3 mr-1" />
-                        {t('songs.sheet')}
-                      </Badge>
-                    )}
-                    {song.audioFile && (
-                      <Badge variant="outline" className="text-xs">
-                        <Play className="h-3 w-3 mr-1" />
-                        {t('songs.audio')}
-                      </Badge>
-                    )}
-                  </div>
+                <div className="md:col-span-2 hidden md:flex items-center space-x-2">
+                  {song.sheetMusic && (
+                    <Badge variant="outline" className="text-xs">
+                      <FileText className="h-3 w-3 mr-1" />
+                      {t('songs.sheet')}
+                    </Badge>
+                  )}
+                  {song.audioFile && (
+                    <Badge variant="outline" className="text-xs">
+                      <Play className="h-3 w-3 mr-1" />
+                      {t('songs.audio')}
+                    </Badge>
+                  )}
                 </div>
+
+                {canAddToPlaylist && (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="hidden md:inline-flex rounded-lg shrink-0"
+                    title={t('playlists.addToPlaylist')}
+                    onClick={(e) => openAddToPlaylist(e, song.id)}
+                  >
+                    <ListMusic className="h-4 w-4" />
+                  </Button>
+                )}
 
                 <div className="md:hidden flex items-center space-x-2 ml-auto">
-                  <Badge variant="secondary" className="rounded-lg text-xs">
-                    {song.category.name}
-                  </Badge>
+                  <SongTagBadges tags={song.tags?.slice(0, 1)} />
+                  {canAddToPlaylist && (
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="rounded-lg shrink-0"
+                      title={t('playlists.addToPlaylist')}
+                      onClick={(e) => openAddToPlaylist(e, song.id)}
+                    >
+                      <ListMusic className="h-4 w-4" />
+                    </Button>
+                  )}
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </div>
               </div>
@@ -618,7 +378,6 @@ export default function SongsPage() {
         </div>
       )}
 
-      {/* 分页 */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center space-x-2 animate-fade-in">
           <Button
@@ -630,23 +389,9 @@ export default function SongsPage() {
           >
             {t('songs.prevPage')}
           </Button>
-          <div className="flex items-center space-x-1">
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              const pageNum = Math.max(1, Math.min(page - 2, totalPages - 4)) + i
-              if (pageNum > totalPages) return null
-              return (
-                <Button
-                  key={pageNum}
-                  variant={page === pageNum ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setPage(pageNum)}
-                  className="rounded-lg w-10"
-                >
-                  {pageNum}
-                </Button>
-              )
-            })}
-          </div>
+          <span className="text-sm text-muted-foreground">
+            {page} / {totalPages}
+          </span>
           <Button
             variant="outline"
             size="sm"
@@ -657,6 +402,16 @@ export default function SongsPage() {
             {t('songs.nextPage')}
           </Button>
         </div>
+      )}
+
+      {addToPlaylistSongId && (
+        <AddToPlaylistDialog
+          songId={addToPlaylistSongId}
+          open={!!addToPlaylistSongId}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setAddToPlaylistSongId(null)
+          }}
+        />
       )}
     </div>
   )

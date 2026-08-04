@@ -9,12 +9,14 @@ import { Badge } from '@/components/ui/badge'
 import {
   ArrowLeft, Edit, Trash, FileText, Music2, Calendar, Download,
   Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, Repeat,
-  Shuffle, Heart, Share2, ListMusic, Disc3, Mic2, Clock, Video, ExternalLink
+  Shuffle, Heart, Share2, ListMusic, ListPlus, Disc3, Mic2, Clock, Video, ExternalLink
 } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { enUS, zhCN } from 'date-fns/locale'
 import { ShareButton } from '@/components/share-button'
+import { SongTagBadges, type TagItem } from '@/components/tag-multi-select'
+import { AddToPlaylistDialog } from '@/components/add-to-playlist-dialog'
 import { usePermissions } from '@/hooks/use-permissions'
 import { toast } from 'sonner'
 
@@ -33,10 +35,7 @@ interface Song {
   audioFile: string | null
   lyrics: string | null
   notes: string | null
-  category: {
-    id: string
-    name: string
-  }
+  tags: Array<{ tag: TagItem }>
   meetings: Array<{
     meeting: {
       id: string
@@ -66,6 +65,7 @@ export default function SongDetailPage() {
   const [isShuffle, setIsShuffle] = useState(false)
   const [currentLyricIndex, setCurrentLyricIndex] = useState(-1)
   const [showLyrics, setShowLyrics] = useState(true)
+  const [addToPlaylistOpen, setAddToPlaylistOpen] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const lyricsRef = useRef<HTMLDivElement>(null)
 
@@ -292,9 +292,9 @@ export default function SongDetailPage() {
             </Button>
           </Link>
           <div>
-            <Badge variant="secondary" className="mb-2">
-              {song.category.name}
-            </Badge>
+            <div className="mb-2 flex flex-wrap gap-1">
+              <SongTagBadges tags={song.tags} />
+            </div>
             <h1 className="text-3xl font-bold tracking-tight">
               <span className="gradient-text">{song.title}</span>
             </h1>
@@ -308,6 +308,16 @@ export default function SongDetailPage() {
         </div>
         <div className="flex space-x-2">
           <ShareButton type="song" id={song.id} />
+          {(permissions.canEditPlaylist || permissions.canCreatePlaylist) && (
+            <Button
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setAddToPlaylistOpen(true)}
+            >
+              <ListPlus className="mr-2 h-4 w-4" />
+              {t('playlists.addToPlaylist')}
+            </Button>
+          )}
           {permissions.canEditSong && (
             <Link href={`/songs/${song.id}/edit`}>
               <Button variant="outline" className="rounded-xl">
@@ -335,7 +345,7 @@ export default function SongDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* 专辑封面 */}
           <Card className="animate-fade-in border-0 shadow-lg overflow-hidden" style={{ animationDelay: '100ms' }}>
-            <div className={`bg-gradient-to-br ${getCategoryColor(song.category.name)} p-8`}>
+            <div className={`bg-gradient-to-br ${getCategoryColor(song.tags?.find((st) => st.tag.kind === 'TYPE')?.tag.name || '')} p-8`}>
               <div className="aspect-square max-w-md mx-auto rounded-2xl overflow-hidden shadow-2xl bg-black/20 backdrop-blur-sm">
                 {song.sheetMusic ? (
                   <img
@@ -539,10 +549,10 @@ export default function SongDetailPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                <span className="text-sm text-muted-foreground">{t('songs.category')}</span>
-                <Badge variant="secondary" className="rounded-lg">
-                  {song.category.name}
-                </Badge>
+                <span className="text-sm text-muted-foreground">{t('songs.tags')}</span>
+                <div className="flex flex-wrap justify-end gap-1">
+                  <SongTagBadges tags={song.tags} />
+                </div>
               </div>
               {song.artist && (
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
@@ -712,6 +722,12 @@ export default function SongDetailPage() {
           </Card>
         </div>
       </div>
+
+      <AddToPlaylistDialog
+        songId={song.id}
+        open={addToPlaylistOpen}
+        onOpenChange={setAddToPlaylistOpen}
+      />
     </div>
   )
 }
