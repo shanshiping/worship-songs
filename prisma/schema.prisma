@@ -98,9 +98,22 @@ model Song {
 
   uploadedBy      User?          @relation("SongUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
   sheetUploadedBy User?          @relation("SheetUploader", fields: [sheetUploadedById], references: [id], onDelete: SetNull)
-  tags      SongTag[]
-  meetings  MeetingSong[]
-  playlists PlaylistSong[]
+  tags       SongTag[]
+  meetings   MeetingSong[]
+  playlists  PlaylistSong[]
+  scriptures SongScripture[]
+}
+
+model SongScripture {
+  id        String  @id @default(cuid())
+  songId    String
+  reference String
+  text      String?
+  order     Int
+
+  song Song @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@unique([songId, order])
 }
 
 // 标签（类型 / 风格）

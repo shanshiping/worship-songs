@@ -24,6 +24,7 @@ export type PrismaMock = {
   category: ReturnType<typeof model>
   tag: ReturnType<typeof model>
   songTag: ReturnType<typeof model>
+  songScripture: ReturnType<typeof model>
   playlist: ReturnType<typeof model>
   playlistSong: ReturnType<typeof model>
   meetingSong: ReturnType<typeof model>
@@ -42,6 +43,7 @@ export const mockPrisma: PrismaMock = {
   category: model(),
   tag: model(),
   songTag: model(),
+  songScripture: model(),
   playlist: model(),
   playlistSong: model(),
   meetingSong: model(),

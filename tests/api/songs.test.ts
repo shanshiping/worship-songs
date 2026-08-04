@@ -86,12 +86,42 @@ describe('/api/songs', () => {
               OR: [
                 { title: { contains: 'Praise', mode: 'insensitive' } },
                 { artist: { contains: 'Praise', mode: 'insensitive' } },
+                {
+                  scriptures: {
+                    some: {
+                      reference: { contains: 'Praise', mode: 'insensitive' },
+                    },
+                  },
+                },
               ],
             },
             { lyrics: { contains: 'holy', mode: 'insensitive' } },
           ],
         },
       })
+    )
+  })
+
+  it('GET search also matches scripture reference', async () => {
+    mockPrisma.song.findMany.mockResolvedValue([])
+    mockPrisma.song.count.mockResolvedValue(0)
+
+    await GET(jsonRequest('http://localhost/api/songs?search=诗篇'))
+
+    const call = mockPrisma.song.findMany.mock.calls[0]?.[0] as {
+      where: { OR?: unknown[]; AND?: Array<{ OR?: unknown[] }> }
+    }
+    const or =
+      call.where.OR ??
+      call.where.AND?.find((clause) => Array.isArray(clause.OR))?.OR
+    expect(or).toEqual(
+      expect.arrayContaining([
+        {
+          scriptures: {
+            some: { reference: { contains: '诗篇', mode: 'insensitive' } },
+          },
+        },
+      ])
     )
   })
 
@@ -169,5 +199,52 @@ describe('/api/songs', () => {
         }),
       })
     )
+  })
+
+  it('POST creates scriptures', async () => {
+    vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'u1' } })
+    mockPrisma.song.create.mockResolvedValue({
+      id: 's1',
+      title: 'T',
+      tags: [],
+      scriptures: [],
+    })
+
+    await POST(
+      jsonRequest('http://localhost/api/songs', {
+        method: 'POST',
+        body: {
+          title: 'T',
+          scriptures: [
+            { reference: '约翰福音 3:16', text: '神爱世人' },
+            { reference: '诗篇 23:1' },
+          ],
+        },
+      })
+    )
+
+    expect(mockPrisma.song.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          scriptures: {
+            create: [
+              { reference: '约翰福音 3:16', text: '神爱世人', order: 0 },
+              { reference: '诗篇 23:1', text: null, order: 1 },
+            ],
+          },
+        }),
+      })
+    )
+  })
+
+  it('POST returns 400 for blank scripture reference', async () => {
+    vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'u1' } })
+    const res = await POST(
+      jsonRequest('http://localhost/api/songs', {
+        method: 'POST',
+        body: { title: 'T', scriptures: [{ reference: '  ' }] },
+      })
+    )
+    expect((await readJson(res)).status).toBe(400)
   })
 })

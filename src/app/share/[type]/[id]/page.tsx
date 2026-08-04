@@ -9,6 +9,7 @@ import { Music, Calendar } from 'lucide-react'
 import { format } from 'date-fns'
 import { enUS, zhCN } from 'date-fns/locale'
 import { SongTagBadges, type TagItem } from '@/components/tag-multi-select'
+import { SongScripturesDisplay } from '@/components/song-scriptures-editor'
 
 interface SharedSong {
   id: string
@@ -24,6 +25,12 @@ interface SharedSong {
   mvUrl?: string | null
   tags?: Array<{ tag: TagItem }>
   category?: { name: string }
+  scriptures?: Array<{
+    id?: string
+    reference: string
+    text?: string | null
+    order?: number
+  }>
 }
 
 interface SharedData {
@@ -102,6 +109,9 @@ function FullSongBlock({
         <pre className="text-sm whitespace-pre-wrap bg-muted/40 rounded p-3 max-h-60 overflow-y-auto">
           {song.lyrics}
         </pre>
+      )}
+      {song.scriptures && song.scriptures.length > 0 && (
+        <SongScripturesDisplay scriptures={song.scriptures} t={t} />
       )}
       <div className="flex flex-wrap gap-3 items-center text-sm">
         {song.sheetMusic && (

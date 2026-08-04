@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto'
 
 const fullSongInclude = {
   tags: { include: { tag: true } },
+  scriptures: { orderBy: { order: 'asc' as const } },
 } as const
 
 export async function POST(request: Request) {

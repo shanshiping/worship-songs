@@ -3,7 +3,12 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getErrorMessage } from '@/lib/errors'
-import { normalizeOptional, isValidHttpUrl, parseTagIds } from '../route'
+import {
+  normalizeOptional,
+  isValidHttpUrl,
+  parseTagIds,
+  parseScriptures,
+} from '../route'
 
 async function getSongMeetings(songId: string) {
   const meetingSongs = await prisma.meetingSong.findMany({
@@ -21,6 +26,9 @@ async function getSongMeetings(songId: string) {
 const songDetailInclude = {
   tags: {
     include: { tag: true },
+  },
+  scriptures: {
+    orderBy: { order: 'asc' as const },
   },
   uploadedBy: {
     select: { id: true, name: true, email: true },
@@ -94,6 +102,7 @@ export async function PUT(
       lyrics,
       lyricsLrc,
       notes,
+      scriptures: rawScriptures,
     } = body
 
     const normalizedMvUrl = normalizeOptional(mvUrl)
@@ -102,6 +111,11 @@ export async function PUT(
     }
 
     const tagIds = parseTagIds(rawTagIds)
+    const scripturesResult = parseScriptures(rawScriptures)
+    if (!scripturesResult.ok) {
+      return NextResponse.json({ error: scripturesResult.error }, { status: 400 })
+    }
+
     const normalizedSheet = normalizeOptional(sheetMusic)
 
     const existing = await prisma.song.findUnique({
@@ -119,6 +133,7 @@ export async function PUT(
     const userId = session?.user?.id
 
     await prisma.songTag.deleteMany({ where: { songId: id } })
+    await prisma.songScripture.deleteMany({ where: { songId: id } })
 
     const song = await prisma.song.update({
       where: { id },
@@ -153,6 +168,13 @@ export async function PUT(
         tags: {
           create: tagIds.map((tagId) => ({ tagId })),
         },
+        scriptures: {
+          create: scripturesResult.data.map((s, order) => ({
+            reference: s.reference,
+            text: s.text,
+            order,
+          })),
+        },
       },
       include: songDetailInclude,
     })
@@ -183,6 +205,10 @@ export async function DELETE(
     })
 
     await prisma.songTag.deleteMany({
+      where: { songId: id },
+    })
+
+    await prisma.songScripture.deleteMany({
       where: { songId: id },
     })
 

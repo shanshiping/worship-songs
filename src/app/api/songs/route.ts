@@ -24,10 +24,41 @@ export function parseTagIds(value: unknown): string[] {
   return value.filter((id): id is string => typeof id === 'string' && id.length > 0)
 }
 
+export type ScriptureInput = { reference: string; text: string | null }
+
+export function parseScriptures(
+  value: unknown
+): { ok: true; data: ScriptureInput[] } | { ok: false; error: string } {
+  if (value === undefined || value === null || !Array.isArray(value)) {
+    return { ok: true, data: [] }
+  }
+
+  const data: ScriptureInput[] = []
+  for (const item of value) {
+    if (!item || typeof item !== 'object') {
+      return { ok: false, error: '经文出处不能为空' }
+    }
+    const raw = item as { reference?: unknown; text?: unknown }
+    const reference =
+      typeof raw.reference === 'string' ? raw.reference.trim() : ''
+    if (!reference) {
+      return { ok: false, error: '经文出处不能为空' }
+    }
+    data.push({
+      reference,
+      text: normalizeOptional(raw.text),
+    })
+  }
+  return { ok: true, data }
+}
+
 function songDetailInclude() {
   return {
     tags: {
       include: { tag: true },
+    },
+    scriptures: {
+      orderBy: { order: 'asc' as const },
     },
     uploadedBy: {
       select: { id: true, name: true, email: true },
@@ -70,6 +101,13 @@ export async function GET(request: Request) {
         OR: [
           { title: { contains: search, mode: 'insensitive' as const } },
           { artist: { contains: search, mode: 'insensitive' as const } },
+          {
+            scriptures: {
+              some: {
+                reference: { contains: search, mode: 'insensitive' as const },
+              },
+            },
+          },
         ],
       })
     }
@@ -142,6 +180,7 @@ export async function POST(request: Request) {
       lyrics,
       lyricsLrc,
       notes,
+      scriptures: rawScriptures,
     } = body
 
     if (!title) {
@@ -152,6 +191,10 @@ export async function POST(request: Request) {
     }
 
     const tagIds = parseTagIds(rawTagIds)
+    const scripturesResult = parseScriptures(rawScriptures)
+    if (!scripturesResult.ok) {
+      return NextResponse.json({ error: scripturesResult.error }, { status: 400 })
+    }
 
     const normalizedMvUrl = normalizeOptional(mvUrl)
     if (normalizedMvUrl && !isValidHttpUrl(normalizedMvUrl)) {
@@ -185,6 +228,16 @@ export async function POST(request: Request) {
           tagIds.length > 0
             ? {
                 create: tagIds.map((tagId) => ({ tagId })),
+              }
+            : undefined,
+        scriptures:
+          scripturesResult.data.length > 0
+            ? {
+                create: scripturesResult.data.map((s, order) => ({
+                  reference: s.reference,
+                  text: s.text,
+                  order,
+                })),
               }
             : undefined,
       },

@@ -48,6 +48,7 @@ describe('/api/songs/[id]', () => {
   it('PUT saves and clears lyricsLrc', async () => {
     mockPrisma.song.findUnique.mockResolvedValue({ sheetMusic: null })
     mockPrisma.songTag.deleteMany.mockResolvedValue({ count: 0 })
+    mockPrisma.songScripture.deleteMany.mockResolvedValue({ count: 0 })
     mockPrisma.song.update.mockResolvedValue({ id: 'song-1', lyricsLrc: null })
 
     const saveRes = await PUT(
@@ -91,6 +92,7 @@ describe('/api/songs/[id]', () => {
   it('PUT syncs tags', async () => {
     mockPrisma.song.findUnique.mockResolvedValue({ sheetMusic: null })
     mockPrisma.songTag.deleteMany.mockResolvedValue({ count: 1 })
+    mockPrisma.songScripture.deleteMany.mockResolvedValue({ count: 0 })
     mockPrisma.song.update.mockResolvedValue({
       id: 'song-1',
       title: '神掌权',
@@ -124,10 +126,84 @@ describe('/api/songs/[id]', () => {
     )
   })
 
+  it('PUT replaces scriptures', async () => {
+    mockPrisma.song.findUnique.mockResolvedValue({ sheetMusic: null })
+    mockPrisma.songTag.deleteMany.mockResolvedValue({ count: 0 })
+    mockPrisma.songScripture.deleteMany.mockResolvedValue({ count: 1 })
+    mockPrisma.song.update.mockResolvedValue({ id: 'song-1', scriptures: [] })
+
+    const res = await PUT(
+      jsonRequest('http://localhost/api/songs/song-1', {
+        method: 'PUT',
+        body: {
+          title: '神掌权',
+          tagIds: [],
+          scriptures: [{ reference: '诗篇 23:1', text: '耶和华是我的牧者' }],
+        },
+      }),
+      params
+    )
+    expect((await readJson(res)).status).toBe(200)
+    expect(mockPrisma.songScripture.deleteMany).toHaveBeenCalledWith({
+      where: { songId: 'song-1' },
+    })
+    expect(mockPrisma.song.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          scriptures: {
+            create: [
+              { reference: '诗篇 23:1', text: '耶和华是我的牧者', order: 0 },
+            ],
+          },
+        }),
+      })
+    )
+  })
+
+  it('PUT clears scriptures when omitted', async () => {
+    mockPrisma.song.findUnique.mockResolvedValue({ sheetMusic: null })
+    mockPrisma.songTag.deleteMany.mockResolvedValue({ count: 0 })
+    mockPrisma.songScripture.deleteMany.mockResolvedValue({ count: 2 })
+    mockPrisma.song.update.mockResolvedValue({ id: 'song-1', scriptures: [] })
+
+    const res = await PUT(
+      jsonRequest('http://localhost/api/songs/song-1', {
+        method: 'PUT',
+        body: { title: '神掌权', tagIds: [] },
+      }),
+      params
+    )
+    expect((await readJson(res)).status).toBe(200)
+    expect(mockPrisma.song.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          scriptures: { create: [] },
+        }),
+      })
+    )
+  })
+
+  it('PUT returns 400 for blank scripture reference', async () => {
+    mockPrisma.song.findUnique.mockResolvedValue({ sheetMusic: null })
+    const res = await PUT(
+      jsonRequest('http://localhost/api/songs/song-1', {
+        method: 'PUT',
+        body: {
+          title: '神掌权',
+          tagIds: [],
+          scriptures: [{ reference: '' }],
+        },
+      }),
+      params
+    )
+    expect((await readJson(res)).status).toBe(400)
+  })
+
   it('PUT records sheet uploader when sheet changes', async () => {
     vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'u2' } })
     mockPrisma.song.findUnique.mockResolvedValue({ sheetMusic: null })
     mockPrisma.songTag.deleteMany.mockResolvedValue({ count: 0 })
+    mockPrisma.songScripture.deleteMany.mockResolvedValue({ count: 0 })
     mockPrisma.song.update.mockResolvedValue({
       id: 'song-1',
       sheetMusic: '/uploads/sheets/new.pdf',
@@ -160,6 +236,7 @@ describe('/api/songs/[id]', () => {
     mockPrisma.meetingSong.deleteMany.mockResolvedValue({ count: 1 })
     mockPrisma.playlistSong.deleteMany.mockResolvedValue({ count: 0 })
     mockPrisma.songTag.deleteMany.mockResolvedValue({ count: 0 })
+    mockPrisma.songScripture.deleteMany.mockResolvedValue({ count: 0 })
     mockPrisma.song.delete.mockResolvedValue({ id: 'song-1' })
 
     const res = await DELETE(
@@ -169,6 +246,9 @@ describe('/api/songs/[id]', () => {
     const { status } = await readJson(res)
     expect(status).toBe(200)
     expect(mockPrisma.meetingSong.deleteMany).toHaveBeenCalled()
+    expect(mockPrisma.songScripture.deleteMany).toHaveBeenCalledWith({
+      where: { songId: 'song-1' },
+    })
     expect(mockPrisma.song.delete).toHaveBeenCalled()
   })
 })
