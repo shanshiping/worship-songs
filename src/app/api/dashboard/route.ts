@@ -9,8 +9,8 @@ export async function GET() {
     // 获取聚会记录总数
     const totalMeetings = await prisma.meeting.count()
 
-    // 获取分类总数
-    const totalCategories = await prisma.category.count()
+    // 获取标签总数
+    const totalTags = await prisma.tag.count()
 
     // 获取热门歌曲（按使用次数排序）
     const topSongs = await prisma.meetingSong.groupBy({
@@ -42,7 +42,8 @@ export async function GET() {
     return NextResponse.json({
       totalSongs,
       totalMeetings,
-      totalCategories,
+      totalCategories: totalTags,
+      totalTags,
       topSongs: topSongsWithDetails,
     })
   } catch (error) {

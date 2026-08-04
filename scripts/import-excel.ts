@@ -136,15 +136,6 @@ async function main() {
 
   const workbook = XLSX.readFile('/Users/ping/Desktop/敬拜赞美诗歌表(1)_副本.xls')
 
-  const defaultCategory = await prisma.category.findUnique({
-    where: { name: '其他' },
-  })
-
-  if (!defaultCategory) {
-    console.error('错误：未找到默认分类"其他"')
-    return
-  }
-
   const meetingsMap = new Map<string, MeetingData>()
   const skippedItems: string[] = []
 
@@ -303,7 +294,6 @@ async function main() {
         song = await prisma.song.create({
           data: {
             title: songTitle,
-            categoryId: defaultCategory.id,
           },
         })
         totalSongs++

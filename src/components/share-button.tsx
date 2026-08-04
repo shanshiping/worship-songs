@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { useI18n } from '@/components/providers/i18n-provider'
 
 interface ShareButtonProps {
-  type: 'song' | 'meeting'
+  type: 'song' | 'meeting' | 'playlist'
   id: string
 }
 

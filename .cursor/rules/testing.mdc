@@ -1,0 +1,26 @@
+---
+description: Feature changes must include tests and pass pnpm test
+alwaysApply: true
+---
+
+# Testing required for feature changes
+
+## Rules
+
+1. Behavior changes to API routes (`src/app/api/**`) or `src/lib/**` must add or update matching tests under `tests/`.
+2. Before claiming work is complete, run `pnpm test` and confirm it is green.
+3. Do not ship production-only changes without tests for the changed behavior.
+4. New API routes require a corresponding `tests/api/*.test.ts`.
+
+## Stack
+
+- Runner: Vitest (`pnpm test` / `pnpm test:watch`)
+- DB: mock Prisma via `tests/helpers/mock-prisma.ts` — do not use a real database in unit/API tests
+- Out of scope unless explicitly requested: Playwright E2E, GitHub Actions CI, testing `auth/[...nextauth]` internals
+
+## Pattern
+
+```ts
+vi.mock('@/lib/prisma', () => ({ prisma: mockPrisma }))
+// call GET/POST/PUT/DELETE handlers with jsonRequest + readJson
+```

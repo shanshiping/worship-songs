@@ -19,18 +19,41 @@ export function isValidHttpUrl(value: string): boolean {
   }
 }
 
+export function parseTagIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((id): id is string => typeof id === 'string' && id.length > 0)
+}
+
+function songTagInclude() {
+  return {
+    tags: {
+      include: { tag: true },
+    },
+  } as const
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const category = searchParams.get('category')
     const search = searchParams.get('search')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
+    const tagIds = [
+      ...new Set(
+        searchParams
+          .getAll('tagIds')
+          .flatMap((v) => v.split(','))
+          .map((s) => s.trim())
+          .filter(Boolean)
+      ),
+    ]
 
     const where: Prisma.SongWhereInput = {}
 
-    if (category) {
-      where.categoryId = category
+    if (tagIds.length > 0) {
+      where.AND = tagIds.map((tagId) => ({
+        tags: { some: { tagId } },
+      }))
     }
 
     if (search) {
@@ -44,7 +67,7 @@ export async function GET(request: Request) {
       prisma.song.findMany({
         where,
         include: {
-          category: true,
+          ...songTagInclude(),
           _count: {
             select: { meetings: true },
           },
@@ -85,7 +108,7 @@ export async function POST(request: Request) {
     const {
       title,
       artist,
-      categoryId,
+      tagIds: rawTagIds,
       key,
       timeSignature,
       composer,
@@ -99,12 +122,14 @@ export async function POST(request: Request) {
       notes,
     } = body
 
-    if (!title || !categoryId) {
+    if (!title) {
       return NextResponse.json(
-        { error: '歌曲名称和分类为必填项' },
+        { error: '歌曲名称为必填项' },
         { status: 400 }
       )
     }
+
+    const tagIds = parseTagIds(rawTagIds)
 
     const normalizedMvUrl = normalizeOptional(mvUrl)
     if (normalizedMvUrl && !isValidHttpUrl(normalizedMvUrl)) {
@@ -115,7 +140,6 @@ export async function POST(request: Request) {
       data: {
         title,
         artist: normalizeOptional(artist),
-        categoryId,
         key: normalizeOptional(key),
         timeSignature: normalizeOptional(timeSignature),
         composer: normalizeOptional(composer),
@@ -127,10 +151,14 @@ export async function POST(request: Request) {
         audioFile: normalizeOptional(audioFile),
         lyrics: normalizeOptional(lyrics),
         notes: normalizeOptional(notes),
+        tags:
+          tagIds.length > 0
+            ? {
+                create: tagIds.map((tagId) => ({ tagId })),
+              }
+            : undefined,
       },
-      include: {
-        category: true,
-      },
+      include: songTagInclude(),
     })
 
     return NextResponse.json(song, { status: 201 })

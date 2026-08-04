@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockPrisma, resetPrismaMock } from '../helpers/mock-prisma'
 import { jsonRequest, readJson } from '../helpers/request'
 
-
 vi.mock('@/lib/prisma', async () => {
   const { mockPrisma } = await import('../helpers/mock-prisma')
   return { prisma: mockPrisma }
@@ -30,17 +29,17 @@ describe('/api/share', () => {
     expect((await readJson(res)).status).toBe(401)
   })
 
-  it('POST returns share url', async () => {
+  it('POST returns share url for playlist', async () => {
     vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'u1' } })
     const res = await POST(
       jsonRequest('http://localhost/api/share', {
         method: 'POST',
-        body: { type: 'song', id: 's1' },
+        body: { type: 'playlist', id: 'p1' },
       })
     )
     const { status, body } = await readJson<{ url: string; token: string }>(res)
     expect(status).toBe(200)
-    expect(body.url).toContain('/share/song/s1')
+    expect(body.url).toContain('/share/playlist/p1')
     expect(body.token).toBeTruthy()
   })
 
@@ -49,19 +48,71 @@ describe('/api/share', () => {
     expect((await readJson(res)).status).toBe(400)
   })
 
-  it('GET returns song data', async () => {
+  it('GET returns song data with tags', async () => {
     mockPrisma.song.findUnique.mockResolvedValue({
       id: 's1',
       title: '神掌权',
-      category: { name: '其他' },
+      lyrics: '歌词',
+      sheetMusic: '/uploads/sheets/a.pdf',
+      audioFile: '/uploads/audio/a.mp3',
+      tags: [],
       meetings: [],
     })
     const res = await GET(
       jsonRequest('http://localhost/api/share?type=song&id=s1&token=abc')
     )
-    const { status, body } = await readJson<{ title: string }>(res)
+    const { status, body } = await readJson<{
+      title: string
+      lyrics: string
+      sheetMusic: string
+      audioFile: string
+    }>(res)
     expect(status).toBe(200)
     expect(body.title).toBe('神掌权')
+    expect(body.lyrics).toBe('歌词')
+    expect(body.sheetMusic).toBeTruthy()
+    expect(body.audioFile).toBeTruthy()
+  })
+
+  it('GET returns playlist with full song fields', async () => {
+    mockPrisma.playlist.findUnique.mockResolvedValue({
+      id: 'p1',
+      title: '主日歌单',
+      songs: [
+        {
+          order: 1,
+          song: {
+            id: 's1',
+            title: '神掌权',
+            lyrics: '完整歌词',
+            sheetMusic: '/uploads/sheets/a.pdf',
+            audioFile: '/uploads/audio/a.mp3',
+            key: 'G',
+            tags: [{ tag: { name: '敬拜赞美', kind: 'TYPE' } }],
+          },
+        },
+      ],
+    })
+
+    const res = await GET(
+      jsonRequest('http://localhost/api/share?type=playlist&id=p1&token=abc')
+    )
+    const { status, body } = await readJson<{
+      title: string
+      songs: Array<{
+        song: {
+          lyrics: string
+          sheetMusic: string
+          audioFile: string
+        }
+      }>
+    }>(res)
+
+    expect(status).toBe(200)
+    expect(body.title).toBe('主日歌单')
+    expect(body.songs[0].song.lyrics).toBe('完整歌词')
+    expect(body.songs[0].song.sheetMusic).toBeTruthy()
+    expect(body.songs[0].song.audioFile).toBeTruthy()
   })
 
   it('GET returns 400 for unknown type', async () => {

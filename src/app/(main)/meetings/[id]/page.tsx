@@ -29,9 +29,7 @@ interface Meeting {
       id: string
       title: string
       artist: string | null
-      category: {
-        name: string
-      }
+      tags?: Array<{ tag: { name: string; kind: string } }>
     }
   }>
 }
@@ -289,7 +287,10 @@ export default function MeetingDetailPage() {
                       </div>
                     </div>
                     <Badge variant="outline" className="rounded-lg">
-                      {item.song.category?.name || t('meetings.uncategorized')}
+                      {item.song.tags
+                        ?.filter((st) => st.tag.kind === 'TYPE')
+                        .map((st) => st.tag.name)
+                        .join('、') || t('meetings.uncategorized')}
                     </Badge>
                   </Link>
                 ))}

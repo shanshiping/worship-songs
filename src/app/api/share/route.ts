@@ -4,6 +4,10 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { randomBytes } from 'crypto'
 
+const fullSongInclude = {
+  tags: { include: { tag: true } },
+} as const
+
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
@@ -12,13 +16,9 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { type, id, password } = body
+    const { type, id } = body
 
-    // 生成分享令牌
     const token = randomBytes(32).toString('hex')
-
-    // 存储分享信息（这里简化处理，实际应该存到数据库）
-    // 这里我们直接返回一个分享链接
     const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/share/${type}/${id}?token=${token}`
 
     return NextResponse.json({
@@ -48,14 +48,11 @@ export async function GET(request: Request) {
       )
     }
 
-    // 验证 token（简化处理，实际应该验证数据库中的 token）
-    // 这里我们直接返回数据
-
     if (type === 'song') {
       const data = await prisma.song.findUnique({
         where: { id },
         include: {
-          category: true,
+          ...fullSongInclude,
           meetings: {
             include: {
               meeting: true,
@@ -86,7 +83,39 @@ export async function GET(request: Request) {
         include: {
           songs: {
             include: {
-              song: true,
+              song: {
+                include: fullSongInclude,
+              },
+            },
+            orderBy: {
+              order: 'asc',
+            },
+          },
+        },
+      })
+
+      if (!data) {
+        return NextResponse.json(
+          { error: '数据不存在' },
+          { status: 404 }
+        )
+      }
+
+      return NextResponse.json(data)
+    }
+
+    if (type === 'playlist') {
+      const data = await prisma.playlist.findUnique({
+        where: { id },
+        include: {
+          createdBy: {
+            select: { id: true, name: true, email: true },
+          },
+          songs: {
+            include: {
+              song: {
+                include: fullSongInclude,
+              },
             },
             orderBy: {
               order: 'asc',

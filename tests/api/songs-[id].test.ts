@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockPrisma, resetPrismaMock } from '../helpers/mock-prisma'
 import { jsonRequest, readJson } from '../helpers/request'
 
-
 vi.mock('@/lib/prisma', async () => {
   const { mockPrisma } = await import('../helpers/mock-prisma')
   return { prisma: mockPrisma }
@@ -26,11 +25,11 @@ describe('/api/songs/[id]', () => {
     expect(status).toBe(404)
   })
 
-  it('GET returns song with meetings', async () => {
+  it('GET returns song with meetings and tags', async () => {
     mockPrisma.song.findUnique.mockResolvedValue({
       id: 'song-1',
       title: '神掌权',
-      category: { id: 'c1', name: '其他' },
+      tags: [{ tag: { id: 't1', name: '敬拜赞美', kind: 'TYPE' } }],
     })
     mockPrisma.meetingSong.findMany.mockResolvedValue([
       { meeting: { id: 'm1', date: new Date('2026-01-01') } },
@@ -43,11 +42,12 @@ describe('/api/songs/[id]', () => {
     expect(body.meetings).toHaveLength(1)
   })
 
-  it('PUT updates via category.connect', async () => {
+  it('PUT syncs tags', async () => {
+    mockPrisma.songTag.deleteMany.mockResolvedValue({ count: 1 })
     mockPrisma.song.update.mockResolvedValue({
       id: 'song-1',
       title: '神掌权',
-      category: { id: 'c2', name: '敬拜' },
+      tags: [{ tag: { id: 't2', name: '活泼', kind: 'STYLE' } }],
     })
 
     const res = await PUT(
@@ -55,7 +55,7 @@ describe('/api/songs/[id]', () => {
         method: 'PUT',
         body: {
           title: '神掌权',
-          categoryId: 'c2',
+          tagIds: ['t2'],
           artist: '',
           mvUrl: '',
         },
@@ -64,22 +64,23 @@ describe('/api/songs/[id]', () => {
     )
     const { status } = await readJson(res)
     expect(status).toBe(200)
+    expect(mockPrisma.songTag.deleteMany).toHaveBeenCalledWith({
+      where: { songId: 'song-1' },
+    })
     expect(mockPrisma.song.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'song-1' },
         data: expect.objectContaining({
-          category: { connect: { id: 'c2' } },
+          tags: { create: [{ tagId: 't2' }] },
         }),
       })
     )
-    const updateArg = mockPrisma.song.update.mock.calls[0][0] as {
-      data: Record<string, unknown>
-    }
-    expect(updateArg.data).not.toHaveProperty('categoryId')
   })
 
-  it('DELETE removes meeting links then song', async () => {
+  it('DELETE removes links then song', async () => {
     mockPrisma.meetingSong.deleteMany.mockResolvedValue({ count: 1 })
+    mockPrisma.playlistSong.deleteMany.mockResolvedValue({ count: 0 })
+    mockPrisma.songTag.deleteMany.mockResolvedValue({ count: 0 })
     mockPrisma.song.delete.mockResolvedValue({ id: 'song-1' })
 
     const res = await DELETE(

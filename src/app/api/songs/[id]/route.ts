@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getErrorMessage } from '@/lib/errors'
-import { normalizeOptional, isValidHttpUrl } from '../route'
+import { normalizeOptional, isValidHttpUrl, parseTagIds } from '../route'
 
 async function getSongMeetings(songId: string) {
   const meetingSongs = await prisma.meetingSong.findMany({
@@ -16,6 +16,12 @@ async function getSongMeetings(songId: string) {
   }))
 }
 
+const songTagInclude = {
+  tags: {
+    include: { tag: true },
+  },
+} as const
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -23,12 +29,9 @@ export async function GET(
   try {
     const { id } = await params
 
-    // 获取歌曲基本信息
     const song = await prisma.song.findUnique({
       where: { id },
-      include: {
-        category: true,
-      },
+      include: songTagInclude,
     })
 
     if (!song) {
@@ -38,7 +41,6 @@ export async function GET(
       )
     }
 
-    // 获取使用记录
     let meetings: Awaited<ReturnType<typeof getSongMeetings>> = []
     try {
       meetings = await getSongMeetings(id)
@@ -46,12 +48,10 @@ export async function GET(
       console.error('Get meetings error:', e)
     }
 
-    const result = {
+    return NextResponse.json({
       ...song,
       meetings,
-    }
-
-    return NextResponse.json(result)
+    })
   } catch (error) {
     console.error('Get song error:', error)
     return NextResponse.json(
@@ -71,7 +71,7 @@ export async function PUT(
     const {
       title,
       artist,
-      categoryId,
+      tagIds: rawTagIds,
       key,
       timeSignature,
       composer,
@@ -90,14 +90,15 @@ export async function PUT(
       return NextResponse.json({ error: 'MV 链接格式不正确' }, { status: 400 })
     }
 
+    const tagIds = parseTagIds(rawTagIds)
+
+    await prisma.songTag.deleteMany({ where: { songId: id } })
+
     const song = await prisma.song.update({
       where: { id },
       data: {
         title,
         artist: normalizeOptional(artist),
-        category: {
-          connect: { id: categoryId },
-        },
         key: normalizeOptional(key),
         timeSignature: normalizeOptional(timeSignature),
         composer: normalizeOptional(composer),
@@ -109,10 +110,11 @@ export async function PUT(
         audioFile: normalizeOptional(audioFile),
         lyrics: normalizeOptional(lyrics),
         notes: normalizeOptional(notes),
+        tags: {
+          create: tagIds.map((tagId) => ({ tagId })),
+        },
       },
-      include: {
-        category: true,
-      },
+      include: songTagInclude,
     })
 
     return NextResponse.json(song)
@@ -133,6 +135,14 @@ export async function DELETE(
     const { id } = await params
 
     await prisma.meetingSong.deleteMany({
+      where: { songId: id },
+    })
+
+    await prisma.playlistSong.deleteMany({
+      where: { songId: id },
+    })
+
+    await prisma.songTag.deleteMany({
       where: { songId: id },
     })
 

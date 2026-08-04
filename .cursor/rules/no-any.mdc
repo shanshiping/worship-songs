@@ -1,0 +1,35 @@
+---
+description: 禁止使用 any 类型
+globs: **/*.{ts,tsx}
+alwaysApply: false
+---
+
+# 禁止使用 any
+
+不得使用 `any` 类型。ESLint 规则 `@typescript-eslint/no-explicit-any` 已启用。
+
+## 替代方案
+
+```typescript
+// ❌ BAD
+catch (error: any) { ... }
+const where: any = {}
+const data: any = null
+
+// ✅ GOOD — 未知错误
+catch (error: unknown) {
+  const message = error instanceof Error ? error.message : '操作失败'
+}
+
+// ✅ GOOD — Prisma where 条件
+import { Prisma } from '@prisma/client'
+const where: Prisma.SongWhereInput = {}
+
+// ✅ GOOD — 部分已知结构
+const updates: Partial<FormData> = {}
+```
+
+## 原则
+
+- 优先使用具体类型、`unknown`、泛型或 Prisma 生成的类型
+- 确实无法推断时，用 `unknown` 加类型收窄，而不是 `any`

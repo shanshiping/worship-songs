@@ -16,28 +16,19 @@ interface Song {
   id: string
   title: string
   artist: string | null
-  category: {
-    name: string
-  }
-}
-
-interface Category {
-  id: string
-  name: string
+  tags?: Array<{ tag: { id: string; name: string; kind: string } }>
 }
 
 export default function NewMeetingPage() {
   const { t } = useI18n()
   const router = useRouter()
   const [songs, setSongs] = useState<Song[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSongs, setSelectedSongs] = useState<Song[]>([])
   const [manualTitle, setManualTitle] = useState('')
   const [manualArtist, setManualArtist] = useState('')
-  const [manualCategoryId, setManualCategoryId] = useState('')
   const [addingManual, setAddingManual] = useState(false)
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -47,10 +38,6 @@ export default function NewMeetingPage() {
     type: 'MORNING',
     notes: '',
   })
-
-  useEffect(() => {
-    fetchCategories()
-  }, [])
 
   useEffect(() => {
     setSearching(true)
@@ -85,21 +72,6 @@ export default function NewMeetingPage() {
     }
   }
 
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch('/api/categories')
-      if (response.ok) {
-        const data = await response.json()
-        setCategories(data)
-        if (data.length > 0) {
-          setManualCategoryId(data[0].id)
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch categories:', error)
-    }
-  }
-
   const handleAddSong = (song: Song) => {
     if (!selectedSongs.find((s) => s.id === song.id)) {
       setSelectedSongs([...selectedSongs, song])
@@ -112,7 +84,7 @@ export default function NewMeetingPage() {
 
   const handleManualAdd = async () => {
     const title = manualTitle.trim()
-    if (!title || !manualCategoryId) return
+    if (!title) return
 
     setAddingManual(true)
     try {
@@ -122,7 +94,6 @@ export default function NewMeetingPage() {
         body: JSON.stringify({
           title,
           artist: manualArtist.trim() || null,
-          categoryId: manualCategoryId,
         }),
       })
 
@@ -311,7 +282,7 @@ export default function NewMeetingPage() {
                             </p>
                           )}
                         </div>
-                        <Badge variant="outline">{song.category.name}</Badge>
+                        <Plus className="h-4 w-4 text-muted-foreground" />
                       </div>
                     ))
                   ) : showManualAdd ? (
@@ -339,34 +310,11 @@ export default function NewMeetingPage() {
                           placeholder={t('meetings.manualArtistPlaceholder')}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="manualCategory">{t('meetings.manualCategory')}</Label>
-                        <select
-                          id="manualCategory"
-                          value={manualCategoryId}
-                          onChange={(e) => setManualCategoryId(e.target.value)}
-                          className="w-full px-3 py-2 border rounded-md bg-white"
-                        >
-                          {categories.length === 0 ? (
-                            <option value="">{t('meetings.manualCategoryPlaceholder')}</option>
-                          ) : (
-                            categories.map((cat) => (
-                              <option key={cat.id} value={cat.id}>
-                                {cat.name}
-                              </option>
-                            ))
-                          )}
-                        </select>
-                      </div>
                       <Button
                         type="button"
                         size="sm"
                         onClick={handleManualAdd}
-                        disabled={
-                          addingManual ||
-                          !manualTitle.trim() ||
-                          !manualCategoryId
-                        }
+                        disabled={addingManual || !manualTitle.trim()}
                       >
                         <Plus className="mr-2 h-4 w-4" />
                         {addingManual

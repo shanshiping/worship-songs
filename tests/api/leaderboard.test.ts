@@ -29,13 +29,13 @@ describe('/api/leaderboard', () => {
         id: 's1',
         title: 'A',
         artist: null,
-        category: { name: '其他' },
+        tags: [{ tag: { id: 't1', name: '其他', kind: 'TYPE' } }],
       },
       {
         id: 's2',
         title: 'B',
         artist: null,
-        category: { name: '敬拜' },
+        tags: [{ tag: { id: 't2', name: '敬拜赞美', kind: 'TYPE' } }],
       },
     ])
 

@@ -18,7 +18,7 @@ export async function GET(
           include: {
             song: {
               include: {
-                category: true,
+                tags: { include: { tag: true } },
               },
             },
           },
@@ -85,7 +85,7 @@ export async function PUT(
           include: {
             song: {
               include: {
-                category: true,
+                tags: { include: { tag: true } },
               },
             },
           },

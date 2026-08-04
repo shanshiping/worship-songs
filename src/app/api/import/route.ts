@@ -204,18 +204,6 @@ export async function POST(request: Request) {
       skipped: 0,
     }
 
-    // 获取默认分类
-    let defaultCategory = await prisma.category.findUnique({
-      where: { name: '其他' },
-    })
-
-    // 如果不存在则创建
-    if (!defaultCategory) {
-      defaultCategory = await prisma.category.create({
-        data: { name: '其他' },
-      })
-    }
-
     // 遍历每个 Sheet
     for (const sheetName of workbook.SheetNames) {
       const sheet = workbook.Sheets[sheetName]
@@ -355,7 +343,6 @@ export async function POST(request: Request) {
                 song = await prisma.song.create({
                   data: {
                     title: songTitle,
-                    categoryId: defaultCategory.id,
                   },
                 })
                 results.songs++

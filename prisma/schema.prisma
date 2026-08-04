@@ -25,6 +25,7 @@ model User {
   ownedTeams  Team[]       @relation("TeamOwner")
   teamMembers TeamMember[]
   messages    Message[]
+  playlists   Playlist[]
 }
 
 // 团队表
@@ -74,7 +75,6 @@ model Song {
   id            String   @id @default(cuid())
   title         String
   artist        String?
-  categoryId    String
   key           String?  // 调，如 C、G、Am
   timeSignature String?  // 拍，如 4/4、6/8
   composer      String?  // 作曲
@@ -89,15 +89,56 @@ model Song {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  category Category @relation(fields: [categoryId], references: [id])
-  meetings MeetingSong[]
+  tags      SongTag[]
+  meetings  MeetingSong[]
+  playlists PlaylistSong[]
 }
 
-// 分类表
-model Category {
-  id    String @id @default(cuid())
-  name  String @unique
-  songs Song[]
+// 标签（类型 / 风格）
+model Tag {
+  id   String @id @default(cuid())
+  name String
+  kind String // TYPE | STYLE
+
+  songs SongTag[]
+
+  @@unique([name, kind])
+}
+
+model SongTag {
+  id     String @id @default(cuid())
+  songId String
+  tagId  String
+
+  song Song @relation(fields: [songId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([songId, tagId])
+}
+
+// 歌单
+model Playlist {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User           @relation(fields: [createdById], references: [id])
+  songs     PlaylistSong[]
+}
+
+model PlaylistSong {
+  id         String @id @default(cuid())
+  playlistId String
+  songId     String
+  order      Int
+
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  song     Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, songId])
 }
 
 // 聚会记录表

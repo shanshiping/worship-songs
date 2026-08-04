@@ -12,11 +12,7 @@ import { ArrowLeft, Upload, FileText, Music, Loader2, Sparkles, X, CheckCircle }
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/errors'
-
-interface Category {
-  id: string
-  name: string
-}
+import { TagMultiSelect, type TagItem } from '@/components/tag-multi-select'
 
 interface UploadedFile {
   path: string
@@ -34,14 +30,15 @@ const TIME_SIGNATURE_PRESETS = ['4/4', '3/4', '6/8', '2/4', '12/8', '2/2', '3/8'
 export default function UploadSongPage() {
   const { t } = useI18n()
   const router = useRouter()
-  const [categories, setCategories] = useState<Category[]>([])
+  const [typeTags, setTypeTags] = useState<TagItem[]>([])
+  const [styleTags, setStyleTags] = useState<TagItem[]>([])
+  const [tagIds, setTagIds] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [parsing, setParsing] = useState(false)
   const [parsed, setParsed] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     artist: '',
-    categoryId: '',
     key: '',
     timeSignature: '',
     composer: '',
@@ -58,18 +55,20 @@ export default function UploadSongPage() {
   const [uploadingAudio, setUploadingAudio] = useState(false)
 
   useEffect(() => {
-    fetchCategories()
+    fetchTags()
   }, [])
 
-  const fetchCategories = async () => {
+  const fetchTags = async () => {
     try {
-      const response = await fetch('/api/categories')
+      const response = await fetch('/api/tags')
       if (response.ok) {
         const data = await response.json()
-        setCategories(data)
+        const tags = (data.tags || []) as TagItem[]
+        setTypeTags(tags.filter((tag) => tag.kind === 'TYPE'))
+        setStyleTags(tags.filter((tag) => tag.kind === 'STYLE'))
       }
     } catch (error) {
-      console.error('Failed to fetch categories:', error)
+      console.error('Failed to fetch tags:', error)
     }
   }
 
@@ -192,11 +191,6 @@ export default function UploadSongPage() {
 
     if (!formData.title.trim()) {
       toast.error(t('songs.enterTitle'))
-      return
-    }
-
-    if (!formData.categoryId) {
-      toast.error(t('songs.selectCategoryError'))
       return
     }
 
@@ -543,24 +537,25 @@ export default function UploadSongPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="category">{t('songs.categoryRequired')}</Label>
-              <select
-                id="category"
-                value={formData.categoryId}
-                onChange={(e) =>
-                  setFormData({ ...formData, categoryId: e.target.value })
-                }
-                required
-                className="w-full h-11 px-3 border rounded-xl input-focus"
-              >
-                <option value="">{t('songs.selectCategory')}</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-4 md:col-span-2">
+              <TagMultiSelect
+                label={t('songs.typeTags')}
+                tags={typeTags}
+                selectedIds={tagIds.filter((id) => typeTags.some((tag) => tag.id === id))}
+                onChange={(ids) => {
+                  const styles = tagIds.filter((id) => styleTags.some((tag) => tag.id === id))
+                  setTagIds([...ids, ...styles])
+                }}
+              />
+              <TagMultiSelect
+                label={t('songs.styleTags')}
+                tags={styleTags}
+                selectedIds={tagIds.filter((id) => styleTags.some((tag) => tag.id === id))}
+                onChange={(ids) => {
+                  const types = tagIds.filter((id) => typeTags.some((tag) => tag.id === id))
+                  setTagIds([...types, ...ids])
+                }}
+              />
             </div>
 
             <div className="space-y-2">

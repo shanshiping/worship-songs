@@ -12,17 +12,12 @@ import { ArrowLeft, Save, Loader2, Music, FileText, X, CheckCircle } from 'lucid
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/errors'
-
-interface Category {
-  id: string
-  name: string
-}
+import { TagMultiSelect, type TagItem } from '@/components/tag-multi-select'
 
 interface Song {
   id: string
   title: string
   artist: string | null
-  categoryId: string
   key: string | null
   timeSignature: string | null
   composer: string | null
@@ -34,6 +29,7 @@ interface Song {
   audioFile: string | null
   lyrics: string | null
   notes: string | null
+  tags?: Array<{ tag: TagItem }>
 }
 
 interface UploadedFile {
@@ -54,13 +50,14 @@ export default function EditSongPage() {
   const params = useParams()
   const router = useRouter()
   const [song, setSong] = useState<Song | null>(null)
-  const [categories, setCategories] = useState<Category[]>([])
+  const [typeTags, setTypeTags] = useState<TagItem[]>([])
+  const [styleTags, setStyleTags] = useState<TagItem[]>([])
+  const [tagIds, setTagIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     artist: '',
-    categoryId: '',
     key: '',
     timeSignature: '',
     composer: '',
@@ -84,10 +81,9 @@ export default function EditSongPage() {
     try {
       const { id } = await params
 
-      // 并行获取歌曲和分类数据
-      const [songRes, categoriesRes] = await Promise.all([
+      const [songRes, tagsRes] = await Promise.all([
         fetch(`/api/songs/${id}`),
-        fetch('/api/categories'),
+        fetch('/api/tags'),
       ])
 
       if (songRes.ok) {
@@ -96,7 +92,6 @@ export default function EditSongPage() {
         setFormData({
           title: songData.title || '',
           artist: songData.artist || '',
-          categoryId: songData.categoryId || '',
           key: songData.key || '',
           timeSignature: songData.timeSignature || '',
           composer: songData.composer || '',
@@ -107,6 +102,9 @@ export default function EditSongPage() {
           lyrics: songData.lyrics || '',
           notes: songData.notes || '',
         })
+        setTagIds(
+          (songData.tags || []).map((st: { tag: TagItem }) => st.tag.id)
+        )
         if (songData.sheetMusic) {
           setSheetMusic({
             path: songData.sheetMusic,
@@ -129,9 +127,11 @@ export default function EditSongPage() {
         return
       }
 
-      if (categoriesRes.ok) {
-        const categoriesData = await categoriesRes.json()
-        setCategories(categoriesData)
+      if (tagsRes.ok) {
+        const tagsData = await tagsRes.json()
+        const tags = (tagsData.tags || []) as TagItem[]
+        setTypeTags(tags.filter((tag) => tag.kind === 'TYPE'))
+        setStyleTags(tags.filter((tag) => tag.kind === 'STYLE'))
       }
     } catch (error) {
       console.error('Failed to fetch data:', error)
@@ -211,11 +211,6 @@ export default function EditSongPage() {
       return
     }
 
-    if (!formData.categoryId) {
-      toast.error(t('songs.selectCategoryError'))
-      return
-    }
-
     setSaving(true)
 
     try {
@@ -227,6 +222,7 @@ export default function EditSongPage() {
         },
         body: JSON.stringify({
           ...formData,
+          tagIds,
           sheetMusic: sheetMusic?.path || null,
           audioFile: audioFile?.path || null,
         }),
@@ -559,24 +555,25 @@ export default function EditSongPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="category">{t('songs.categoryRequired')}</Label>
-              <select
-                id="category"
-                value={formData.categoryId}
-                onChange={(e) =>
-                  setFormData({ ...formData, categoryId: e.target.value })
-                }
-                required
-                className="w-full h-11 px-3 border rounded-xl input-focus"
-              >
-                <option value="">{t('songs.selectCategory')}</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-4 md:col-span-2">
+              <TagMultiSelect
+                label={t('songs.typeTags')}
+                tags={typeTags}
+                selectedIds={tagIds.filter((id) => typeTags.some((tag) => tag.id === id))}
+                onChange={(ids) => {
+                  const styles = tagIds.filter((id) => styleTags.some((tag) => tag.id === id))
+                  setTagIds([...ids, ...styles])
+                }}
+              />
+              <TagMultiSelect
+                label={t('songs.styleTags')}
+                tags={styleTags}
+                selectedIds={tagIds.filter((id) => styleTags.some((tag) => tag.id === id))}
+                onChange={(ids) => {
+                  const types = tagIds.filter((id) => typeTags.some((tag) => tag.id === id))
+                  setTagIds([...types, ...ids])
+                }}
+              />
             </div>
 
             <div className="space-y-2">

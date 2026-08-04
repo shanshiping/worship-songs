@@ -49,18 +49,23 @@ export async function GET(request: Request) {
 
     const songs = await prisma.song.findMany({
       where: { id: { in: pageGroups.map((g) => g.songId) } },
-      include: { category: true },
+      include: { tags: { include: { tag: true } } },
     })
     const songMap = new Map(songs.map((s) => [s.id, s]))
 
     const leaderboard = pageGroups.map((item, index) => {
       const song = songMap.get(item.songId)
+      const typeTags =
+        song?.tags
+          ?.filter((st) => st.tag.kind === 'TYPE')
+          .map((st) => st.tag.name) ?? []
       return {
         rank: skip + index + 1,
         id: song?.id,
         title: song?.title || '未知歌曲',
         artist: song?.artist,
-        category: song?.category?.name || '未分类',
+        category: typeTags.length > 0 ? typeTags.join('、') : '未分类',
+        tags: song?.tags?.map((st) => st.tag) ?? [],
         count: item._count.songId,
       }
     })

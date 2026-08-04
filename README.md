@@ -123,7 +123,20 @@ pnpm test:watch
 
 测试覆盖 API 路由与 `src/lib` 纯函数；数据库使用 Mock，不连接真实 PostgreSQL。
 
-### 2. 配置环境变量
+### 2. 启动 PostgreSQL（Docker）
+
+需先安装并启动 [Docker Desktop](https://www.docker.com/products/docker-desktop/)，然后：
+
+```bash
+docker compose up -d
+```
+
+默认账号：`postgres` / `postgres`，库名：`worship_songs`，端口：`5432`。  
+若 5432 已被占用：`POSTGRES_PORT=5433 docker compose up -d`，并把 `DATABASE_URL` 端口改成 `5433`。  
+本机已有可用的 Postgres 且库名一致时，可跳过本步。  
+停止：`docker compose down`（加 `-v` 会清空数据卷）。
+
+### 3. 配置环境变量
 
 复制 `.env.example` 文件并配置：
 
@@ -131,11 +144,11 @@ pnpm test:watch
 cp .env.example .env
 ```
 
-编辑 `.env` 文件，配置以下变量：
+使用上面的 Docker 时，`.env` 中数据库可直接用示例值：
 
 ```env
-# 数据库（PostgreSQL）
-DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/worship_songs"
+# 数据库（与 docker-compose.yml 一致）
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/worship_songs"
 
 # NextAuth
 NEXTAUTH_URL="http://localhost:3000"
@@ -145,27 +158,29 @@ NEXTAUTH_SECRET="your-secret-key-here"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-### 3. 初始化数据库
+若你已有本机 Postgres，把 `DATABASE_URL` 改成自己的连接串即可。
+
+### 4. 初始化数据库
 
 ```bash
 # 运行数据库迁移
 npx prisma migrate dev
 
 # 初始化种子数据（创建默认分类和管理员账户）
-npm run seed
+pnpm seed
 ```
 
-### 4. 导入 Excel 数据
+### 5. 导入 Excel 数据
 
 ```bash
 # 导入敬拜赞美诗歌表数据
 npx ts-node scripts/import-excel.ts
 ```
 
-### 5. 启动开发服务器
+### 6. 启动开发服务器
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 访问 http://localhost:3000 即可使用。

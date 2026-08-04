@@ -18,7 +18,7 @@ describe('/api/dashboard', () => {
   it('returns overview stats and top songs', async () => {
     mockPrisma.song.count.mockResolvedValue(10)
     mockPrisma.meeting.count.mockResolvedValue(5)
-    mockPrisma.category.count.mockResolvedValue(3)
+    mockPrisma.tag.count.mockResolvedValue(15)
     mockPrisma.meetingSong.groupBy.mockResolvedValue([
       { songId: 's1', _count: { songId: 4 } },
     ])

@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockPrisma, resetPrismaMock } from '../helpers/mock-prisma'
 import { jsonRequest, readJson } from '../helpers/request'
 
-
 vi.mock('@/lib/prisma', async () => {
   const { mockPrisma } = await import('../helpers/mock-prisma')
   return { prisma: mockPrisma }
@@ -21,7 +20,7 @@ describe('/api/songs', () => {
 
   it('GET returns paginated songs', async () => {
     mockPrisma.song.findMany.mockResolvedValue([
-      { id: 's1', title: 'Song', category: { name: 'A' }, _count: { meetings: 0 } },
+      { id: 's1', title: 'Song', tags: [], _count: { meetings: 0 } },
     ])
     mockPrisma.song.count.mockResolvedValue(1)
 
@@ -36,12 +35,32 @@ describe('/api/songs', () => {
     expect(body.pagination.total).toBe(1)
   })
 
+  it('GET filters by tagIds with AND', async () => {
+    mockPrisma.song.findMany.mockResolvedValue([])
+    mockPrisma.song.count.mockResolvedValue(0)
+
+    await GET(
+      jsonRequest('http://localhost/api/songs?tagIds=t1&tagIds=t2')
+    )
+
+    expect(mockPrisma.song.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          AND: [
+            { tags: { some: { tagId: 't1' } } },
+            { tags: { some: { tagId: 't2' } } },
+          ],
+        },
+      })
+    )
+  })
+
   it('POST returns 401 without session', async () => {
     vi.mocked(getServerSession).mockResolvedValue(null)
     const res = await POST(
       jsonRequest('http://localhost/api/songs', {
         method: 'POST',
-        body: { title: 'T', categoryId: 'c1' },
+        body: { title: 'T' },
       })
     )
     const { status, body } = await readJson<{ error: string }>(res)
@@ -49,36 +68,42 @@ describe('/api/songs', () => {
     expect(body.error).toBe('请先登录')
   })
 
-  it('POST returns 400 when title or category missing', async () => {
+  it('POST returns 400 when title missing', async () => {
     vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'u1' } })
     const res = await POST(
       jsonRequest('http://localhost/api/songs', {
         method: 'POST',
-        body: { title: 'T' },
+        body: { tagIds: ['t1'] },
       })
     )
     const { status } = await readJson(res)
     expect(status).toBe(400)
   })
 
-  it('POST creates song when authenticated', async () => {
+  it('POST creates song with tags when authenticated', async () => {
     vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'u1' } })
     mockPrisma.song.create.mockResolvedValue({
       id: 's1',
       title: '神掌权',
-      categoryId: 'c1',
-      category: { id: 'c1', name: '其他' },
+      tags: [{ tag: { id: 't1', name: '敬拜赞美', kind: 'TYPE' } }],
     })
 
     const res = await POST(
       jsonRequest('http://localhost/api/songs', {
         method: 'POST',
-        body: { title: '神掌权', categoryId: 'c1' },
+        body: { title: '神掌权', tagIds: ['t1'] },
       })
     )
     const { status, body } = await readJson<{ id: string; title: string }>(res)
     expect(status).toBe(201)
     expect(body.title).toBe('神掌权')
-    expect(mockPrisma.song.create).toHaveBeenCalled()
+    expect(mockPrisma.song.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          title: '神掌权',
+          tags: { create: [{ tagId: 't1' }] },
+        }),
+      })
+    )
   })
 })
