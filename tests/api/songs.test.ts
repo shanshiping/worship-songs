@@ -55,6 +55,68 @@ describe('/api/songs', () => {
     )
   })
 
+  it('GET filters by lyricsSearch', async () => {
+    mockPrisma.song.findMany.mockResolvedValue([])
+    mockPrisma.song.count.mockResolvedValue(0)
+
+    await GET(jsonRequest('http://localhost/api/songs?lyricsSearch=哈利路亚'))
+
+    expect(mockPrisma.song.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          lyrics: { contains: '哈利路亚', mode: 'insensitive' },
+        },
+      })
+    )
+  })
+
+  it('GET combines search and lyricsSearch with AND', async () => {
+    mockPrisma.song.findMany.mockResolvedValue([])
+    mockPrisma.song.count.mockResolvedValue(0)
+
+    await GET(
+      jsonRequest('http://localhost/api/songs?search=Praise&lyricsSearch=holy')
+    )
+
+    expect(mockPrisma.song.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          AND: [
+            {
+              OR: [
+                { title: { contains: 'Praise', mode: 'insensitive' } },
+                { artist: { contains: 'Praise', mode: 'insensitive' } },
+              ],
+            },
+            { lyrics: { contains: 'holy', mode: 'insensitive' } },
+          ],
+        },
+      })
+    )
+  })
+
+  it('POST saves lyricsLrc', async () => {
+    vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'u1' } })
+    mockPrisma.song.create.mockResolvedValue({
+      id: 's1',
+      title: 'T',
+      tags: [],
+    })
+
+    await POST(
+      jsonRequest('http://localhost/api/songs', {
+        method: 'POST',
+        body: { title: 'T', lyricsLrc: '[00:01.00]Hi' },
+      })
+    )
+
+    expect(mockPrisma.song.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ lyricsLrc: '[00:01.00]Hi' }),
+      })
+    )
+  })
+
   it('POST returns 401 without session', async () => {
     vi.mocked(getServerSession).mockResolvedValue(null)
     const res = await POST(
@@ -91,7 +153,7 @@ describe('/api/songs', () => {
     const res = await POST(
       jsonRequest('http://localhost/api/songs', {
         method: 'POST',
-        body: { title: '神掌权', tagIds: ['t1'] },
+        body: { title: '神掌权', tagIds: ['t1'], sheetMusic: '/uploads/sheets/a.pdf' },
       })
     )
     const { status, body } = await readJson<{ id: string; title: string }>(res)
@@ -101,6 +163,8 @@ describe('/api/songs', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           title: '神掌权',
+          uploadedById: 'u1',
+          sheetUploadedById: 'u1',
           tags: { create: [{ tagId: 't1' }] },
         }),
       })

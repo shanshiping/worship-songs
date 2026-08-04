@@ -24,10 +24,16 @@ export function parseTagIds(value: unknown): string[] {
   return value.filter((id): id is string => typeof id === 'string' && id.length > 0)
 }
 
-function songTagInclude() {
+function songDetailInclude() {
   return {
     tags: {
       include: { tag: true },
+    },
+    uploadedBy: {
+      select: { id: true, name: true, email: true },
+    },
+    sheetUploadedBy: {
+      select: { id: true, name: true, email: true },
     },
   } as const
 }
@@ -36,6 +42,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search')
+    const lyricsSearch = searchParams.get('lyricsSearch')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
     const tagIds = [
@@ -48,26 +55,39 @@ export async function GET(request: Request) {
       ),
     ]
 
-    const where: Prisma.SongWhereInput = {}
+    const and: Prisma.SongWhereInput[] = []
 
     if (tagIds.length > 0) {
-      where.AND = tagIds.map((tagId) => ({
-        tags: { some: { tagId } },
-      }))
+      and.push(
+        ...tagIds.map((tagId) => ({
+          tags: { some: { tagId } },
+        }))
+      )
     }
 
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { artist: { contains: search, mode: 'insensitive' } },
-      ]
+      and.push({
+        OR: [
+          { title: { contains: search, mode: 'insensitive' as const } },
+          { artist: { contains: search, mode: 'insensitive' as const } },
+        ],
+      })
     }
+
+    if (lyricsSearch) {
+      and.push({
+        lyrics: { contains: lyricsSearch, mode: 'insensitive' as const },
+      })
+    }
+
+    const where: Prisma.SongWhereInput =
+      and.length === 0 ? {} : and.length === 1 ? and[0]! : { AND: and }
 
     const [songs, total] = await Promise.all([
       prisma.song.findMany({
         where,
         include: {
-          ...songTagInclude(),
+          ...songDetailInclude(),
           _count: {
             select: { meetings: true },
           },
@@ -100,7 +120,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: '请先登录' }, { status: 401 })
     }
 
@@ -116,9 +136,11 @@ export async function POST(request: Request) {
       team,
       album,
       mvUrl,
+      coverImage,
       sheetMusic,
       audioFile,
       lyrics,
+      lyricsLrc,
       notes,
     } = body
 
@@ -136,6 +158,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'MV 链接格式不正确' }, { status: 400 })
     }
 
+    const normalizedSheet = normalizeOptional(sheetMusic)
+    const userId = session.user.id
+
     const song = await prisma.song.create({
       data: {
         title,
@@ -147,10 +172,15 @@ export async function POST(request: Request) {
         team: normalizeOptional(team),
         album: normalizeOptional(album),
         mvUrl: normalizedMvUrl,
-        sheetMusic: normalizeOptional(sheetMusic),
+        coverImage: normalizeOptional(coverImage),
+        sheetMusic: normalizedSheet,
         audioFile: normalizeOptional(audioFile),
         lyrics: normalizeOptional(lyrics),
+        lyricsLrc: normalizeOptional(lyricsLrc),
         notes: normalizeOptional(notes),
+        uploadedById: userId,
+        sheetUploadedById: normalizedSheet ? userId : null,
+        sheetUploadedAt: normalizedSheet ? new Date() : null,
         tags:
           tagIds.length > 0
             ? {
@@ -158,7 +188,7 @@ export async function POST(request: Request) {
               }
             : undefined,
       },
-      include: songTagInclude(),
+      include: songDetailInclude(),
     })
 
     return NextResponse.json(song, { status: 201 })

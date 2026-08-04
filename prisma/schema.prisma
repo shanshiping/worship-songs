@@ -26,6 +26,8 @@ model User {
   teamMembers TeamMember[]
   messages    Message[]
   playlists   Playlist[]
+  songsUploaded  Song[] @relation("SongUploader")
+  sheetsUploaded Song[] @relation("SheetUploader")
 }
 
 // 团队表
@@ -82,13 +84,20 @@ model Song {
   team          String?  // 团队（自由文本）
   album         String?  // 专辑
   mvUrl         String?  // MV 外链
+  coverImage    String?  // 封面图片路径
   sheetMusic    String?  // 歌谱文件路径
   audioFile     String?  // 音频文件路径
-  lyrics        String?  // 歌词
+  lyrics        String?  // 纯文本歌词
+  lyricsLrc     String?  // 可选 LRC 时间轴歌词
   notes         String?  // 备注
+  uploadedById  String?  // 歌曲上传者
+  sheetUploadedById String? // 歌谱上传者
+  sheetUploadedAt   DateTime? // 歌谱上传时间
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  uploadedBy      User?          @relation("SongUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  sheetUploadedBy User?          @relation("SheetUploader", fields: [sheetUploadedById], references: [id], onDelete: SetNull)
   tags      SongTag[]
   meetings  MeetingSong[]
   playlists PlaylistSong[]
