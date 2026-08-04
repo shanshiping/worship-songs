@@ -60,6 +60,7 @@ POST /api/meetings { songIds } ──► MeetingSong ──► PostgreSQL
 | 排行榜年份与分页 | [`2026-07-17-leaderboard-pagination-year-design.md`](docs/superpowers/specs/2026-07-17-leaderboard-pagination-year-design.md) |
 | 聚会年份筛选 | [`2026-07-17-meetings-year-filter-design.md`](docs/superpowers/specs/2026-07-17-meetings-year-filter-design.md) |
 | 聚会选歌搜索与手动加歌 | [`2026-07-17-meeting-song-search-design.md`](docs/superpowers/specs/2026-07-17-meeting-song-search-design.md) |
+| 歌谱 OCR / 歌词识别 | [`2026-08-04-lyrics-lrc-ocr-search-design.md`](docs/superpowers/specs/2026-08-04-lyrics-lrc-ocr-search-design.md) |
 | 选歌 Agent | [`2026-08-04-song-selection-agent-design.md`](docs/superpowers/specs/2026-08-04-song-selection-agent-design.md) |
 
 全部规格与计划见 [`docs/superpowers/`](docs/superpowers/)。
@@ -68,6 +69,7 @@ POST /api/meetings { songIds } ──► MeetingSong ──► PostgreSQL
 
 ### 核心功能
 - 🎵 **歌曲管理** - 添加、编辑、删除歌曲；支持歌谱与音频上传、歌词编辑
+- 📝 **歌谱 OCR** - 上传歌谱后自动识别歌词（可配置 Gemini / OpenAI 兼容模型）；支持手动「从歌谱识别」
 - 🎼 **歌曲元数据** - 调、拍号（预设 + 自定义）、作曲、作词、团队（自由文本）、专辑、MV 外链
 - 📅 **聚会记录** - 记录每次聚会的歌曲选择、讲员、主领等；支持按年、月筛选
 - ➕ **聚会选歌** - 新建聚会时搜索曲库（不区分大小写）；搜不到可手动新建并加入
@@ -158,7 +160,12 @@ NEXTAUTH_SECRET="your-secret-key-here"
 # 应用 URL（用于分享链接）
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
-# 选歌 Agent（可选；免费测试可用 Groq，见 .env.example）
+# 歌谱 OCR（可选；用于从歌谱图片/PDF 识别歌词，见下文「歌谱 OCR 与歌词识别」）
+# LYRICS_OCR_PROVIDER=gemini
+# GEMINI_API_KEY=""
+# GEMINI_MODEL="gemini-2.0-flash"
+
+# 选歌 Agent（可选；免费测试可用 Groq，见下文「选歌 Agent」）
 # AI_API_KEY=""
 # AI_BASE_URL="https://api.groq.com/openai/v1"
 # AI_MODEL="llama-3.3-70b-versatile"
@@ -221,6 +228,95 @@ pnpm dev
 | MV | 外链 URL（`http`/`https`），详情页新标签打开 |
 
 歌词、音频、歌谱沿用原有能力。详情页仅展示已填字段；列表页不新增列。导入/导出暂未覆盖这些新字段。
+
+### 歌谱 OCR 与歌词识别
+
+上传歌谱（图片或 PDF）后，平台可调用视觉模型自动提取纯文本歌词并保存。需配置环境变量；未配置时识别接口返回 503，其余功能不受影响。
+
+**自动识别时机：**
+
+1. **上传歌谱时** — 新建/编辑页上传成功后，若歌词为空，自动识别并填入表单
+2. **保存歌曲时** — 创建或更换歌谱且歌词为空时，服务端自动识别并写入数据库
+3. **打开歌曲详情时** — 有歌谱但无歌词时，自动识别并保存（可手动点击「从歌谱识别」重试）
+
+已有歌词时不会被覆盖；仅当歌词为空时才会自动识别。
+
+#### 环境变量
+
+| 变量 | 说明 |
+|------|------|
+| `LYRICS_OCR_PROVIDER` | `gemini` 或 `openai`（OpenAI 兼容 API） |
+| `GEMINI_API_KEY` | Gemini API 密钥（provider 为 gemini 时必填） |
+| `GEMINI_MODEL` | Gemini 模型名，默认 `gemini-2.0-flash` |
+| `LYRICS_OCR_API_KEY` | OpenAI 兼容 API 密钥（可选，可复用 `AI_API_KEY`） |
+| `LYRICS_OCR_BASE_URL` | OpenAI 兼容 Base URL（可选，可复用 `AI_BASE_URL`） |
+| `LYRICS_OCR_MODEL` | OpenAI 兼容模型名（可选，可复用 `AI_MODEL`） |
+
+**未设置 `LYRICS_OCR_PROVIDER` 时的自动选择：**
+
+- 配置了 `GEMINI_API_KEY` → 使用 Gemini
+- 否则配置了 `AI_API_KEY` 或 `LYRICS_OCR_API_KEY` → 使用 OpenAI 兼容接口
+
+#### 方案 A：Gemini（推荐，支持图片 + PDF）
+
+在 [Google AI Studio](https://aistudio.google.com/apikey) 申请 API Key，写入 `.env`：
+
+```env
+LYRICS_OCR_PROVIDER=gemini
+GEMINI_API_KEY=你的密钥
+GEMINI_MODEL=gemini-2.0-flash
+```
+
+常用模型：`gemini-2.0-flash`（默认，快且省）、`gemini-2.5-flash`、`gemini-1.5-pro`（通常更准，更慢更贵）。
+
+#### 方案 B：OpenAI 兼容 API（仅图片）
+
+适用于 OpenAI、Azure OpenAI 或提供 OpenAI 兼容 `/chat/completions` 且支持视觉的代理。**不支持 PDF 歌谱**；PDF 请改用 Gemini 或上传 PNG/JPG。
+
+**独立配置：**
+
+```env
+LYRICS_OCR_PROVIDER=openai
+LYRICS_OCR_API_KEY=你的密钥
+LYRICS_OCR_BASE_URL=https://api.openai.com/v1
+LYRICS_OCR_MODEL=gpt-4o-mini
+```
+
+**复用选歌 Agent 的配置（见下文）：**
+
+```env
+LYRICS_OCR_PROVIDER=openai
+AI_API_KEY=你的密钥
+AI_BASE_URL=https://api.openai.com/v1
+AI_MODEL=gpt-4o
+```
+
+#### 提供商对比
+
+| 提供商 | 图片歌谱 | PDF 歌谱 | 模型配置项 |
+|--------|----------|----------|------------|
+| Gemini | ✅ | ✅ | `GEMINI_MODEL` |
+| OpenAI 兼容 | ✅ | ❌ | `LYRICS_OCR_MODEL` 或 `AI_MODEL` |
+
+修改 `.env` 后需**重启开发服务器**（`pnpm dev`）生效。
+
+#### 手动识别
+
+上传/编辑页歌词区域旁有 **「从歌谱识别」** 按钮；歌曲详情页在无歌词时也可点击识别。若已有歌词，手动识别会先确认是否覆盖。
+
+### 选歌 Agent
+
+侧边栏 **Agent** 用于对话式选歌，与歌谱 OCR **独立配置**（使用 `AI_*` 变量，不影响 `GEMINI_*`）。
+
+免费测试推荐 [Groq](https://console.groq.com/keys)：
+
+```env
+AI_API_KEY=你的 Groq 密钥
+AI_BASE_URL=https://api.groq.com/openai/v1
+AI_MODEL=llama-3.3-70b-versatile
+```
+
+也可指向 OpenAI 官方或其他 OpenAI 兼容服务，按需修改 `AI_BASE_URL` 与 `AI_MODEL`。
 
 ### 聚会筛选与选歌
 
@@ -289,6 +385,7 @@ worship-songs/
 │       ├── i18n.ts        # 国际化核心与类型
 │       ├── prisma.ts      # Prisma 客户端
 │       ├── permissions.ts # 权限管理
+│       ├── lyrics-ocr.ts  # 歌谱 OCR 路由（Gemini / OpenAI）
 │       └── utils.ts       # 工具函数
 └── public/                # 静态资源
 ```

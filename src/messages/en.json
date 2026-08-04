@@ -36,7 +36,8 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "skipToContent": "Skip to main content",
-    "playlists": "Playlists"
+    "playlists": "Playlists",
+    "guide": "Guide"
   },
   "roles": {
     "SUPER_ADMIN": "Super Admin",
@@ -113,7 +114,9 @@
     "importData": "Import data",
     "importDataDesc": "Import from Excel",
     "viewLeaderboard": "Leaderboard",
-    "viewLeaderboardDesc": "See popular songs"
+    "viewLeaderboardDesc": "See popular songs",
+    "viewGuide": "Feature guide",
+    "viewGuideDesc": "Explore highlights and module help"
   },
   "settings": {
     "title": "Settings",
@@ -271,6 +274,9 @@
     "extractingLyrics": "Extracting lyrics...",
     "extractConfirmOverwrite": "Lyrics already exist. Overwrite with extracted text?",
     "extractSuccess": "Extracted lyrics filled in — review before saving",
+    "autoExtractingLyrics": "Automatically extracting lyrics...",
+    "autoExtractSuccess": "Lyrics extracted and filled in automatically",
+    "autoExtractSaved": "Lyrics extracted and saved automatically",
     "extractFailed": "Failed to extract lyrics from sheet",
     "plainLyrics": "Plain lyrics",
     "notes": "Notes",
@@ -334,6 +340,14 @@
     "dropCoverHint": "Images only (JPG / PNG)",
     "sheetPreview": "Sheet music preview",
     "downloadSheet": "Download sheet",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "resetZoom": "Reset zoom",
+    "fullscreen": "Fullscreen",
+    "exitFullscreen": "Exit fullscreen",
+    "zoomHint": "Ctrl/⌘ + scroll to zoom",
+    "noLyrics": "No lyrics yet",
+    "addLyrics": "Add lyrics",
     "uploadedBy": "Song uploaded by",
     "sheetUploadedBy": "Sheet uploaded by",
     "unknownUploader": "Unknown"
@@ -575,6 +589,114 @@
     "confirmDelete": "Delete this playlist?",
     "deleted": "Playlist deleted",
     "deleteFailed": "Failed to delete playlist"
+  },
+  "guide": {
+    "eyebrow": "Explore the platform",
+    "title": "Feature guide",
+    "subtitle": "Learn what each module does, with highlights on AI song picking, tags, playlists, and lyrics tools.",
+    "featuredTitle": "Highlighted features",
+    "featuredDesc": "Tools built for worship teams — start here.",
+    "allModulesTitle": "All modules",
+    "allModulesDesc": "Browse every feature. Use “Try it” to open the related page.",
+    "tabAll": "All",
+    "tabFeatured": "Featured",
+    "tabCore": "Core",
+    "tryIt": "Try it",
+    "agentHintTitle": "Where is the song assistant?",
+    "agentHintDesc": "After login, look for the chat button at the bottom-right on any main page. Describe the occasion, mood, or a lyric snippet — it searches the catalog, suggests popular songs, and leaders can add picks to playlists. Requires AI API keys on the server.",
+    "badges": {
+      "ai": "AI",
+      "new": "New",
+      "smart": "Smart"
+    },
+    "features": {
+      "songAgent": {
+        "title": "AI song assistant",
+        "desc": "Floating chat to find songs, check trends, and add to playlists in natural language.",
+        "tip1": "Try: “Upbeat Easter worship songs for Sunday”",
+        "tip2": "Only recommends real catalog songs — never invents titles",
+        "tip3": "Chat history stays in this browser; you can clear it anytime"
+      },
+      "lyricsOcr": {
+        "title": "Sheet OCR for lyrics",
+        "desc": "Extract lyric text from uploaded sheet images or PDFs in one click.",
+        "tip1": "Fills the form only — confirms before overwriting existing lyrics",
+        "tip2": "Needs Gemini API; unavailable when not configured"
+      },
+      "lrcKaraoke": {
+        "title": "LRC timed follow-along",
+        "desc": "Optional LRC lyrics highlight the current line while audio plays.",
+        "tip1": "Stored separately from plain lyrics",
+        "tip2": "Share pages show plain text; follow-along is on the detail page"
+      },
+      "tags": {
+        "title": "Type + style tags",
+        "desc": "Replaces single category with multi-select occasion types and moods.",
+        "tip1": "TYPE: Sunday worship, Christmas, children, etc.; STYLE: upbeat, solemn, inspiring",
+        "tip2": "Filter the library with AND across selected tags",
+        "tip3": "Click tag badges on song cards to toggle filters quickly"
+      },
+      "playlists": {
+        "title": "Standalone playlists",
+        "desc": "Separate from meeting records — for rehearsal lists, themes, and sharing.",
+        "tip1": "Create an empty playlist, then add songs from the library or detail page",
+        "tip2": "Does not affect leaderboard stats (only meeting picks count)"
+      },
+      "share": {
+        "title": "One-click share",
+        "desc": "Public links for songs, meetings, or playlists — no login required to view.",
+        "tip1": "Playlist shares include full song info and sheet preview",
+        "tip2": "Handy for band members or guest musicians"
+      },
+      "songs": {
+        "title": "Song library",
+        "desc": "Upload sheets, audio, covers; edit metadata and lyrics; search and download.",
+        "tip1": "Key, time signature, composer, album, MV link, and more",
+        "tip2": "Leaders and above can upload and edit"
+      },
+      "lyricsSearch": {
+        "title": "Dedicated lyrics search",
+        "desc": "Besides title/artist search, search lyric body text separately.",
+        "tip1": "Combines with tag filters and title search"
+      },
+      "scriptures": {
+        "title": "Scripture links",
+        "desc": "Attach multiple scripture references and optional verse text per song.",
+        "tip1": "Add on upload/edit; shown on detail and share pages",
+        "tip2": "Main search also matches scripture references"
+      },
+      "quickTags": {
+        "title": "Quick tag edit",
+        "desc": "Tap the cover on the song detail page to edit tags in a dialog.",
+        "tip1": "Requires edit permission; cover colors refresh after save"
+      },
+      "meetings": {
+        "title": "Meeting records",
+        "desc": "Log songs, speaker, and worship leader per gathering; filter by year/month.",
+        "tip1": "Search the catalog when creating; add a new song on the spot if missing",
+        "tip2": "Meeting song picks feed the leaderboard"
+      },
+      "leaderboard": {
+        "title": "Song leaderboard",
+        "desc": "Ranked by how often songs appear in meetings; year filter and pagination.",
+        "tip1": "Choose all-time or a specific year"
+      },
+      "teams": {
+        "title": "Team collaboration",
+        "desc": "Create teams, invite members, and chat in-app.",
+        "tip1": "Not the same as the free-text “team” field on a song"
+      },
+      "data": {
+        "title": "Import & export",
+        "desc": "Bulk import from Excel or export backups by year.",
+        "tip1": "Import requires leader role or above"
+      },
+      "i18n": {
+        "title": "English & Chinese UI",
+        "desc": "Switch EN / 中文 in the header; preference is remembered.",
+        "tip1": "UI strings only — song content stays as entered"
+      }
+    }
   },
   "agent": {
     "title": "Song assistant",

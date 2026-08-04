@@ -3,6 +3,7 @@
 import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -37,6 +38,7 @@ type ViewMode = 'grid' | 'list'
 
 export default function SongsPage() {
   const { t } = useI18n()
+  const router = useRouter()
   const permissions = usePermissions()
   const [songs, setSongs] = useState<Song[]>([])
   const [typeTags, setTypeTags] = useState<TagItem[]>([])
@@ -151,7 +153,7 @@ export default function SongsPage() {
         <div className="flex items-center space-x-2">
           {permissions.canCreateSong && (
             <Link
-              href="/songs/upload"
+              href="/song-upload"
               className={buttonVariants({ className: 'rounded-xl btn-active' })}
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -262,7 +264,7 @@ export default function SongsPage() {
             <p className="text-muted-foreground mb-6">{t('songs.noSongsHint')}</p>
             {permissions.canCreateSong && (
               <Link
-                href="/songs/upload"
+                href="/song-upload"
                 className={buttonVariants({ className: 'rounded-xl' })}
               >
                 <Plus className="mr-2 h-4 w-4" />
@@ -276,11 +278,12 @@ export default function SongsPage() {
           {songs.map((song, index) => (
             <Card
               key={song.id}
-              className="card-hover animate-fade-in border-0 shadow-sm h-full"
+              className="card-hover animate-fade-in border-0 shadow-sm h-full cursor-pointer"
               style={{ animationDelay: `${index * 50}ms` }}
+              onClick={() => router.push(`/songs/${song.id}`)}
             >
               <CardContent className="p-6">
-                <Link href={`/songs/${song.id}`} className="block group mb-3">
+                <div className="block group mb-3">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg group-hover:text-primary transition-colors line-clamp-1">
@@ -305,16 +308,19 @@ export default function SongsPage() {
                       {song.lyrics.split('\n')[0]}
                     </p>
                   )}
-                </Link>
+                </div>
 
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex flex-wrap gap-1">
-                    <SongTagBadges
-                      tags={song.tags}
-                      onTagClick={handleSongTagClick}
-                      onUncategorizedClick={handleUncategorizedClick}
-                    />
-                  </div>
+                  <div
+                  className="flex flex-wrap gap-1"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <SongTagBadges
+                    tags={song.tags}
+                    onTagClick={handleSongTagClick}
+                    onUncategorizedClick={handleUncategorizedClick}
+                  />
+                </div>
                   <div className="flex items-center space-x-3 text-xs text-muted-foreground shrink-0">
                     {song.sheetMusic && <FileText className="h-3 w-3" />}
                     {song.audioFile && <Play className="h-3 w-3" />}
@@ -329,7 +335,10 @@ export default function SongsPage() {
                     variant="ghost"
                     size="sm"
                     className="mt-3 w-full justify-center rounded-lg"
-                    onClick={() => openAddToPlaylist(song.id)}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      openAddToPlaylist(song.id)
+                    }}
                   >
                     <ListMusic className="mr-2 h-4 w-4" />
                     {t('playlists.addToPlaylist')}
@@ -352,22 +361,23 @@ export default function SongsPage() {
           {songs.map((song, index) => (
             <div
               key={song.id}
-              className="flex items-center md:grid md:grid-cols-12 gap-4 p-4 bg-white rounded-xl hover:shadow-md transition-all animate-fade-in border border-gray-100"
+              className="flex items-center md:grid md:grid-cols-12 gap-4 p-4 bg-white rounded-xl hover:shadow-md transition-all animate-fade-in border border-gray-100 cursor-pointer"
               style={{ animationDelay: `${index * 30}ms` }}
+              onClick={() => router.push(`/songs/${song.id}`)}
             >
-              <Link
-                href={`/songs/${song.id}`}
-                className="min-w-0 md:col-span-4 flex items-center space-x-3 group"
-              >
+              <div className="min-w-0 md:col-span-4 flex items-center space-x-3 group">
                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
                   <Music className="h-5 w-5 text-foreground" />
                 </div>
                 <p className="font-medium group-hover:text-primary transition-colors truncate">
                   {song.title}
                 </p>
-              </Link>
+              </div>
 
-              <div className="md:col-span-3 hidden md:flex flex-wrap gap-1">
+              <div
+                className="md:col-span-3 hidden md:flex flex-wrap gap-1"
+                onClick={(event) => event.stopPropagation()}
+              >
                 <SongTagBadges
                   tags={song.tags}
                   onTagClick={handleSongTagClick}
@@ -406,7 +416,10 @@ export default function SongsPage() {
                     size="icon-sm"
                     className="rounded-lg shrink-0"
                     title={t('playlists.addToPlaylist')}
-                    onClick={() => openAddToPlaylist(song.id)}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      openAddToPlaylist(song.id)
+                    }}
                   >
                     <ListMusic className="h-4 w-4" />
                   </Button>
@@ -425,14 +438,15 @@ export default function SongsPage() {
                     size="icon-sm"
                     className="rounded-lg shrink-0"
                     title={t('playlists.addToPlaylist')}
-                    onClick={() => openAddToPlaylist(song.id)}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      openAddToPlaylist(song.id)
+                    }}
                   >
                     <ListMusic className="h-4 w-4" />
                   </Button>
                 )}
-                <Link href={`/songs/${song.id}`} aria-label={song.title}>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </Link>
+                <ChevronRight className="h-4 w-4 text-muted-foreground md:hidden" aria-hidden />
               </div>
             </div>
           ))}

@@ -4,16 +4,14 @@ import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button, buttonVariants } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  ArrowLeft, Edit, Trash, FileText, Music2, Calendar, Download,
+  ArrowLeft, Edit, Trash, FileText, Music2, Download,
   Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, Repeat,
-  Shuffle, Heart, Share2, ListMusic, ListPlus, Disc3, Mic2, Clock, Video, ExternalLink, Tags
+  Shuffle, Heart, ListMusic, ListPlus, Disc3, Mic2, Video, ExternalLink, Tags, Loader2
 } from 'lucide-react'
 import Link from 'next/link'
-import { format } from 'date-fns'
-import { enUS, zhCN } from 'date-fns/locale'
+import { requestExtractAndSaveLyrics } from '@/lib/extract-lyrics-client'
 import { ShareButton } from '@/components/share-button'
 import { SongTagBadges, type TagItem } from '@/components/tag-multi-select'
 import { AddToPlaylistDialog } from '@/components/add-to-playlist-dialog'
@@ -23,6 +21,7 @@ import { SongScripturesDisplay } from '@/components/song-scriptures-editor'
 import { usePermissions } from '@/hooks/use-permissions'
 import { toast } from 'sonner'
 import { parseLrc } from '@/lib/lrc'
+import { getRouteParamId, isSongDetailId, SONG_UPLOAD_PATH } from '@/lib/route-params'
 
 interface Song {
   id: string
@@ -51,21 +50,13 @@ interface Song {
     text: string | null
     order: number
   }>
-  meetings: Array<{
-    meeting: {
-      id: string
-      date: string
-      theme: string | null
-      leader: string | null
-    }
-  }>
 }
 
 export default function SongDetailPage() {
-  const { t, locale } = useI18n()
-  const dateLocale = locale === 'zh' ? zhCN : enUS
+  const { t } = useI18n()
   const params = useParams()
   const router = useRouter()
+  const songId = getRouteParamId(params.id)
   const permissions = usePermissions()
   const [song, setSong] = useState<Song | null>(null)
   const [loading, setLoading] = useState(true)
@@ -83,28 +74,118 @@ export default function SongDetailPage() {
   const [addToPlaylistOpen, setAddToPlaylistOpen] = useState(false)
   const [tagsDialogOpen, setTagsDialogOpen] = useState(false)
   const [sheetPreviewOpen, setSheetPreviewOpen] = useState(false)
+  const [extractingLyrics, setExtractingLyrics] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const lyricsRef = useRef<HTMLDivElement>(null)
+  const autoExtractAttemptedRef = useRef<string | null>(null)
 
   useEffect(() => {
-    fetchSong()
-  }, [params.id])
-
-  useEffect(() => {
-    if (song?.lyricsLrc && isPlaying) {
-      updateCurrentLyric()
+    if (!isSongDetailId(songId)) {
+      if (songId === 'upload') {
+        router.replace(SONG_UPLOAD_PATH)
+      } else if (songId === 'new') {
+        router.replace('/songs/new')
+      }
+      return
     }
-  }, [currentTime, song?.lyricsLrc, isPlaying])
+
+    let cancelled = false
+    setSong(null)
+    setLoading(true)
+
+    const fetchSong = async () => {
+      try {
+        const response = await fetch(`/api/songs/${songId}`)
+        if (cancelled) return
+
+        if (response.ok) {
+          const data = (await response.json()) as Song
+          if (data?.id && data.title) {
+            setSong(data)
+          } else {
+            toast.error(t('songs.songNotFound'))
+            router.push('/songs')
+          }
+        } else {
+          toast.error(t('songs.songNotFound'))
+          router.push('/songs')
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Failed to fetch song:', error)
+          toast.error(t('songs.loadFailed'))
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    void fetchSong()
+
+    return () => {
+      cancelled = true
+    }
+  }, [songId, router, t])
+
+  useEffect(() => {
+    if (!song?.sheetMusic) return
+    if (song.lyrics?.trim() || song.lyricsLrc?.trim()) return
+    if (autoExtractAttemptedRef.current === song.id) return
+
+    autoExtractAttemptedRef.current = song.id
+
+    const autoExtract = async () => {
+      setExtractingLyrics(true)
+      toast.message(t('songs.autoExtractingLyrics'))
+      try {
+        const result = await requestExtractAndSaveLyrics(song.id)
+        if (result.ok && result.lyrics.trim()) {
+          setSong((prev) => (prev ? { ...prev, lyrics: result.lyrics } : prev))
+          toast.success(t('songs.autoExtractSaved'))
+        }
+      } finally {
+        setExtractingLyrics(false)
+      }
+    }
+
+    void autoExtract()
+  }, [song, t])
+
+  const handleExtractAndSaveLyrics = async () => {
+    if (!song) return
+    setExtractingLyrics(true)
+    try {
+      const result = await requestExtractAndSaveLyrics(song.id)
+      if (!result.ok) {
+        toast.error(
+          result.error === 'extractFailed'
+            ? t('songs.extractFailed')
+            : result.error,
+        )
+        return
+      }
+      if (!result.lyrics.trim()) {
+        toast.error(t('songs.extractFailed'))
+        return
+      }
+      setSong((prev) => (prev ? { ...prev, lyrics: result.lyrics } : prev))
+      toast.success(t('songs.autoExtractSaved'))
+    } finally {
+      setExtractingLyrics(false)
+    }
+  }
 
   const fetchSong = async () => {
+    if (!isSongDetailId(songId)) return
+
+    setLoading(true)
     try {
-      const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : ''
-      const response = await fetch(`/api/songs/${id}`)
+      const response = await fetch(`/api/songs/${songId}`)
       if (response.ok) {
-        const data = await response.json()
-        setSong(data)
-      } else {
-        router.push('/songs')
+        const data = (await response.json()) as Song
+        if (data?.id && data.title) {
+          setSong(data)
+        }
       }
     } catch (error) {
       console.error('Failed to fetch song:', error)
@@ -125,8 +206,7 @@ export default function SongDetailPage() {
 
     setDeleting(true)
     try {
-      const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : ''
-      const response = await fetch(`/api/songs/${id}`, {
+      const response = await fetch(`/api/songs/${songId}`, {
         method: 'DELETE',
       })
 
@@ -241,6 +321,12 @@ export default function SongDetailPage() {
     }
   }
 
+  useEffect(() => {
+    if (song?.lyricsLrc && isPlaying) {
+      updateCurrentLyric()
+    }
+  }, [currentTime, song?.lyricsLrc, isPlaying])
+
   // 获取songs.category颜色
   const getCategoryColor = (categoryName: string) => {
     const colors: Record<string, string> = {
@@ -296,7 +382,7 @@ export default function SongDetailPage() {
   const timedFollowAlong = lrcLines.length > 0
 
   return (
-    <div className="space-y-6">
+    <div key={songId} className="space-y-6">
       {/* 头部 */}
       <div className="flex items-center justify-between animate-fade-in">
         <div className="flex items-center space-x-4">
@@ -535,78 +621,9 @@ export default function SongDetailPage() {
             </Card>
           )}
 
-          {/* lyrics display */}
-          {(timedFollowAlong || plainLines.length > 0) && (
-            <Card className="animate-fade-in border-0 shadow-lg" style={{ animationDelay: '300ms' }}>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center space-x-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
-                      <ListMusic className="h-4 w-4 text-white" />
-                    </div>
-                    <span>{t('songs.lyrics')}</span>
-                  </CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowLyrics(!showLyrics)}
-                    className="rounded-lg"
-                  >
-                    {showLyrics ? t('songs.collapseLyrics') : t('songs.expandLyrics')}
-                  </Button>
-                </div>
-              </CardHeader>
-              {showLyrics && (
-                <CardContent className="space-y-4">
-                  {timedFollowAlong ? (
-                    <div
-                      ref={lyricsRef}
-                      className="max-h-96 overflow-y-auto space-y-3 p-4 bg-gray-50 rounded-xl"
-                    >
-                      {lrcLines.map((line, index) => (
-                        <div
-                          key={`${line.timeSec}-${index}`}
-                          className={`py-2 px-4 rounded-lg transition-all duration-300 ${
-                            index === currentLyricIndex
-                              ? 'bg-primary text-primary-foreground font-bold text-lg scale-105'
-                              : 'text-muted-foreground hover:bg-gray-100'
-                          }`}
-                        >
-                          {line.text}
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                  {plainLines.length > 0 && (
-                    <div className={timedFollowAlong ? 'space-y-2' : undefined}>
-                      {timedFollowAlong && (
-                        <p className="text-sm font-medium text-muted-foreground">
-                          {t('songs.plainLyrics')}
-                        </p>
-                      )}
-                      <div
-                        className={`max-h-96 overflow-y-auto space-y-3 p-4 bg-gray-50 rounded-xl ${
-                          timedFollowAlong ? 'max-h-48' : ''
-                        }`}
-                      >
-                        {plainLines.map((line, index) => (
-                          <div
-                            key={index}
-                            className="py-2 px-4 rounded-lg text-muted-foreground"
-                          >
-                            {line.trim()}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              )}
-            </Card>
-          )}
         </div>
 
-        {/* 右侧：songs.songInfo和songs.usageHistory */}
+        {/* 右侧：歌曲信息与歌词 */}
         <div className="space-y-6">
           {/* songs.songInfo */}
           <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '200ms' }}>
@@ -700,13 +717,6 @@ export default function SongDetailPage() {
                   <span className="font-medium">{song.album}</span>
                 </div>
               )}
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                <span className="text-sm text-muted-foreground">{t('songs.usageCount')}</span>
-                <div className="flex items-center space-x-1">
-                  <Music2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{t('songs.times', { count: song.meetings.length })}</span>
-                </div>
-              </div>
               {song.notes && (
                 <div className="p-3 bg-gray-50 rounded-xl">
                   <span className="text-sm text-muted-foreground">{t('songs.notes')}</span>
@@ -717,6 +727,115 @@ export default function SongDetailPage() {
                 <SongScripturesDisplay scriptures={song.scriptures} t={t} />
               )}
             </CardContent>
+          </Card>
+
+          {/* 歌词 */}
+          <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '250ms' }}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
+                    <ListMusic className="h-4 w-4 text-white" />
+                  </div>
+                  <span>{t('songs.lyrics')}</span>
+                </CardTitle>
+                {(timedFollowAlong || plainLines.length > 0) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowLyrics(!showLyrics)}
+                    className="rounded-lg"
+                  >
+                    {showLyrics ? t('songs.collapseLyrics') : t('songs.expandLyrics')}
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            {showLyrics && (
+              <CardContent className="space-y-4">
+                {timedFollowAlong || plainLines.length > 0 ? (
+                  <>
+                    {timedFollowAlong ? (
+                      <div
+                        ref={lyricsRef}
+                        className="max-h-80 overflow-y-auto space-y-2 rounded-xl bg-gray-50 p-4"
+                      >
+                        {lrcLines.map((line, index) => (
+                          <div
+                            key={`${line.timeSec}-${index}`}
+                            className={`rounded-lg px-4 py-2 transition-all duration-300 ${
+                              index === currentLyricIndex
+                                ? 'scale-105 bg-primary text-lg font-bold text-primary-foreground'
+                                : 'text-muted-foreground hover:bg-gray-100'
+                            }`}
+                          >
+                            {line.text}
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                    {plainLines.length > 0 && (
+                      <div className={timedFollowAlong ? 'space-y-2' : undefined}>
+                        {timedFollowAlong && (
+                          <p className="text-sm font-medium text-muted-foreground">
+                            {t('songs.plainLyrics')}
+                          </p>
+                        )}
+                        <div
+                          className={`max-h-80 overflow-y-auto space-y-2 rounded-xl bg-gray-50 p-4 ${
+                            timedFollowAlong ? 'max-h-48' : ''
+                          }`}
+                        >
+                          {plainLines.map((line, index) => (
+                            <div
+                              key={index}
+                              className="rounded-lg px-4 py-2 text-muted-foreground"
+                            >
+                              {line.trim()}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-gray-50 py-8 text-center">
+                    {extractingLyrics ? (
+                      <>
+                        <Loader2 className="mb-2 h-8 w-8 animate-spin text-muted-foreground/70" />
+                        <p className="text-sm text-muted-foreground">
+                          {t('songs.autoExtractingLyrics')}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <ListMusic className="mb-2 h-8 w-8 text-muted-foreground/50" />
+                        <p className="text-sm text-muted-foreground">{t('songs.noLyrics')}</p>
+                        {song.sheetMusic && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="mt-3 rounded-lg"
+                            onClick={() => void handleExtractAndSaveLyrics()}
+                          >
+                            {t('songs.extractFromSheet')}
+                          </Button>
+                        )}
+                        {permissions.canEditSong && (
+                          <Link
+                            href={`/songs/${song.id}/edit`}
+                            className="mt-3 text-sm text-primary hover:underline"
+                          >
+                            {t('songs.addLyrics')}
+                          </Link>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            )}
           </Card>
 
           {/* songs.attachments */}
@@ -769,60 +888,6 @@ export default function SongDetailPage() {
                   </div>
                   <ExternalLink className="h-4 w-4 text-muted-foreground" />
                 </a>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* songs.usageHistory */}
-          <Card className="animate-fade-in border-0 shadow-sm" style={{ animationDelay: '400ms' }}>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-                  <Calendar className="h-4 w-4 text-white" />
-                </div>
-                <span>{t('songs.usageHistory')}</span>
-              </CardTitle>
-              <CardDescription>{t('songs.recentUsage')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {song.meetings.length > 0 ? (
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {song.meetings.slice(0, 10).map((item, index) => (
-                    <Link
-                      key={index}
-                      href={`/meetings/${item.meeting.id}`}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                          <Calendar className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium group-hover:text-primary transition-colors">
-                            {format(new Date(item.meeting.date), 'PPP', {
-                              locale: dateLocale,
-                            })}
-                          </p>
-                          {item.meeting.theme && (
-                            <p className="text-xs text-muted-foreground line-clamp-1">
-                              {item.meeting.theme}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      {item.meeting.leader && (
-                        <span className="text-xs text-muted-foreground">
-                          {item.meeting.leader}
-                        </span>
-                      )}
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
-                  <Calendar className="h-8 w-8 mb-2 opacity-50" />
-                  <p className="text-sm">{t('songs.noUsage')}</p>
-                </div>
               )}
             </CardContent>
           </Card>

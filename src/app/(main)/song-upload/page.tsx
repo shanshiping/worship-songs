@@ -12,6 +12,7 @@ import { ArrowLeft, Upload, FileText, Music, Loader2, Sparkles, X, CheckCircle }
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/errors'
+import { requestExtractedLyrics } from '@/lib/extract-lyrics-client'
 import { TagMultiSelect, type TagItem } from '@/components/tag-multi-select'
 import {
   SongScripturesEditor,
@@ -162,6 +163,7 @@ export default function UploadSongPage() {
       setSheetMusic(result)
       toast.success(t('songs.sheetUploadSuccess'))
       handleFileParse(file)
+      void autoExtractLyricsAfterSheetUpload(result.path)
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, t('songs.sheetUploadFailed')))
     } finally {
@@ -216,29 +218,41 @@ export default function UploadSongPage() {
     setAudioFile(null)
   }
 
-  const handleExtractLyrics = async () => {
-    if (!sheetMusic?.path) return
+  const handleExtractLyrics = async (sheetPath = sheetMusic?.path) => {
+    if (!sheetPath) return
     if (formData.lyrics.trim()) {
       const ok = window.confirm(t('songs.extractConfirmOverwrite'))
       if (!ok) return
     }
     setExtractingLyrics(true)
     try {
-      const response = await fetch('/api/songs/extract-lyrics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: sheetMusic.path }),
-      })
-      const data = await response.json()
-      if (!response.ok) {
-        toast.error(data.error || t('songs.extractFailed'))
+      const result = await requestExtractedLyrics(sheetPath)
+      if (!result.ok) {
+        toast.error(
+          result.error === 'extractFailed'
+            ? t('songs.extractFailed')
+            : result.error,
+        )
         return
       }
-      setFormData((prev) => ({ ...prev, lyrics: data.lyrics || '' }))
+      setFormData((prev) => ({ ...prev, lyrics: result.lyrics }))
       toast.success(t('songs.extractSuccess'))
-    } catch (error) {
-      console.error('Extract lyrics error:', error)
-      toast.error(t('songs.extractFailed'))
+    } finally {
+      setExtractingLyrics(false)
+    }
+  }
+
+  const autoExtractLyricsAfterSheetUpload = async (sheetPath: string) => {
+    if (formData.lyrics.trim()) return
+
+    setExtractingLyrics(true)
+    toast.message(t('songs.autoExtractingLyrics'))
+    try {
+      const result = await requestExtractedLyrics(sheetPath)
+      if (!result.ok) return
+      if (!result.lyrics.trim()) return
+      setFormData((prev) => ({ ...prev, lyrics: result.lyrics }))
+      toast.success(t('songs.autoExtractSuccess'))
     } finally {
       setExtractingLyrics(false)
     }
@@ -683,7 +697,7 @@ export default function UploadSongPage() {
                     size="sm"
                     className="rounded-lg"
                     disabled={extractingLyrics}
-                    onClick={handleExtractLyrics}
+                    onClick={() => void handleExtractLyrics()}
                   >
                     {extractingLyrics ? (
                       <>

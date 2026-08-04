@@ -1,42 +1,14 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { extractLyricsFromSheet } from '@/lib/gemini-lyrics'
-import { readFile } from 'fs/promises'
-import path from 'path'
+import {
+  getLyricsOcrConfigError,
+  isLyricsOcrConfigured,
+} from '@/lib/lyrics-ocr-config'
+import { extractLyricsFromSheet } from '@/lib/lyrics-ocr'
+import { readSheetBytes, resolveSheetPath } from '@/lib/sheet-lyrics'
 
-const SHEET_PREFIX = '/uploads/sheets/'
-
-const MIME_BY_EXT: Record<string, string> = {
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.png': 'image/png',
-  '.gif': 'image/gif',
-  '.webp': 'image/webp',
-  '.pdf': 'application/pdf',
-}
-
-/** Resolve a public sheet path to an absolute file path, or null if unsafe/invalid. */
-export function resolveSheetPath(rawPath: unknown): {
-  absolutePath: string
-  mimeType: string
-} | null {
-  if (typeof rawPath !== 'string') return null
-  const trimmed = rawPath.trim()
-  if (!trimmed.startsWith(SHEET_PREFIX)) return null
-  if (trimmed.includes('..') || trimmed.includes('\\')) return null
-
-  const relative = trimmed.slice(1) // uploads/sheets/...
-  const fileName = path.basename(relative)
-  if (!fileName || fileName !== relative.split('/').pop()) return null
-
-  const ext = path.extname(fileName).toLowerCase()
-  const mimeType = MIME_BY_EXT[ext]
-  if (!mimeType) return null
-
-  const absolutePath = path.join(process.cwd(), 'public', 'uploads', 'sheets', fileName)
-  return { absolutePath, mimeType }
-}
+export { resolveSheetPath }
 
 export async function POST(request: Request) {
   try {
@@ -45,10 +17,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '请先登录' }, { status: 401 })
     }
 
-    const apiKey = process.env.GEMINI_API_KEY?.trim()
-    if (!apiKey) {
+    if (!isLyricsOcrConfigured()) {
       return NextResponse.json(
-        { error: '未配置 GEMINI_API_KEY，无法识别歌谱歌词' },
+        { error: getLyricsOcrConfigError() },
         { status: 503 }
       )
     }
@@ -64,7 +35,7 @@ export async function POST(request: Request) {
 
     let bytes: Buffer
     try {
-      bytes = await readFile(resolved.absolutePath)
+      bytes = await readSheetBytes(body.path)
     } catch {
       return NextResponse.json(
         { error: '歌谱文件不存在' },
@@ -76,11 +47,10 @@ export async function POST(request: Request) {
       const lyrics = await extractLyricsFromSheet({
         bytes,
         mimeType: resolved.mimeType,
-        apiKey,
       })
       return NextResponse.json({ lyrics })
     } catch (err) {
-      console.error('Gemini extract error:', err)
+      console.error('Lyrics OCR extract error:', err)
       return NextResponse.json(
         {
           error:

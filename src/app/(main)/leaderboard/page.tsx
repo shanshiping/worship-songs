@@ -84,6 +84,68 @@ export default function LeaderboardPage() {
     }
   }
 
+  const renderPodiumCard = (item: LeaderboardItem) => {
+    const card = (
+      <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              {getRankIcon(item.rank)}
+              <CardTitle className="text-lg">{item.title}</CardTitle>
+            </div>
+            <Badge variant="secondary">{item.category}</Badge>
+          </div>
+          {item.artist && <CardDescription>{item.artist}</CardDescription>}
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center space-x-2">
+            <Music className="h-4 w-4 text-muted-foreground" />
+            <span className="text-2xl font-bold">{item.count}</span>
+            <span className="text-muted-foreground">{t('leaderboard.timesUsed')}</span>
+          </div>
+        </CardContent>
+      </Card>
+    )
+
+    if (!item.id) return card
+
+    return (
+      <Link href={`/songs/${item.id}`} className="block h-full">
+        {card}
+      </Link>
+    )
+  }
+
+  const renderListRow = (item: LeaderboardItem) => {
+    const row = (
+      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+        <div className="flex items-center space-x-4">
+          <span className="text-sm font-medium text-muted-foreground w-8 text-center">
+            {item.rank}
+          </span>
+          <div>
+            <p className="font-medium">{item.title}</p>
+            {item.artist && (
+              <p className="text-sm text-muted-foreground">{item.artist}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center space-x-4">
+          <Badge variant="outline">{item.category}</Badge>
+          <div className="flex items-center space-x-1">
+            <Music className="h-4 w-4 text-muted-foreground" />
+            <span className="font-bold">{item.count}</span>
+            <span className="text-sm text-muted-foreground">{t('leaderboard.times')}</span>
+          </div>
+        </div>
+      </div>
+    )
+
+    if (!item.id) return row
+
+    return <Link href={`/songs/${item.id}`}>{row}</Link>
+  }
+
   const periodLabel = year
     ? t('leaderboard.yearLabel', { year })
     : t('leaderboard.allTime')
@@ -158,29 +220,7 @@ export default function LeaderboardPage() {
           {showPodium && (
             <div className="grid gap-4 md:grid-cols-3">
               {podiumItems.map((item) => (
-                <Link key={item.id} href={`/songs/${item.id}`}>
-                  <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          {getRankIcon(item.rank)}
-                          <CardTitle className="text-lg">{item.title}</CardTitle>
-                        </div>
-                        <Badge variant="secondary">{item.category}</Badge>
-                      </div>
-                      {item.artist && (
-                        <CardDescription>{item.artist}</CardDescription>
-                      )}
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center space-x-2">
-                        <Music className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-2xl font-bold">{item.count}</span>
-                        <span className="text-muted-foreground">{t('leaderboard.timesUsed')}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                <div key={item.id || `rank-${item.rank}`}>{renderPodiumCard(item)}</div>
               ))}
             </div>
           )}
@@ -195,33 +235,7 @@ export default function LeaderboardPage() {
             <CardContent>
               <div className="space-y-3">
                 {listItems.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/songs/${item.id}`}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <span className="text-sm font-medium text-muted-foreground w-8 text-center">
-                        {item.rank}
-                      </span>
-                      <div>
-                        <p className="font-medium">{item.title}</p>
-                        {item.artist && (
-                          <p className="text-sm text-muted-foreground">
-                            {item.artist}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <Badge variant="outline">{item.category}</Badge>
-                      <div className="flex items-center space-x-1">
-                        <Music className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-bold">{item.count}</span>
-                        <span className="text-sm text-muted-foreground">{t('leaderboard.times')}</span>
-                      </div>
-                    </div>
-                  </Link>
+                  <div key={item.id || `rank-${item.rank}`}>{renderListRow(item)}</div>
                 ))}
               </div>
             </CardContent>

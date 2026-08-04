@@ -1,7 +1,7 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import { MainLayout } from '@/components/layout/main-layout'
 
@@ -12,6 +12,7 @@ export default function MainLayoutPage({
 }) {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -31,5 +32,5 @@ export default function MainLayoutPage({
     return null
   }
 
-  return <MainLayout>{children}</MainLayout>
+  return <MainLayout key={pathname}>{children}</MainLayout>
 }

@@ -8,9 +8,16 @@ vi.mock('@/lib/prisma', async () => {
 })
 vi.mock('next-auth', () => ({ getServerSession: vi.fn() }))
 vi.mock('@/lib/auth', () => ({ authOptions: {} }))
+vi.mock('@/lib/sheet-lyrics', () => ({
+  resolveLyricsWithAutoExtract: vi.fn(async (_sheet, lyrics) => {
+    if (typeof lyrics === 'string' && lyrics.trim()) return lyrics.trim()
+    return '自动识别歌词'
+  }),
+}))
 
 import { DELETE, GET, PUT } from '@/app/api/songs/[id]/route'
 import { getServerSession } from 'next-auth'
+import { resolveLyricsWithAutoExtract } from '@/lib/sheet-lyrics'
 
 const params = { params: Promise.resolve({ id: 'song-1' }) }
 
@@ -18,6 +25,7 @@ describe('/api/songs/[id]', () => {
   beforeEach(() => {
     resetPrismaMock()
     vi.mocked(getServerSession).mockReset()
+    vi.mocked(resolveLyricsWithAutoExtract).mockClear()
   })
 
   it('GET returns 404 when missing', async () => {
@@ -229,6 +237,39 @@ describe('/api/songs/[id]', () => {
           sheetUploadedById: 'u2',
         }),
       })
+    )
+  })
+
+  it('PUT auto-extracts lyrics when sheet is added', async () => {
+    vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'u2' } })
+    mockPrisma.song.findUnique.mockResolvedValue({ sheetMusic: null })
+    mockPrisma.songTag.deleteMany.mockResolvedValue({ count: 0 })
+    mockPrisma.songScripture.deleteMany.mockResolvedValue({ count: 0 })
+    mockPrisma.song.update.mockResolvedValue({
+      id: 'song-1',
+      lyrics: '自动识别歌词',
+    })
+
+    const res = await PUT(
+      jsonRequest('http://localhost/api/songs/song-1', {
+        method: 'PUT',
+        body: {
+          title: '神掌权',
+          sheetMusic: '/uploads/sheets/new.pdf',
+          tagIds: [],
+        },
+      }),
+      params,
+    )
+    expect((await readJson(res)).status).toBe(200)
+    expect(resolveLyricsWithAutoExtract).toHaveBeenCalledWith(
+      '/uploads/sheets/new.pdf',
+      undefined,
+    )
+    expect(mockPrisma.song.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ lyrics: '自动识别歌词' }),
+      }),
     )
   })
 

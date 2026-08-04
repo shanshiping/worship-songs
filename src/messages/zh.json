@@ -36,7 +36,8 @@
     "openMenu": "打开菜单",
     "closeMenu": "关闭菜单",
     "skipToContent": "跳到主要内容",
-    "playlists": "歌单"
+    "playlists": "歌单",
+    "guide": "功能指南"
   },
   "roles": {
     "SUPER_ADMIN": "超级管理员",
@@ -113,7 +114,9 @@
     "importData": "导入数据",
     "importDataDesc": "从 Excel 导入数据",
     "viewLeaderboard": "查看排行",
-    "viewLeaderboardDesc": "查看热门歌曲排行"
+    "viewLeaderboardDesc": "查看热门歌曲排行",
+    "viewGuide": "功能指南",
+    "viewGuideDesc": "了解特色功能与模块说明"
   },
   "settings": {
     "title": "设置",
@@ -271,6 +274,9 @@
     "extractingLyrics": "正在识别歌词...",
     "extractConfirmOverwrite": "当前已有歌词，是否用识别结果覆盖？",
     "extractSuccess": "已填入识别的歌词，请核对后保存",
+    "autoExtractingLyrics": "正在自动识别歌词...",
+    "autoExtractSuccess": "已自动识别并填入歌词",
+    "autoExtractSaved": "已自动识别并保存歌词",
     "extractFailed": "歌谱歌词识别失败",
     "plainLyrics": "纯文本歌词",
     "notes": "备注",
@@ -334,6 +340,14 @@
     "dropCoverHint": "仅支持图片（JPG / PNG）",
     "sheetPreview": "歌谱预览",
     "downloadSheet": "下载歌谱",
+    "zoomIn": "放大",
+    "zoomOut": "缩小",
+    "resetZoom": "重置缩放",
+    "fullscreen": "全屏",
+    "exitFullscreen": "退出全屏",
+    "zoomHint": "Ctrl/⌘ + 滚轮可缩放",
+    "noLyrics": "暂无歌词",
+    "addLyrics": "添加歌词",
     "uploadedBy": "歌曲上传",
     "sheetUploadedBy": "歌谱上传",
     "unknownUploader": "未知"
@@ -575,6 +589,114 @@
     "confirmDelete": "确定删除这个歌单吗？",
     "deleted": "歌单已删除",
     "deleteFailed": "删除歌单失败"
+  },
+  "guide": {
+    "eyebrow": "了解平台能力",
+    "title": "功能指南",
+    "subtitle": "快速了解敬拜选歌平台各模块能做什么，重点介绍 AI 选歌、标签歌单、歌词识别等特色能力。",
+    "featuredTitle": "特色功能",
+    "featuredDesc": "为敬拜团队设计的高效工具，建议优先了解。",
+    "allModulesTitle": "全部功能模块",
+    "allModulesDesc": "按模块浏览完整功能说明，点击「去体验」可跳转到对应页面。",
+    "tabAll": "全部",
+    "tabFeatured": "特色",
+    "tabCore": "基础",
+    "tryIt": "去体验",
+    "agentHintTitle": "选歌助手在哪里？",
+    "agentHintDesc": "登录后，任意主页面右下角有对话按钮。用自然语言描述场合、心情或歌词片段，助手会搜索曲库、推荐热门歌曲，领队还可直接加入歌单。需服务器配置 AI 密钥后可用。",
+    "badges": {
+      "ai": "AI",
+      "new": "新",
+      "smart": "智能"
+    },
+    "features": {
+      "songAgent": {
+        "title": "选歌 AI 助手",
+        "desc": "全站悬浮对话，用自然语言找歌、查热门、加入歌单。",
+        "tip1": "例如：「找几首复活节、活泼的主日敬拜歌」",
+        "tip2": "仅推荐曲库中真实存在的歌曲，不会编造歌名",
+        "tip3": "对话历史保存在本浏览器，可随时清空"
+      },
+      "lyricsOcr": {
+        "title": "歌谱 OCR 提取歌词",
+        "desc": "上传歌谱后，一键从图片或 PDF 识别歌词文字。",
+        "tip1": "识别结果填入表单，覆盖前会提示确认",
+        "tip2": "需配置 Gemini API；未配置时按钮不可用"
+      },
+      "lrcKaraoke": {
+        "title": "LRC 时间轴跟唱",
+        "desc": "可选 LRC 格式歌词，播放音频时自动高亮当前行。",
+        "tip1": "与纯文本歌词独立保存，互不影响",
+        "tip2": "分享页展示纯文本，详情页才有跟唱效果"
+      },
+      "tags": {
+        "title": "类型 + 风格标签",
+        "desc": "取代旧版单一分类，支持多选场合类型与情绪风格。",
+        "tip1": "TYPE：主日敬拜、圣诞、儿童等；STYLE：活泼、忧伤、激励",
+        "tip2": "列表可按标签组合筛选（AND）",
+        "tip3": "点击歌曲卡片上的标签可快速切换筛选"
+      },
+      "playlists": {
+        "title": "独立歌单",
+        "desc": "与聚会记录分开，用于排练清单、主题合集与对外分享。",
+        "tip1": "先建空歌单，再从曲库或详情「加入歌单」",
+        "tip2": "不影响排行榜统计（只有聚会选歌才计入使用次数）"
+      },
+      "share": {
+        "title": "一键分享",
+        "desc": "歌曲、聚会、歌单均可生成公开链接，无需登录即可查看。",
+        "tip1": "歌单分享含完整歌曲信息与歌谱预览",
+        "tip2": "适合发给弟兄姊妹或外团同工"
+      },
+      "songs": {
+        "title": "曲库管理",
+        "desc": "上传歌谱、音频、封面，编辑元数据与歌词，搜索与下载。",
+        "tip1": "支持调、拍号、作曲、专辑、MV 等元数据",
+        "tip2": "领队及以上可上传与编辑"
+      },
+      "lyricsSearch": {
+        "title": "独立歌词搜索",
+        "desc": "除歌名/歌手外，另有专门搜索歌词正文的输入框。",
+        "tip1": "可与标签筛选、歌名搜索组合使用"
+      },
+      "scriptures": {
+        "title": "经文关联",
+        "desc": "每首歌可关联多条经文引用与可选经文正文。",
+        "tip1": "上传/编辑页动态增删；详情与分享页展示",
+        "tip2": "主搜索框也可匹配经文引用"
+      },
+      "quickTags": {
+        "title": "快速编辑标签",
+        "desc": "在歌曲详情页点击封面，对话框内快速修改标签。",
+        "tip1": "需有歌曲编辑权限；保存后立即刷新封面配色"
+      },
+      "meetings": {
+        "title": "聚会记录",
+        "desc": "记录每次聚会的选歌、讲员、主领，支持年月筛选。",
+        "tip1": "新建时可搜索曲库，搜不到可当场手动建歌",
+        "tip2": "聚会选歌会计入排行榜"
+      },
+      "leaderboard": {
+        "title": "歌曲排行榜",
+        "desc": "按聚会使用次数排名，支持年份与分页。",
+        "tip1": "选「全部时间」或指定年份查看"
+      },
+      "teams": {
+        "title": "团队协作",
+        "desc": "创建团队、添加成员、团队内聊天。",
+        "tip1": "与歌曲元数据里的「团队」文本字段无关"
+      },
+      "data": {
+        "title": "数据导入导出",
+        "desc": "Excel 批量导入历史数据，或按年导出备份。",
+        "tip1": "导入需领队及以上权限"
+      },
+      "i18n": {
+        "title": "中英双语",
+        "desc": "顶栏切换 EN / 中文，偏好自动记住。",
+        "tip1": "仅翻译界面文案，不翻译歌曲内容"
+      }
+    }
   },
   "agent": {
     "title": "选歌助手",

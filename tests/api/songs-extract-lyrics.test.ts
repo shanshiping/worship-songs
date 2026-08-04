@@ -3,7 +3,7 @@ import { jsonRequest, readJson } from '../helpers/request'
 
 vi.mock('next-auth', () => ({ getServerSession: vi.fn() }))
 vi.mock('@/lib/auth', () => ({ authOptions: {} }))
-vi.mock('@/lib/gemini-lyrics', () => ({
+vi.mock('@/lib/lyrics-ocr', () => ({
   extractLyricsFromSheet: vi.fn(),
 }))
 vi.mock('fs/promises', () => ({
@@ -12,7 +12,7 @@ vi.mock('fs/promises', () => ({
 
 import { POST } from '@/app/api/songs/extract-lyrics/route'
 import { getServerSession } from 'next-auth'
-import { extractLyricsFromSheet } from '@/lib/gemini-lyrics'
+import { extractLyricsFromSheet } from '@/lib/lyrics-ocr'
 import { readFile } from 'fs/promises'
 
 describe('/api/songs/extract-lyrics', () => {
@@ -21,6 +21,8 @@ describe('/api/songs/extract-lyrics', () => {
     vi.mocked(extractLyricsFromSheet).mockReset()
     vi.mocked(readFile).mockReset()
     delete process.env.GEMINI_API_KEY
+    delete process.env.LYRICS_OCR_PROVIDER
+    delete process.env.AI_API_KEY
   })
 
   it('returns 401 without session', async () => {
@@ -36,7 +38,7 @@ describe('/api/songs/extract-lyrics', () => {
     expect(body.error).toBe('请先登录')
   })
 
-  it('returns 503 without GEMINI_API_KEY', async () => {
+  it('returns 503 without OCR config', async () => {
     vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'u1' } })
     const res = await POST(
       jsonRequest('http://localhost/api/songs/extract-lyrics', {

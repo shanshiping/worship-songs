@@ -8,14 +8,22 @@ vi.mock('@/lib/prisma', async () => {
 })
 vi.mock('next-auth', () => ({ getServerSession: vi.fn() }))
 vi.mock('@/lib/auth', () => ({ authOptions: {} }))
+vi.mock('@/lib/sheet-lyrics', () => ({
+  resolveLyricsWithAutoExtract: vi.fn(async (_sheet, lyrics) => {
+    if (typeof lyrics === 'string' && lyrics.trim()) return lyrics.trim()
+    return '自动识别歌词'
+  }),
+}))
 
 import { GET, POST } from '@/app/api/songs/route'
 import { getServerSession } from 'next-auth'
+import { resolveLyricsWithAutoExtract } from '@/lib/sheet-lyrics'
 
 describe('/api/songs', () => {
   beforeEach(() => {
     resetPrismaMock()
     vi.mocked(getServerSession).mockReset()
+    vi.mocked(resolveLyricsWithAutoExtract).mockClear()
   })
 
   it('GET returns paginated songs', async () => {
@@ -195,9 +203,36 @@ describe('/api/songs', () => {
           title: '神掌权',
           uploadedById: 'u1',
           sheetUploadedById: 'u1',
+          lyrics: '自动识别歌词',
           tags: { create: [{ tagId: 't1' }] },
         }),
       })
+    )
+  })
+
+  it('POST keeps provided lyrics over auto extract', async () => {
+    vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'u1' } })
+    mockPrisma.song.create.mockResolvedValue({ id: 's1', title: 'T', tags: [] })
+
+    await POST(
+      jsonRequest('http://localhost/api/songs', {
+        method: 'POST',
+        body: {
+          title: 'T',
+          sheetMusic: '/uploads/sheets/a.pdf',
+          lyrics: '手动歌词',
+        },
+      }),
+    )
+
+    expect(resolveLyricsWithAutoExtract).toHaveBeenCalledWith(
+      '/uploads/sheets/a.pdf',
+      '手动歌词',
+    )
+    expect(mockPrisma.song.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ lyrics: '手动歌词' }),
+      }),
     )
   })
 

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getErrorMessage } from '@/lib/errors'
+import { resolveLyricsWithAutoExtract } from '@/lib/sheet-lyrics'
 import {
   normalizeOptional,
   isValidHttpUrl,
@@ -132,6 +133,15 @@ export async function PUT(
     const sheetRemoved = sheetChanged && normalizedSheet === null
     const userId = session?.user?.id
 
+    const shouldAutoExtract =
+      !normalizeOptional(lyrics) &&
+      normalizedSheet !== null &&
+      (sheetAddedOrReplaced || !(existing.sheetMusic ?? null))
+
+    const resolvedLyrics = shouldAutoExtract
+      ? await resolveLyricsWithAutoExtract(normalizedSheet, lyrics)
+      : normalizeOptional(lyrics)
+
     await prisma.songTag.deleteMany({ where: { songId: id } })
     await prisma.songScripture.deleteMany({ where: { songId: id } })
 
@@ -150,7 +160,7 @@ export async function PUT(
         coverImage: normalizeOptional(coverImage),
         sheetMusic: normalizedSheet,
         audioFile: normalizeOptional(audioFile),
-        lyrics: normalizeOptional(lyrics),
+        lyrics: resolvedLyrics,
         lyricsLrc: normalizeOptional(lyricsLrc),
         notes: normalizeOptional(notes),
         ...(sheetAddedOrReplaced && userId

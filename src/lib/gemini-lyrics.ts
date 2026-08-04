@@ -1,12 +1,4 @@
-const GEMINI_MODEL = 'gemini-2.0-flash'
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
-
-const EXTRACT_PROMPT = `Extract only the sung lyric lines from this sheet music image or PDF.
-Rules:
-- Output plain text lyrics only, one lyric line per line.
-- Omit musical notation, chord symbols, clefs, measure numbers, page headers/footers, and titles/artist if they are not lyric lines.
-- Preserve the original language of the lyrics.
-- If no lyrics are found, return an empty string.`
+import { LYRICS_OCR_PROMPT } from '@/lib/lyrics-ocr-config'
 
 type GeminiResponse = {
   candidates?: Array<{
@@ -17,13 +9,14 @@ type GeminiResponse = {
   error?: { message?: string }
 }
 
-export async function extractLyricsFromSheet(params: {
+export async function extractLyricsWithGemini(params: {
   bytes: Buffer
   mimeType: string
   apiKey: string
+  model: string
 }): Promise<string> {
-  const { bytes, mimeType, apiKey } = params
-  const url = `${GEMINI_URL}?key=${encodeURIComponent(apiKey)}`
+  const { bytes, mimeType, apiKey, model } = params
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`
 
   const res = await fetch(url, {
     method: 'POST',
@@ -38,7 +31,7 @@ export async function extractLyricsFromSheet(params: {
                 data: bytes.toString('base64'),
               },
             },
-            { text: EXTRACT_PROMPT },
+            { text: LYRICS_OCR_PROMPT },
           ],
         },
       ],
@@ -51,11 +44,23 @@ export async function extractLyricsFromSheet(params: {
     throw new Error(data.error?.message || `Gemini request failed (${res.status})`)
   }
 
-  const text =
+  return (
     data.candidates?.[0]?.content?.parts
-      ?.map((p) => p.text ?? '')
+      ?.map((part) => part.text ?? '')
       .join('')
       .trim() ?? ''
+  )
+}
 
-  return text
+/** @deprecated Use extractLyricsFromSheet from @/lib/lyrics-ocr */
+export async function extractLyricsFromSheet(params: {
+  bytes: Buffer
+  mimeType: string
+  apiKey: string
+  model?: string
+}): Promise<string> {
+  return extractLyricsWithGemini({
+    ...params,
+    model: params.model || 'gemini-2.0-flash',
+  })
 }

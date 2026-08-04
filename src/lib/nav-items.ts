@@ -8,6 +8,7 @@ import {
   MessageCircle,
   Database,
   ListMusic,
+  CircleHelp,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -33,6 +34,7 @@ export function getNavItems(t: Translate, permissions: Perms): NavItem[] {
     { title: t('nav.meetings'), href: '/meetings', icon: Calendar, show: true },
     { title: t('nav.leaderboard'), href: '/leaderboard', icon: Trophy, show: true },
     { title: t('nav.teams'), href: '/teams', icon: MessageCircle, show: true },
+    { title: t('nav.guide'), href: '/guide', icon: CircleHelp, show: true },
     { title: t('nav.data'), href: '/data', icon: Database, show: permissions.isLeaderOrAbove },
     { title: t('nav.adminUsers'), href: '/admin/users', icon: Users, show: permissions.isSuperAdmin },
     { title: t('nav.settings'), href: '/settings', icon: Settings, show: true },

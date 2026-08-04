@@ -42,30 +42,32 @@ export async function GET(request: Request) {
       ...new Set(meetings.map((m) => m.date.getFullYear())),
     ].sort((a, b) => b - a)
 
-    const total = grouped.length
-    const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize)
-    const skip = (page - 1) * pageSize
-    const pageGroups = grouped.slice(skip, skip + pageSize)
-
+    const allSongIds = grouped.map((g) => g.songId)
     const songs = await prisma.song.findMany({
-      where: { id: { in: pageGroups.map((g) => g.songId) } },
+      where: { id: { in: allSongIds } },
       include: { tags: { include: { tag: true } } },
     })
     const songMap = new Map(songs.map((s) => [s.id, s]))
 
+    const validGrouped = grouped.filter((item) => songMap.has(item.songId))
+    const total = validGrouped.length
+    const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize)
+    const skip = (page - 1) * pageSize
+    const pageGroups = validGrouped.slice(skip, skip + pageSize)
+
     const leaderboard = pageGroups.map((item, index) => {
-      const song = songMap.get(item.songId)
+      const song = songMap.get(item.songId)!
       const typeTags =
-        song?.tags
+        song.tags
           ?.filter((st) => st.tag.kind === 'TYPE')
           .map((st) => st.tag.name) ?? []
       return {
         rank: skip + index + 1,
-        id: song?.id,
-        title: song?.title || '未知歌曲',
-        artist: song?.artist,
+        id: song.id,
+        title: song.title,
+        artist: song.artist,
         category: typeTags.length > 0 ? typeTags.join('、') : '未分类',
-        tags: song?.tags?.map((st) => st.tag) ?? [],
+        tags: song.tags?.map((st) => st.tag) ?? [],
         count: item._count.songId,
       }
     })

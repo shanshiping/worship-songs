@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { resolveLyricsWithAutoExtract } from '@/lib/sheet-lyrics'
 
 export function normalizeOptional(value: unknown): string | null {
   if (typeof value !== 'string') return null
@@ -204,6 +205,11 @@ export async function POST(request: Request) {
     const normalizedSheet = normalizeOptional(sheetMusic)
     const userId = session.user.id
 
+    const resolvedLyrics = await resolveLyricsWithAutoExtract(
+      normalizedSheet,
+      lyrics,
+    )
+
     const song = await prisma.song.create({
       data: {
         title,
@@ -218,7 +224,7 @@ export async function POST(request: Request) {
         coverImage: normalizeOptional(coverImage),
         sheetMusic: normalizedSheet,
         audioFile: normalizeOptional(audioFile),
-        lyrics: normalizeOptional(lyrics),
+        lyrics: resolvedLyrics,
         lyricsLrc: normalizeOptional(lyricsLrc),
         notes: normalizeOptional(notes),
         uploadedById: userId,
