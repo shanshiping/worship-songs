@@ -13,7 +13,8 @@
     "download": "Download",
     "success": "Success",
     "error": "Something went wrong",
-    "actions": "Actions"
+    "actions": "Actions",
+    "close": "Close"
   },
   "brand": {
     "name": "Worship Songs",
@@ -304,7 +305,8 @@
     "edit": "Edit",
     "typeTags": "Type",
     "styleTags": "Style",
-    "tags": "Tags"
+    "tags": "Tags",
+    "noResults": "No songs found"
   },
   "meetings": {
     "title": "Meetings",

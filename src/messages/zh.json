@@ -13,7 +13,8 @@
     "download": "下载",
     "success": "成功",
     "error": "出错了",
-    "actions": "操作"
+    "actions": "操作",
+    "close": "关闭"
   },
   "brand": {
     "name": "敬拜选歌",
@@ -304,7 +305,8 @@
     "edit": "编辑",
     "typeTags": "类型",
     "styleTags": "风格",
-    "tags": "标签"
+    "tags": "标签",
+    "noResults": "没有找到符合条件的歌曲"
   },
   "meetings": {
     "title": "聚会记录",
