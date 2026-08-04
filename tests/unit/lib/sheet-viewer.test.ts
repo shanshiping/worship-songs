@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   buildSheetImagePrintHtml,
+  buildSheetPdfPrintHtml,
   clampSheetZoom,
   DEFAULT_SHEET_ZOOM,
   formatSheetZoom,
@@ -9,7 +10,6 @@ import {
   MAX_SHEET_ZOOM,
   MIN_SHEET_ZOOM,
   printSheetMusic,
-  type PrintSheetMusicOptions,
   stepSheetZoom,
 } from '@/lib/sheet-viewer'
 
@@ -54,53 +54,50 @@ describe('sheet-viewer', () => {
     expect(html).toContain('http://localhost:3000/uploads/sheets/a.png')
     expect(html).toContain('Sheet preview')
     expect(html).not.toContain('<preview>')
+    expect(html).toContain('img.addEventListener(\'load\'')
   })
 
-  it('prints image sheets in a new window', () => {
+  it('builds pdf print html with embed', () => {
+    const html = buildSheetPdfPrintHtml(
+      'http://localhost:3000/uploads/sheets/a.pdf',
+      'Sheet',
+    )
+    expect(html).toContain('<embed src="http://localhost:3000/uploads/sheets/a.pdf"')
+    expect(html).toContain('window.print()')
+  })
+
+  it('prints sheets via hidden iframe', () => {
     const write = vi.fn()
     const close = vi.fn()
-    const open = vi.fn(() => ({
-      document: { open: vi.fn(), write, close },
-      addEventListener: vi.fn(),
-    }))
+    const open = vi.fn()
+    const remove = vi.fn()
+    const addEventListener = vi.fn()
+    const appendChild = vi.fn()
+
+    const iframe = {
+      style: {},
+      setAttribute: vi.fn(),
+      contentDocument: { open, write, close },
+      contentWindow: { addEventListener },
+      remove,
+    }
+
+    const doc = {
+      createElement: vi.fn(() => iframe),
+      body: { appendChild },
+    }
 
     printSheetMusic({
       path: '/uploads/sheets/a.png',
       origin: 'http://localhost:3000',
       title: 'Sheet',
-      openWindow: open as unknown as PrintSheetMusicOptions['openWindow'],
+      doc: doc as unknown as Document,
     })
 
-    expect(open).toHaveBeenCalledWith('', '_blank', 'noopener,noreferrer')
-    expect(write).toHaveBeenCalled()
-  })
-
-  it('opens pdf sheets for printing', () => {
-    const print = vi.fn()
-    const addEventListener = vi.fn((event, handler) => {
-      if (event === 'load') handler()
-    })
-    const open = vi.fn(() => ({
-      addEventListener,
-      focus: vi.fn(),
-      print,
-    }))
-
-    vi.useFakeTimers()
-    printSheetMusic({
-      path: '/uploads/sheets/a.pdf',
-      origin: 'http://localhost:3000',
-      title: 'Sheet',
-      openWindow: open as unknown as PrintSheetMusicOptions['openWindow'],
-    })
-    vi.runAllTimers()
-    vi.useRealTimers()
-
-    expect(open).toHaveBeenCalledWith(
-      'http://localhost:3000/uploads/sheets/a.pdf',
-      '_blank',
-      'noopener,noreferrer',
-    )
-    expect(print).toHaveBeenCalled()
+    expect(doc.createElement).toHaveBeenCalledWith('iframe')
+    expect(appendChild).toHaveBeenCalledWith(iframe)
+    expect(open).toHaveBeenCalled()
+    expect(write).toHaveBeenCalledWith(expect.stringContaining('/uploads/sheets/a.png'))
+    expect(close).toHaveBeenCalled()
   })
 })

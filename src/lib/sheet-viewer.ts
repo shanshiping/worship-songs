@@ -56,9 +56,49 @@ export function buildSheetImagePrintHtml(imageUrl: string, title: string): strin
   <body>
     <img src="${safeUrl}" alt="${safeTitle}" />
     <script>
+      (function () {
+        var img = document.querySelector('img');
+        function doPrint() {
+          window.focus();
+          window.print();
+        }
+        if (!img) return;
+        if (img.complete && img.naturalWidth > 0) {
+          doPrint();
+          return;
+        }
+        img.addEventListener('load', doPrint, { once: true });
+        img.addEventListener('error', function () {
+          document.body.textContent = 'Failed to load sheet image for printing.';
+        }, { once: true });
+      })();
+    </script>
+  </body>
+</html>`
+}
+
+export function buildSheetPdfPrintHtml(pdfUrl: string, title: string): string {
+  const safeTitle = title.replace(/[<>&"]/g, '')
+  const safeUrl = pdfUrl.replace(/"/g, '&quot;')
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>${safeTitle}</title>
+    <style>
+      @page { margin: 0; }
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
+      embed { display: block; width: 100%; height: 100vh; border: 0; }
+    </style>
+  </head>
+  <body>
+    <embed src="${safeUrl}" type="application/pdf" />
+    <script>
       window.addEventListener('load', function () {
-        window.focus();
-        window.print();
+        window.setTimeout(function () {
+          window.focus();
+          window.print();
+        }, 800);
       });
     </script>
   </body>
@@ -69,36 +109,43 @@ export type PrintSheetMusicOptions = {
   path: string
   origin: string
   title: string
-  openWindow?: (url: string, target: string, features?: string) => Window | null
+  doc?: Pick<Document, 'createElement' | 'body'>
+}
+
+function buildSheetPrintHtml(path: string, absoluteUrl: string, title: string): string {
+  return isPdfSheetPath(path)
+    ? buildSheetPdfPrintHtml(absoluteUrl, title)
+    : buildSheetImagePrintHtml(absoluteUrl, title)
 }
 
 export function printSheetMusic(options: PrintSheetMusicOptions): void {
-  const { path, origin, title, openWindow = window.open.bind(window) } = options
+  const { path, origin, title, doc = document } = options
   const absoluteUrl = getSheetAbsoluteUrl(path, origin)
+  const html = buildSheetPrintHtml(path, absoluteUrl, title)
 
-  if (isPdfSheetPath(path)) {
-    const win = openWindow(absoluteUrl, '_blank', 'noopener,noreferrer')
-    if (!win) {
-      throw new Error('popup_blocked')
-    }
-    win.addEventListener('load', () => {
-      globalThis.setTimeout(() => {
-        try {
-          win.focus()
-          win.print()
-        } catch {
-          // Browser may block programmatic print on cross-document PDF viewers.
-        }
-      }, 500)
-    })
-    return
+  const iframe = doc.createElement('iframe')
+  iframe.setAttribute('aria-hidden', 'true')
+  iframe.style.position = 'fixed'
+  iframe.style.right = '0'
+  iframe.style.bottom = '0'
+  iframe.style.width = '0'
+  iframe.style.height = '0'
+  iframe.style.border = '0'
+  doc.body.appendChild(iframe)
+
+  const frameDoc = iframe.contentDocument ?? iframe.contentWindow?.document
+  if (!frameDoc) {
+    iframe.remove()
+    throw new Error('print_frame_unavailable')
   }
 
-  const win = openWindow('', '_blank', 'noopener,noreferrer')
-  if (!win) {
-    throw new Error('popup_blocked')
+  frameDoc.open()
+  frameDoc.write(html)
+  frameDoc.close()
+
+  const frameWindow = iframe.contentWindow
+  if (frameWindow) {
+    frameWindow.addEventListener('afterprint', () => iframe.remove(), { once: true })
   }
-  win.document.open()
-  win.document.write(buildSheetImagePrintHtml(absoluteUrl, title))
-  win.document.close()
+  globalThis.setTimeout(() => iframe.remove(), 120_000)
 }

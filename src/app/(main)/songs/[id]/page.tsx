@@ -17,6 +17,7 @@ import { SongTagBadges, type TagItem } from '@/components/tag-multi-select'
 import { AddToPlaylistDialog } from '@/components/add-to-playlist-dialog'
 import { EditSongTagsDialog } from '@/components/edit-song-tags-dialog'
 import { SheetMusicPreviewDialog } from '@/components/sheet-music-preview-dialog'
+import { SongAttachmentQuickUpload } from '@/components/song-attachment-quick-upload'
 import { SongScripturesDisplay } from '@/components/song-scriptures-editor'
 import { usePermissions } from '@/hooks/use-permissions'
 import { toast } from 'sonner'
@@ -175,10 +176,10 @@ export default function SongDetailPage() {
     }
   }
 
-  const fetchSong = async () => {
+  const fetchSong = async (options?: { silent?: boolean }) => {
     if (!isSongDetailId(songId)) return
 
-    setLoading(true)
+    if (!options?.silent) setLoading(true)
     try {
       const response = await fetch(`/api/songs/${songId}`)
       if (response.ok) {
@@ -190,8 +191,12 @@ export default function SongDetailPage() {
     } catch (error) {
       console.error('Failed to fetch song:', error)
     } finally {
-      setLoading(false)
+      if (!options?.silent) setLoading(false)
     }
+  }
+
+  const handleAttachmentUploaded = () => {
+    void fetchSong({ silent: true })
   }
 
   const handleDelete = async () => {
@@ -499,7 +504,7 @@ export default function SongDetailPage() {
           </Card>
 
           {/* 播放器 */}
-          {song.audioFile && (
+          {song.audioFile ? (
             <Card className="animate-fade-in border-0 shadow-lg" style={{ animationDelay: '200ms' }}>
               <CardContent className="p-6">
                 <audio
@@ -619,7 +624,18 @@ export default function SongDetailPage() {
                 </div>
               </CardContent>
             </Card>
-          )}
+          ) : permissions.canEditSong ? (
+            <Card className="animate-fade-in border-0 shadow-lg" style={{ animationDelay: '200ms' }}>
+              <CardContent className="p-6">
+                <SongAttachmentQuickUpload
+                  song={song}
+                  kind="audio"
+                  variant="card"
+                  onUploaded={handleAttachmentUploaded}
+                />
+              </CardContent>
+            </Card>
+          ) : null}
 
         </div>
 
@@ -849,7 +865,7 @@ export default function SongDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {song.sheetMusic && (
+              {song.sheetMusic ? (
                 <button
                   type="button"
                   onClick={() => setSheetPreviewOpen(true)}
@@ -861,8 +877,14 @@ export default function SongDetailPage() {
                   </div>
                   <Download className="h-4 w-4 text-muted-foreground" />
                 </button>
-              )}
-              {song.audioFile && (
+              ) : permissions.canEditSong ? (
+                <SongAttachmentQuickUpload
+                  song={song}
+                  kind="sheet"
+                  onUploaded={handleAttachmentUploaded}
+                />
+              ) : null}
+              {song.audioFile ? (
                 <a
                   href={song.audioFile}
                   download
@@ -874,7 +896,13 @@ export default function SongDetailPage() {
                   </div>
                   <Download className="h-4 w-4 text-muted-foreground" />
                 </a>
-              )}
+              ) : permissions.canEditSong ? (
+                <SongAttachmentQuickUpload
+                  song={song}
+                  kind="audio"
+                  onUploaded={handleAttachmentUploaded}
+                />
+              ) : null}
               {song.mvUrl && (
                 <a
                   href={song.mvUrl}
