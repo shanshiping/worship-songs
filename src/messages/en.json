@@ -340,6 +340,8 @@
     "dropCoverHint": "Images only (JPG / PNG)",
     "sheetPreview": "Sheet music preview",
     "downloadSheet": "Download sheet",
+    "printSheet": "Print sheet",
+    "printSheetFailed": "Could not open the print window — check if pop-ups are blocked",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "resetZoom": "Reset zoom",

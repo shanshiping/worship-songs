@@ -340,6 +340,8 @@
     "dropCoverHint": "仅支持图片（JPG / PNG）",
     "sheetPreview": "歌谱预览",
     "downloadSheet": "下载歌谱",
+    "printSheet": "打印歌谱",
+    "printSheetFailed": "无法打开打印窗口，请检查浏览器是否拦截弹窗",
     "zoomIn": "放大",
     "zoomOut": "缩小",
     "resetZoom": "重置缩放",

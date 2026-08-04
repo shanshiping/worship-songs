@@ -14,17 +14,20 @@ import {
   DEFAULT_SHEET_ZOOM,
   formatSheetZoom,
   isPdfSheetPath,
+  printSheetMusic,
   stepSheetZoom,
 } from '@/lib/sheet-viewer'
 import {
   Download,
   Maximize2,
   Minimize2,
+  Printer,
   RotateCcw,
   ZoomIn,
   ZoomOut,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
 type SheetMusicPreviewDialogProps = {
   open: boolean
@@ -78,6 +81,20 @@ export function SheetMusicPreviewDialog({
       clampSheetZoom(current + (event.deltaY < 0 ? 0.1 : -0.1)),
     )
   }, [])
+
+  const handlePrint = useCallback(() => {
+    if (!path) return
+    try {
+      printSheetMusic({
+        path,
+        origin: window.location.origin,
+        title: t('songs.sheetPreview'),
+      })
+    } catch (error) {
+      console.error('Print sheet music failed:', error)
+      toast.error(t('songs.printSheetFailed'))
+    }
+  }, [path, t])
 
   if (!path) return null
 
@@ -142,6 +159,16 @@ export function SheetMusicPreviewDialog({
                 <Maximize2 className="h-4 w-4" />
               )}
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-lg"
+              onClick={handlePrint}
+              aria-label={t('songs.printSheet')}
+            >
+              <Printer className="h-4 w-4" />
+            </Button>
             <span className="text-xs text-muted-foreground">{t('songs.zoomHint')}</span>
           </div>
 
@@ -181,6 +208,15 @@ export function SheetMusicPreviewDialog({
         </div>
 
         <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-lg"
+            onClick={handlePrint}
+          >
+            <Printer className="mr-2 h-4 w-4" />
+            {t('songs.printSheet')}
+          </Button>
           <a
             href={path}
             download
