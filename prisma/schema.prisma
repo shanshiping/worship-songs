@@ -18,6 +18,7 @@ model User {
   password  String
   role      String   @default("MEMBER") // SUPER_ADMIN, ADMIN, LEADER, MEMBER
   avatar    String?
+  emailVerified DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -28,6 +29,7 @@ model User {
   playlists   Playlist[]
   songsUploaded  Song[] @relation("SongUploader")
   sheetsUploaded Song[] @relation("SheetUploader")
+  teamSongsShared TeamSong[] @relation("TeamSongSharer")
 }
 
 // 团队表
@@ -43,6 +45,7 @@ model Team {
   owner   User         @relation("TeamOwner", fields: [ownerId], references: [id])
   members TeamMember[]
   messages Message[]
+  songs   TeamSong[]
 }
 
 // 团队成员表
@@ -85,6 +88,7 @@ model Song {
   album         String?  // 专辑
   mvUrl         String?  // MV 外链
   coverImage    String?  // 封面图片路径
+  pptBackground String?  // PPT 投影默认背景图路径
   sheetMusic    String?  // 歌谱文件路径
   audioFile     String?  // 音频文件路径
   lyrics        String?  // 纯文本歌词
@@ -102,6 +106,7 @@ model Song {
   meetings   MeetingSong[]
   playlists  PlaylistSong[]
   scriptures SongScripture[]
+  teamShares TeamSong[]
 }
 
 model SongScripture {
@@ -189,4 +194,19 @@ model MeetingSong {
   song    Song    @relation(fields: [songId], references: [id], onDelete: Cascade)
 
   @@unique([meetingId, songId])
+}
+
+// 团队共享歌曲
+model TeamSong {
+  id         String   @id @default(cuid())
+  teamId     String
+  songId     String
+  sharedById String
+  sharedAt   DateTime @default(now())
+
+  team     Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  song     Song @relation(fields: [songId], references: [id], onDelete: Cascade)
+  sharedBy User @relation("TeamSongSharer", fields: [sharedById], references: [id])
+
+  @@unique([teamId, songId])
 }

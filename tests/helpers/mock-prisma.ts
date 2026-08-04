@@ -32,6 +32,7 @@ export type PrismaMock = {
   team: ReturnType<typeof model>
   teamMember: ReturnType<typeof model>
   message: ReturnType<typeof model>
+  teamSong: ReturnType<typeof model>
   $disconnect: MockFn
   $queryRaw: MockFn
 }
@@ -51,6 +52,7 @@ export const mockPrisma: PrismaMock = {
   team: model(),
   teamMember: model(),
   message: model(),
+  teamSong: model(),
   $disconnect: vi.fn(),
   $queryRaw: vi.fn(),
 }

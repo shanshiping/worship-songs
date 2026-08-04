@@ -9,6 +9,7 @@ import { Plus, ListMusic, Loader2 } from 'lucide-react'
 import { usePermissions } from '@/hooks/use-permissions'
 import { useSession } from 'next-auth/react'
 import { CreatePlaylistDialog } from '@/components/create-playlist-dialog'
+import { ShareButton } from '@/components/share-button'
 
 interface PlaylistItem {
   id: string
@@ -88,29 +89,42 @@ export default function PlaylistsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {playlists.map((playlist) => (
-            <Link key={playlist.id} href={`/playlists/${playlist.id}`}>
-              <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="p-6">
-                  <h3 className="font-semibold text-lg">{playlist.title}</h3>
-                  {playlist.description && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                      {playlist.description}
+            <Card
+              key={playlist.id}
+              className="h-full transition-shadow hover:shadow-md"
+            >
+              <CardContent className="p-6">
+                <div className="flex items-start gap-2">
+                  <Link href={`/playlists/${playlist.id}`} className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-lg hover:text-primary transition-colors">
+                      {playlist.title}
+                    </h3>
+                    {playlist.description && (
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                        {playlist.description}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-4">
+                      {t('playlists.songCount', {
+                        count: playlist._count?.songs ?? 0,
+                      })}
+                      {playlist.createdBy?.name
+                        ? ` · ${playlist.createdBy.name}`
+                        : ''}
+                      {session?.user?.id === playlist.createdById
+                        ? ` · ${t('playlists.yours')}`
+                        : ''}
                     </p>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-4">
-                    {t('playlists.songCount', {
-                      count: playlist._count?.songs ?? 0,
-                    })}
-                    {playlist.createdBy?.name
-                      ? ` · ${playlist.createdBy.name}`
-                      : ''}
-                    {session?.user?.id === playlist.createdById
-                      ? ` · ${t('playlists.yours')}`
-                      : ''}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
+                  </Link>
+                  <ShareButton
+                    type="playlist"
+                    id={playlist.id}
+                    compact
+                    className="shrink-0 rounded-lg"
+                  />
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

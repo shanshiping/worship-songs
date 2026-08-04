@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Music } from 'lucide-react'
+import { Music, Lock } from 'lucide-react'
+import { toast } from 'sonner'
 import { useI18n } from '@/components/providers/i18n-provider'
 import { LanguageSwitcher } from '@/components/language-switcher'
 
@@ -18,8 +19,52 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [verificationCode, setVerificationCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [sendingCode, setSendingCode] = useState(false)
+  const [countdown, setCountdown] = useState(0)
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout
+    if (countdown > 0) {
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000)
+    }
+    return () => clearTimeout(timer)
+  }, [countdown])
+
+  const handleSendCode = async () => {
+    const normalizedEmail = email.trim()
+    if (!normalizedEmail || !normalizedEmail.includes('@')) {
+      toast.error(t('auth.invalidEmail'))
+      return
+    }
+
+    setSendingCode(true)
+    try {
+      const response = await fetch('/api/auth/send-email-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success(t('auth.codeSent'))
+        setCountdown(60)
+        if (data.code) {
+          console.log('Dev verification code:', data.code)
+        }
+      } else {
+        toast.error(data.error || t('auth.sendFailed'))
+      }
+    } catch {
+      toast.error(t('auth.sendFailed'))
+    } finally {
+      setSendingCode(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,6 +80,11 @@ export default function RegisterPage() {
       return
     }
 
+    if (!verificationCode.trim()) {
+      setError(t('auth.codeRequired'))
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -43,7 +93,12 @@ export default function RegisterPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({
+          name,
+          email: email.trim(),
+          password,
+          code: verificationCode.trim(),
+        }),
       })
 
       const data = await response.json()
@@ -125,6 +180,38 @@ export default function RegisterPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="code">{t('auth.emailCode')}</Label>
+              <div className="flex space-x-2">
+                <div className="relative flex-1">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="code"
+                    type="text"
+                    placeholder={t('auth.codePlaceholder')}
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                    required
+                    maxLength={6}
+                    className="pl-10"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSendCode}
+                  disabled={sendingCode || countdown > 0}
+                  className="whitespace-nowrap"
+                >
+                  {sendingCode
+                    ? t('auth.sending')
+                    : countdown > 0
+                      ? `${countdown}s`
+                      : t('auth.sendEmailCode')}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">{t('auth.emailCodeHint')}</p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">

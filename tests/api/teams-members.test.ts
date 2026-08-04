@@ -56,4 +56,30 @@ describe('/api/teams/[id]/members', () => {
     )
     expect((await readJson(res)).status).toBe(201)
   })
+
+  it('adds member by userId', async () => {
+    vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'u1' } })
+    mockPrisma.teamMember.findFirst
+      .mockResolvedValueOnce({ id: 'tm1', role: 'ADMIN' })
+      .mockResolvedValueOnce(null)
+    mockPrisma.user.findUnique.mockResolvedValue({
+      id: 'u2',
+      name: 'Alice',
+      email: 'a@b.com',
+    })
+    mockPrisma.teamMember.create.mockResolvedValue({
+      id: 'tm2',
+      user: { id: 'u2', name: 'Alice', email: 'a@b.com' },
+    })
+
+    const res = await POST(
+      jsonRequest('http://localhost/api/teams/t1/members', {
+        method: 'POST',
+        body: { userId: 'u2' },
+      }),
+      params
+    )
+    expect((await readJson(res)).status).toBe(201)
+    expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({ where: { id: 'u2' } })
+  })
 })

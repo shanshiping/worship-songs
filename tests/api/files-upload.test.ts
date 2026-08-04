@@ -85,6 +85,25 @@ describe('/api/files/upload', () => {
     expect(body.path).toContain('/uploads/covers/test-uuid.jpg')
   })
 
+  it('uploads valid ppt background image', async () => {
+    vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'u1' } })
+    const form = new FormData()
+    form.append(
+      'file',
+      new File(['img'], 'bg.jpg', { type: 'image/jpeg' })
+    )
+    form.append('type', 'pptBackground')
+    const res = await POST(
+      new Request('http://localhost/api/files/upload', {
+        method: 'POST',
+        body: form,
+      })
+    )
+    const { status, body } = await readJson<{ path: string }>(res)
+    expect(status).toBe(200)
+    expect(body.path).toContain('/uploads/ppt-backgrounds/test-uuid.jpg')
+  })
+
   it('rejects pdf as cover', async () => {
     vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'u1' } })
     const form = new FormData()

@@ -2,9 +2,10 @@ import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { compare } from 'bcryptjs'
 import { prisma } from './prisma'
-
-// 验证码存储（与 send-code API 共享）
-const codeStore = new Map<string, { code: string; expires: number }>()
+import {
+  phoneVerificationKey,
+  verifyAndConsumeCode,
+} from './verification-codes'
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -44,6 +45,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error('密码错误')
         }
 
+        if (!user.emailVerified) {
+          throw new Error('请先验证邮箱后再登录')
+        }
+
         return {
           id: user.id,
           email: user.email,
@@ -67,22 +72,13 @@ export const authOptions: NextAuthOptions = {
         }
 
         // 验证验证码
-        const stored = codeStore.get(credentials.phone)
-        if (!stored) {
-          throw new Error('请先获取验证码')
+        const verified = verifyAndConsumeCode(
+          phoneVerificationKey(credentials.phone),
+          credentials.code
+        )
+        if (!verified) {
+          throw new Error('验证码错误或已过期')
         }
-
-        if (stored.expires < Date.now()) {
-          codeStore.delete(credentials.phone)
-          throw new Error('验证码已过期')
-        }
-
-        if (stored.code !== credentials.code) {
-          throw new Error('验证码错误')
-        }
-
-        // 验证通过，删除验证码
-        codeStore.delete(credentials.phone)
 
         // 查找用户
         const user = await prisma.user.findFirst({

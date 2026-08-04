@@ -37,7 +37,8 @@
     "closeMenu": "Close menu",
     "skipToContent": "Skip to main content",
     "playlists": "Playlists",
-    "guide": "Guide"
+    "guide": "Guide",
+    "ppt": "Lyrics PPT"
   },
   "roles": {
     "SUPER_ADMIN": "Super Admin",
@@ -88,7 +89,14 @@
     "registering": "Creating account...",
     "registerFailed": "Registration failed. Please try again.",
     "haveAccount": "Already have an account?",
-    "signInLink": "Sign in"
+    "signInLink": "Sign in",
+    "invalidEmail": "Please enter a valid email address",
+    "emailCode": "Email verification code",
+    "sendEmailCode": "Send code",
+    "emailCodeHint": "A code will be sent to your email and is valid for 5 minutes",
+    "codeRequired": "Please enter the email verification code",
+    "emailNotVerified": "Please verify your email before signing in",
+    "registerSuccess": "Registration successful. Please sign in."
   },
   "dashboard": {
     "welcomeBack": "Welcome back",
@@ -345,6 +353,12 @@
     "coverFile": "Cover image",
     "dropCover": "Click to upload cover",
     "dropCoverHint": "Images only (JPG / PNG)",
+    "pptBackgroundFile": "PPT background",
+    "dropPptBackground": "Upload PPT background",
+    "dropPptBackgroundHint": "Used by default when generating lyrics PPT; falls back to cover or sheet if empty",
+    "useCoverAsPptBackground": "Use cover as PPT background",
+    "existingPptBackground": "Saved PPT background",
+    "uploadPptBackground": "Upload PPT background",
     "sheetPreview": "Sheet music preview",
     "downloadSheet": "Download sheet",
     "printSheet": "Print sheet",
@@ -481,9 +495,15 @@
     "updated": "Team updated",
     "updateFailed": "Update failed",
     "addMember": "Add member",
-    "addMemberDesc": "Invite a member by email",
+    "addMemberDesc": "Search by name or email to invite a member",
     "memberEmail": "Member email *",
     "memberEmailPlaceholder": "Enter member email",
+    "searchMember": "Search user",
+    "searchMemberPlaceholder": "Search by name or email",
+    "searchMemberHint": "Select a user from the search results",
+    "selectMember": "Please select a user to add",
+    "noUsersFound": "No matching users",
+    "searching": "Searching...",
     "role": "Role",
     "adding": "Adding...",
     "enterEmail": "Please enter member email",
@@ -498,7 +518,21 @@
     "me": "(me)",
     "back": "Back",
     "roleAdminDesc": "Can manage members and content",
-    "roleMemberDesc": "Can view and participate"
+    "roleMemberDesc": "Can view and participate",
+    "shareToTeam": "Share to team",
+    "shareToTeamDesc": "Choose a team — only team members can see shared songs",
+    "shareSongSuccess": "Shared to team",
+    "shareSongFailed": "Share failed",
+    "loginToShare": "Please sign in to share",
+    "sharedSongs": "Shared songs",
+    "sharedSongsCount": "{count} songs",
+    "noSharedSongs": "No shared songs yet",
+    "noSharedSongsHint": "Members can share songs to this team",
+    "sharedBy": "Shared by {name}",
+    "removeSharedSong": "Remove",
+    "removeSharedSongConfirm": "Remove this song from the team?",
+    "removeSharedSongSuccess": "Removed",
+    "removeSharedSongFailed": "Remove failed"
   },
   "leaderboard": {
     "title": "Leaderboard",
@@ -601,10 +635,41 @@
     "deleted": "Playlist deleted",
     "deleteFailed": "Failed to delete playlist"
   },
+  "ppt": {
+    "eyebrow": "Leader tools",
+    "title": "Lyrics PPT",
+    "subtitle": "Pick songs from the library and download a projection-ready PowerPoint file. Each song starts with a title slide, then lyric slides split by section labels (Chorus, Verse, etc.), up to 4 lines per slide.",
+    "searchTitle": "Search songs",
+    "searchDesc": "Click a song to add it to the list on the right. Reorder as needed.",
+    "searchPlaceholder": "Search title, artist…",
+    "searching": "Searching…",
+    "noResults": "No matching songs",
+    "selectedTitle": "Selected songs",
+    "selectedCount": "{count} selected",
+    "emptySelection": "Add songs from the left",
+    "generate": "Generate PPT",
+    "generating": "Generating…",
+    "generateSuccess": "PPT downloaded",
+    "generateFailed": "Failed to generate PPT",
+    "noSelection": "Select at least one song",
+    "noPermission": "You do not have permission to generate PPT",
+    "noPermissionHint": "Your role cannot download or generate PPT. Contact an admin.",
+    "maxSongs": "You can select up to 20 songs",
+    "skippedWarning": "Skipped songs without lyrics: {titles}",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "remove": "Remove",
+    "formatTitle": "Slide layout",
+    "format1": "First slide: title + artist",
+    "format2": "Lyric slides: split by section labels (Chorus, Verse, 副歌, etc.), up to 4 lines each",
+    "format3": "Multiple songs are merged into one file in your chosen order",
+    "format4": "Uses the song's saved PPT background when set; otherwise cover or image sheet",
+    "generateFromDetail": "Generate PPT"
+  },
   "guide": {
     "eyebrow": "Explore the platform",
     "title": "Feature guide",
-    "subtitle": "Learn what each module does, with highlights on AI song picking, tags, playlists, and lyrics tools.",
+    "subtitle": "Learn what each module does, with highlights on AI song picking, team collaboration, and email-verified registration.",
     "featuredTitle": "Highlighted features",
     "featuredDesc": "Tools built for worship teams — start here.",
     "allModulesTitle": "All modules",
@@ -615,6 +680,10 @@
     "tryIt": "Try it",
     "agentHintTitle": "Where is the song assistant?",
     "agentHintDesc": "After login, look for the chat button at the bottom-right on any main page. Describe the occasion, mood, or a lyric snippet — it searches the catalog, suggests popular songs, and leaders can add picks to playlists. Requires AI API keys on the server.",
+    "teamsHintTitle": "How do teams work?",
+    "teamsHintDesc": "Create a team under Teams, then open Settings to search by name or email and invite members. On a song detail page, use Share to team; members see shared songs in the team’s Shared songs sidebar. Teams and chat are visible to members only — not the same as the free-text “team” field on a song.",
+    "registerHintTitle": "How do I register?",
+    "registerHintDesc": "Tap Send code on the register page, enter the 6-digit email code, then submit. Unverified accounts cannot sign in. Without SMTP in dev, the code is printed in the server terminal running pnpm dev.",
     "badges": {
       "ai": "AI",
       "new": "New",
@@ -652,6 +721,12 @@
         "desc": "Separate from meeting records — for rehearsal lists, themes, and sharing.",
         "tip1": "Create an empty playlist, then add songs from the library or detail page",
         "tip2": "Does not affect leaderboard stats (only meeting picks count)"
+      },
+      "ppt": {
+        "title": "Lyrics PPT generator",
+        "desc": "Pick songs and download a projection-ready PowerPoint with lyric slides split by section.",
+        "tip1": "Title slide plus up to 4 lines per slide; recognizes Chorus, Verse, 副歌, etc.",
+        "tip2": "Merge multiple songs into one file and reorder on the Lyrics PPT page"
       },
       "share": {
         "title": "One-click share",
@@ -694,8 +769,18 @@
       },
       "teams": {
         "title": "Team collaboration",
-        "desc": "Create teams, invite members, and chat in-app.",
-        "tip1": "Not the same as the free-text “team” field on a song"
+        "desc": "Private teams, search to invite members, share songs, and in-app chat — members only.",
+        "tip1": "Team list shows only teams you belong to; non-members cannot access",
+        "tip2": "In Settings, search by name or email; owners/admins can invite",
+        "tip3": "Share to team from song detail; view under Shared songs on the team page",
+        "tip4": "Not the same as the free-text “team” field on a song"
+      },
+      "emailVerification": {
+        "title": "Email verification signup",
+        "desc": "Register with an email code before your account is activated.",
+        "tip1": "Send code after filling the form; valid for 5 minutes",
+        "tip2": "Configure SMTP on the server for production email delivery",
+        "tip3": "In dev without SMTP, the code appears in the pnpm dev terminal"
       },
       "data": {
         "title": "Import & export",

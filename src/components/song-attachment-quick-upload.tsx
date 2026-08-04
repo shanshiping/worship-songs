@@ -2,12 +2,12 @@
 
 import { useI18n } from '@/components/providers/i18n-provider'
 import { Input } from '@/components/ui/input'
-import { FileText, Loader2, Music2, Upload } from 'lucide-react'
+import { FileText, Loader2, Music2, Presentation, Upload } from 'lucide-react'
 import { useId, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/errors'
 
-type AttachmentKind = 'sheet' | 'audio'
+type AttachmentKind = 'sheet' | 'audio' | 'pptBackground'
 
 interface SongForUpload {
   id: string
@@ -21,6 +21,7 @@ interface SongForUpload {
   album: string | null
   mvUrl: string | null
   coverImage: string | null
+  pptBackground: string | null
   sheetMusic: string | null
   audioFile: string | null
   lyrics: string | null
@@ -43,12 +44,13 @@ interface SongAttachmentQuickUploadProps {
 const ACCEPT: Record<AttachmentKind, string> = {
   sheet: 'image/*,.pdf',
   audio: 'audio/mpeg,audio/wav,audio/mp3,audio/ogg,audio/webm',
+  pptBackground: 'image/jpeg,image/png,image/gif,image/webp',
 }
 
 async function uploadFile(file: File, type: AttachmentKind) {
   const formData = new FormData()
   formData.append('file', file)
-  formData.append('type', type)
+  formData.append('type', type === 'pptBackground' ? 'pptBackground' : type)
 
   const response = await fetch('/api/files/upload', {
     method: 'POST',
@@ -65,7 +67,7 @@ async function uploadFile(file: File, type: AttachmentKind) {
 
 function buildUpdatePayload(
   song: SongForUpload,
-  patch: Partial<Pick<SongForUpload, 'sheetMusic' | 'audioFile'>>,
+  patch: Partial<Pick<SongForUpload, 'sheetMusic' | 'audioFile' | 'pptBackground'>>,
 ) {
   return {
     title: song.title,
@@ -78,6 +80,8 @@ function buildUpdatePayload(
     album: song.album,
     mvUrl: song.mvUrl,
     coverImage: song.coverImage,
+    pptBackground:
+      patch.pptBackground !== undefined ? patch.pptBackground : song.pptBackground,
     sheetMusic: patch.sheetMusic !== undefined ? patch.sheetMusic : song.sheetMusic,
     audioFile: patch.audioFile !== undefined ? patch.audioFile : song.audioFile,
     lyrics: song.lyrics,
@@ -103,11 +107,28 @@ export function SongAttachmentQuickUpload({
   const [uploading, setUploading] = useState(false)
 
   const isSheet = kind === 'sheet'
-  const Icon = isSheet ? FileText : Music2
-  const label = isSheet ? t('songs.clickUploadSheet') : t('songs.clickUploadAudio')
-  const emptyHint = isSheet ? t('songs.noSheet') : t('songs.noAudio')
-  const successKey = isSheet ? 'songs.sheetUploadSuccess' : 'songs.audioUploadSuccess'
-  const failedKey = isSheet ? 'songs.sheetUploadFailed' : 'songs.audioUploadFailed'
+  const isPptBackground = kind === 'pptBackground'
+  const Icon = isSheet ? FileText : isPptBackground ? Presentation : Music2
+  const label = isSheet
+    ? t('songs.clickUploadSheet')
+    : isPptBackground
+      ? t('songs.uploadPptBackground')
+      : t('songs.clickUploadAudio')
+  const emptyHint = isSheet
+    ? t('songs.noSheet')
+    : isPptBackground
+      ? t('songs.dropPptBackgroundHint')
+      : t('songs.noAudio')
+  const successKey = isSheet
+    ? 'songs.sheetUploadSuccess'
+    : isPptBackground
+      ? 'songs.uploadSuccess'
+      : 'songs.audioUploadSuccess'
+  const failedKey = isSheet
+    ? 'songs.sheetUploadFailed'
+    : isPptBackground
+      ? 'songs.uploadFailed'
+      : 'songs.audioUploadFailed'
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -119,7 +140,9 @@ export function SongAttachmentQuickUpload({
       const uploaded = await uploadFile(file, kind)
       const patch = isSheet
         ? { sheetMusic: uploaded.path }
-        : { audioFile: uploaded.path }
+        : isPptBackground
+          ? { pptBackground: uploaded.path }
+          : { audioFile: uploaded.path }
 
       const response = await fetch(`/api/songs/${song.id}`, {
         method: 'PUT',
@@ -196,7 +219,7 @@ export function SongAttachmentQuickUpload({
         }`}
       >
         <div className="flex items-center space-x-3">
-          <Icon className={`h-5 w-5 ${isSheet ? 'text-blue-500' : 'text-purple-500'}`} />
+          <Icon className={`h-5 w-5 ${isSheet ? 'text-blue-500' : isPptBackground ? 'text-orange-500' : 'text-purple-500'}`} />
           <span className="text-sm font-medium text-primary">
             {uploading ? t('songs.uploading') : label}
           </span>

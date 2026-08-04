@@ -89,12 +89,13 @@ async function main() {
   const superAdminPassword = await hash('admin123', 12)
   const superAdmin = await prisma.user.upsert({
     where: { email: 'admin@worship.com' },
-    update: { role: 'SUPER_ADMIN' },
+    update: { role: 'SUPER_ADMIN', emailVerified: new Date() },
     create: {
       name: '超级管理员',
       email: 'admin@worship.com',
       password: superAdminPassword,
       role: 'SUPER_ADMIN',
+      emailVerified: new Date(),
     },
   })
 
@@ -103,12 +104,13 @@ async function main() {
   const memberPassword = await hash('member123', 12)
   const member = await prisma.user.upsert({
     where: { email: 'member@worship.com' },
-    update: {},
+    update: { emailVerified: new Date() },
     create: {
       name: '普通成员',
       email: 'member@worship.com',
       password: memberPassword,
       role: 'MEMBER',
+      emailVerified: new Date(),
     },
   })
 
@@ -117,16 +119,22 @@ async function main() {
   const leaderPassword = await hash('leader123', 12)
   const leader = await prisma.user.upsert({
     where: { email: 'leader@worship.com' },
-    update: {},
+    update: { emailVerified: new Date() },
     create: {
       name: '领队',
       email: 'leader@worship.com',
       password: leaderPassword,
       role: 'LEADER',
+      emailVerified: new Date(),
     },
   })
 
   console.log('✅ 创建领队:', leader.email)
+
+  await prisma.user.updateMany({
+    where: { emailVerified: null },
+    data: { emailVerified: new Date() },
+  })
 
   const worshipTag = typeTags.find((t) => t.name === '敬拜赞美')
   const sampleSongs = [

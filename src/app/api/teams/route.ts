@@ -106,8 +106,15 @@ export async function POST(request: Request) {
                 id: true,
                 name: true,
                 email: true,
+                avatar: true,
               },
             },
+          },
+        },
+        _count: {
+          select: {
+            members: true,
+            messages: true,
           },
         },
       },

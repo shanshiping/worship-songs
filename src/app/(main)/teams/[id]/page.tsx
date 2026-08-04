@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Send, Users, Crown, Shield, User, MessageCircle } from 'lucide-react'
+import { ArrowLeft, Send, Users, Crown, Shield, User, MessageCircle, Music2, X } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { enUS, zhCN } from 'date-fns/locale'
@@ -47,6 +47,24 @@ interface Team {
   }>
 }
 
+interface TeamSong {
+  id: string
+  sharedAt: string
+  sharedById: string
+  song: {
+    id: string
+    title: string
+    artist: string | null
+    key: string | null
+    coverImage: string | null
+  }
+  sharedBy: {
+    id: string
+    name: string | null
+    email: string
+  }
+}
+
 export default function TeamDetailPage() {
   const { t, locale } = useI18n()
   const dateLocale = locale === 'zh' ? zhCN : enUS
@@ -58,6 +76,9 @@ export default function TeamDetailPage() {
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
   const [showMembers, setShowMembers] = useState(false)
+  const [showSongs, setShowSongs] = useState(false)
+  const [sharedSongs, setSharedSongs] = useState<TeamSong[]>([])
+  const [loadingSongs, setLoadingSongs] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -67,6 +88,69 @@ export default function TeamDetailPage() {
   useEffect(() => {
     scrollToBottom()
   }, [team?.messages])
+
+  useEffect(() => {
+    if (showSongs) {
+      void fetchSharedSongs()
+    }
+  }, [showSongs, params.id])
+
+  const fetchSharedSongs = async () => {
+    setLoadingSongs(true)
+    try {
+      const response = await fetch(`/api/teams/${params.id}/songs`, {
+        credentials: 'include',
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setSharedSongs(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch shared songs:', error)
+    } finally {
+      setLoadingSongs(false)
+    }
+  }
+
+  const handleRemoveSong = async (songId: string) => {
+    if (!confirm(t('teams.removeSharedSongConfirm'))) return
+
+    try {
+      const response = await fetch(
+        `/api/teams/${params.id}/songs?songId=${encodeURIComponent(songId)}`,
+        { method: 'DELETE', credentials: 'include' }
+      )
+      if (response.ok) {
+        setSharedSongs((prev) => prev.filter((item) => item.song.id !== songId))
+        toast.success(t('teams.removeSharedSongSuccess'))
+      } else {
+        const data = await response.json()
+        toast.error(data.error || t('teams.removeSharedSongFailed'))
+      }
+    } catch {
+      toast.error(t('teams.removeSharedSongFailed'))
+    }
+  }
+
+  const canRemoveSong = (item: TeamSong) => {
+    if (!session?.user?.id || !team) return false
+    const member = team.members.find((m) => m.user.id === session.user.id)
+    return (
+      item.sharedById === session.user.id ||
+      member?.role === 'OWNER' ||
+      member?.role === 'ADMIN'
+    )
+  }
+
+  const toggleMembers = () => {
+    setShowMembers((prev) => !prev)
+    setShowSongs(false)
+  }
+
+  const toggleSongs = () => {
+    setShowSongs((prev) => !prev)
+    setShowMembers(false)
+  }
 
   const fetchTeam = async () => {
     try {
@@ -169,14 +253,16 @@ export default function TeamDetailPage() {
             )}
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowMembers(!showMembers)}
-        >
-          <Users className="mr-2 h-4 w-4" />
-          {t('teams.membersCount', { count: team.members.length })}
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm" onClick={toggleSongs}>
+            <Music2 className="mr-2 h-4 w-4" />
+            {t('teams.sharedSongs')}
+          </Button>
+          <Button variant="outline" size="sm" onClick={toggleMembers}>
+            <Users className="mr-2 h-4 w-4" />
+            {t('teams.membersCount', { count: team.members.length })}
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
@@ -276,6 +362,67 @@ export default function TeamDetailPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* 共享歌曲侧边栏 */}
+        {showSongs && (
+          <div className="w-72 border-l bg-white overflow-y-auto">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold">{t('teams.sharedSongs')}</h3>
+                <span className="text-xs text-muted-foreground">
+                  {t('teams.sharedSongsCount', { count: sharedSongs.length })}
+                </span>
+              </div>
+              {loadingSongs ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900" />
+                </div>
+              ) : sharedSongs.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Music2 className="h-8 w-8 mx-auto mb-2" />
+                  <p className="text-sm">{t('teams.noSharedSongs')}</p>
+                  <p className="text-xs mt-1">{t('teams.noSharedSongsHint')}</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {sharedSongs.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-2 rounded-lg hover:bg-gray-50 group"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <Link href={`/songs/${item.song.id}`} className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{item.song.title}</p>
+                          {item.song.artist && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {item.song.artist}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {t('teams.sharedBy', {
+                              name: item.sharedBy.name || item.sharedBy.email,
+                            })}
+                          </p>
+                        </Link>
+                        {canRemoveSong(item) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100"
+                            onClick={() => handleRemoveSong(item.song.id)}
+                            title={t('teams.removeSharedSong')}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

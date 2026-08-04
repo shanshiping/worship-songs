@@ -273,6 +273,33 @@ describe('/api/songs/[id]', () => {
     )
   })
 
+  it('PUT saves pptBackground', async () => {
+    mockPrisma.song.findUnique.mockResolvedValue({ sheetMusic: null })
+    mockPrisma.songTag.deleteMany.mockResolvedValue({ count: 0 })
+    mockPrisma.songScripture.deleteMany.mockResolvedValue({ count: 0 })
+    mockPrisma.song.update.mockResolvedValue({ id: 'song-1' })
+
+    const res = await PUT(
+      jsonRequest('http://localhost/api/songs/song-1', {
+        method: 'PUT',
+        body: {
+          title: '神掌权',
+          tagIds: [],
+          pptBackground: '/uploads/ppt-backgrounds/bg.jpg',
+        },
+      }),
+      params
+    )
+    expect((await readJson(res)).status).toBe(200)
+    expect(mockPrisma.song.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          pptBackground: '/uploads/ppt-backgrounds/bg.jpg',
+        }),
+      })
+    )
+  })
+
   it('DELETE removes links then song', async () => {
     mockPrisma.meetingSong.deleteMany.mockResolvedValue({ count: 1 })
     mockPrisma.playlistSong.deleteMany.mockResolvedValue({ count: 0 })

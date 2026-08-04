@@ -32,15 +32,30 @@ describe('/api/teams', () => {
     expect(body).toHaveLength(1)
   })
 
-  it('POST creates team', async () => {
+  it('POST creates team with same shape as GET', async () => {
     vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'u1' } })
-    mockPrisma.team.create.mockResolvedValue({ id: 't1', name: 'New' })
-    const res = await POST(
-      jsonRequest('http://localhost/api/teams', {
-        method: 'POST',
-        body: { name: 'New' },
+    mockPrisma.team.create.mockResolvedValue({
+      id: 't1',
+      name: 'New',
+      members: [{ id: 'm1', role: 'OWNER', user: { id: 'u1', name: 'User', email: 'u@example.com', avatar: null } }],
+      _count: { members: 1, messages: 0 },
+    })
+    const { status, body } = await readJson<{ _count: { members: number; messages: number } }>(
+      await POST(
+        jsonRequest('http://localhost/api/teams', {
+          method: 'POST',
+          body: { name: 'New' },
+        })
+      )
+    )
+    expect(status).toBe(201)
+    expect(body._count).toEqual({ members: 1, messages: 0 })
+    expect(mockPrisma.team.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: expect.objectContaining({
+          _count: { select: { members: true, messages: true } },
+        }),
       })
     )
-    expect((await readJson(res)).status).toBe(201)
   })
 })

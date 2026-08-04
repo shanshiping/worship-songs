@@ -9,9 +9,11 @@ import { useI18n } from '@/components/providers/i18n-provider'
 interface ShareButtonProps {
   type: 'song' | 'meeting' | 'playlist'
   id: string
+  compact?: boolean
+  className?: string
 }
 
-export function ShareButton({ type, id }: ShareButtonProps) {
+export function ShareButton({ type, id, compact = false, className }: ShareButtonProps) {
   const { t } = useI18n()
   const [sharing, setSharing] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -47,21 +49,35 @@ export function ShareButton({ type, id }: ShareButtonProps) {
 
   return (
     <Button
-      variant="outline"
-      size="sm"
-      onClick={handleShare}
+      variant={compact ? 'ghost' : 'outline'}
+      size={compact ? 'icon-sm' : 'sm'}
+      onClick={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        void handleShare()
+      }}
       disabled={sharing}
+      className={className}
+      title={compact ? t('share.share') : undefined}
     >
       {copied ? (
-        <>
-          <Check className="mr-2 h-4 w-4" />
-          {t('share.copied')}
-        </>
+        compact ? (
+          <Check className="h-4 w-4" />
+        ) : (
+          <>
+            <Check className="mr-2 h-4 w-4" />
+            {t('share.copied')}
+          </>
+        )
       ) : (
-        <>
-          <Share2 className="mr-2 h-4 w-4" />
-          {sharing ? t('share.sharing') : t('share.share')}
-        </>
+        compact ? (
+          <Share2 className="h-4 w-4" />
+        ) : (
+          <>
+            <Share2 className="mr-2 h-4 w-4" />
+            {sharing ? t('share.sharing') : t('share.share')}
+          </>
+        )
       )}
     </Button>
   )

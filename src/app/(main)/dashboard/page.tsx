@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Music, Calendar, Users, Trophy, TrendingUp, ArrowUpRight, CircleHelp } from 'lucide-react'
+import { Music, Calendar, Users, Trophy, TrendingUp, ArrowUpRight } from 'lucide-react'
 import Link from 'next/link'
 import { useI18n } from '@/components/providers/i18n-provider'
 
@@ -47,12 +47,6 @@ export default function DashboardPage() {
   ]
 
   const quickActions = [
-    {
-      title: t('dashboard.viewGuide'),
-      description: t('dashboard.viewGuideDesc'),
-      href: '/guide',
-      icon: CircleHelp,
-    },
     {
       title: t('dashboard.uploadSong'),
       description: t('dashboard.uploadSongDesc'),

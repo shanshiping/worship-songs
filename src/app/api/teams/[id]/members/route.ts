@@ -33,19 +33,19 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { email, role = 'MEMBER' } = body
+    const { email, userId, role = 'MEMBER' } = body
 
-    if (!email) {
+    if (!email && !userId) {
       return NextResponse.json(
-        { error: '请输入成员邮箱' },
+        { error: '请输入用户名或选择用户' },
         { status: 400 }
       )
     }
 
     // 查找用户
-    const user = await prisma.user.findUnique({
-      where: { email },
-    })
+    const user = userId
+      ? await prisma.user.findUnique({ where: { id: userId } })
+      : await prisma.user.findUnique({ where: { email } })
 
     if (!user) {
       return NextResponse.json(

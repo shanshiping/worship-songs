@@ -8,13 +8,14 @@ import { v4 as uuidv4 } from 'uuid'
 const ALLOWED_TYPES = {
   sheet: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'],
   cover: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+  pptBackground: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
   audio: ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/ogg', 'audio/webm'],
 } as const
 
 type UploadKind = keyof typeof ALLOWED_TYPES
 
 function isUploadKind(value: string): value is UploadKind {
-  return value === 'sheet' || value === 'cover' || value === 'audio'
+  return value === 'sheet' || value === 'cover' || value === 'pptBackground' || value === 'audio'
 }
 
 export async function POST(request: Request) {
@@ -46,7 +47,13 @@ export async function POST(request: Request) {
     const ext = file.name.split('.').pop() || 'bin'
     const fileName = `${uuidv4()}.${ext}`
     const folder =
-      type === 'audio' ? 'audio' : type === 'cover' ? 'covers' : 'sheets'
+      type === 'audio'
+        ? 'audio'
+        : type === 'cover'
+          ? 'covers'
+          : type === 'pptBackground'
+            ? 'ppt-backgrounds'
+            : 'sheets'
     const uploadDir = `public/uploads/${folder}`
 
     await mkdir(join(process.cwd(), uploadDir), { recursive: true })

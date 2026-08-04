@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-
-// 存储验证码（实际应该用 Redis）
-const codeStore = new Map<string, { code: string; expires: number }>()
-
-// 生成验证码
-function generateCode(): string {
-  return Math.random().toString().slice(2, 8).padStart(6, '0')
-}
+import {
+  generateVerificationCode,
+  getActiveCodeRemainingSeconds,
+  phoneVerificationKey,
+  setVerificationCode,
+} from '@/lib/verification-codes'
 
 export async function POST(request: Request) {
   try {
@@ -20,7 +18,6 @@ export async function POST(request: Request) {
       )
     }
 
-    // 检查手机号是否已注册
     const user = await prisma.user.findFirst({
       where: { phone },
     })
@@ -32,33 +29,22 @@ export async function POST(request: Request) {
       )
     }
 
-    // 检查是否频繁发送
-    const existing = codeStore.get(phone)
-    if (existing && existing.expires > Date.now()) {
-      const remaining = Math.ceil((existing.expires - Date.now()) / 1000)
+    const key = phoneVerificationKey(phone)
+    const remaining = getActiveCodeRemainingSeconds(key)
+    if (remaining > 240) {
       return NextResponse.json(
         { error: `请等待 ${remaining} 秒后再试` },
         { status: 429 }
       )
     }
 
-    // 生成验证码
-    const code = generateCode()
+    const code = generateVerificationCode()
+    setVerificationCode(key, code)
 
-    // 存储验证码（5分钟有效）
-    codeStore.set(phone, {
-      code,
-      expires: Date.now() + 5 * 60 * 1000,
-    })
-
-    // TODO: 调用短信服务发送验证码
-    // 这里只是模拟，实际需要集成短信服务（如阿里云短信、腾讯云短信等）
     console.log(`验证码已发送到 ${phone}: ${code}`)
 
-    // 开发环境下返回验证码（生产环境应该删除）
     return NextResponse.json({
       message: '验证码已发送',
-      // 注意：生产环境不要返回验证码
       code: process.env.NODE_ENV === 'development' ? code : undefined,
     })
   } catch (error) {
@@ -69,6 +55,3 @@ export async function POST(request: Request) {
     )
   }
 }
-
-// 导出 codeStore 供其他 API 使用
-export { codeStore }

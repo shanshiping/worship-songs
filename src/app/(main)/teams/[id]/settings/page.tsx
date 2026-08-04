@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, UserPlus, Crown, Shield, User, Trash, Loader2, Mail, Save } from 'lucide-react'
+import { ArrowLeft, UserPlus, Crown, Shield, User, Trash, Loader2, Search, Save, X } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 
@@ -36,6 +36,13 @@ interface Team {
   }>
 }
 
+interface SearchUser {
+  id: string
+  name: string | null
+  email: string
+  avatar: string | null
+}
+
 export default function TeamSettingsPage() {
   const { t } = useI18n()
   const params = useParams()
@@ -50,7 +57,10 @@ export default function TeamSettingsPage() {
   ]
   const [saving, setSaving] = useState(false)
   const [addingMember, setAddingMember] = useState(false)
-  const [newMemberEmail, setNewMemberEmail] = useState('')
+  const [memberSearch, setMemberSearch] = useState('')
+  const [searchResults, setSearchResults] = useState<SearchUser[]>([])
+  const [searching, setSearching] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null)
   const [newMemberRole, setNewMemberRole] = useState('MEMBER')
   const [teamName, setTeamName] = useState('')
   const [teamDescription, setTeamDescription] = useState('')
@@ -58,6 +68,34 @@ export default function TeamSettingsPage() {
   useEffect(() => {
     fetchTeam()
   }, [params.id])
+
+  useEffect(() => {
+    if (selectedUser || memberSearch.trim().length < 1) {
+      setSearchResults([])
+      return
+    }
+
+    const timer = setTimeout(async () => {
+      setSearching(true)
+      try {
+        const teamId = params.id as string
+        const response = await fetch(
+          `/api/teams/${teamId}/members/search?q=${encodeURIComponent(memberSearch.trim())}`,
+          { credentials: 'include' }
+        )
+        if (response.ok) {
+          const data = await response.json()
+          setSearchResults(data)
+        }
+      } catch (error) {
+        console.error('Failed to search users:', error)
+      } finally {
+        setSearching(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [memberSearch, selectedUser, params.id])
 
   const fetchTeam = async () => {
     try {
@@ -118,8 +156,8 @@ export default function TeamSettingsPage() {
   // teams.addMember
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newMemberEmail.trim()) {
-      toast.error(t('teams.enterEmail'))
+    if (!selectedUser) {
+      toast.error(t('teams.selectMember'))
       return
     }
 
@@ -131,7 +169,7 @@ export default function TeamSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          email: newMemberEmail,
+          userId: selectedUser.id,
           role: newMemberRole,
         }),
       })
@@ -140,9 +178,10 @@ export default function TeamSettingsPage() {
 
       if (response.ok) {
         toast.success(t('teams.memberAdded'))
-        setNewMemberEmail('')
+        setMemberSearch('')
+        setSelectedUser(null)
+        setSearchResults([])
         setNewMemberRole('MEMBER')
-        // 刷新团队数据
         fetchTeam()
       } else {
         toast.error(data.error || t('teams.addFailed'))
@@ -152,6 +191,18 @@ export default function TeamSettingsPage() {
     } finally {
       setAddingMember(false)
     }
+  }
+
+  const handleSelectUser = (user: SearchUser) => {
+    setSelectedUser(user)
+    setMemberSearch('')
+    setSearchResults([])
+  }
+
+  const handleClearSelectedUser = () => {
+    setSelectedUser(null)
+    setMemberSearch('')
+    setSearchResults([])
   }
 
   // 删除成员
@@ -336,19 +387,64 @@ export default function TeamSettingsPage() {
           <CardContent>
             <form onSubmit={handleAddMember} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="memberEmail">{t('teams.memberEmail')}</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="memberEmail"
-                    type="email"
-                    value={newMemberEmail}
-                    onChange={(e) => setNewMemberEmail(e.target.value)}
-                    placeholder={t('teams.memberEmailPlaceholder')}
-                    required
-                    className="pl-10 h-11 rounded-xl input-focus"
-                  />
-                </div>
+                <Label htmlFor="memberSearch">{t('teams.searchMember')}</Label>
+                {selectedUser ? (
+                  <div className="flex items-center justify-between p-3 border rounded-xl bg-muted/40">
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">
+                        {selectedUser.name || t('teams.noName')}
+                      </p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {selectedUser.email}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearSelectedUser}
+                      className="shrink-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="memberSearch"
+                      value={memberSearch}
+                      onChange={(e) => setMemberSearch(e.target.value)}
+                      placeholder={t('teams.searchMemberPlaceholder')}
+                      className="pl-10 h-11 rounded-xl input-focus"
+                      autoComplete="off"
+                    />
+                    {(searching || searchResults.length > 0 || memberSearch.trim().length > 0) && (
+                      <div className="absolute z-10 w-full mt-1 border rounded-xl bg-white shadow-md max-h-48 overflow-y-auto">
+                        {searching ? (
+                          <p className="p-3 text-sm text-muted-foreground">{t('teams.searching')}</p>
+                        ) : searchResults.length === 0 ? (
+                          <p className="p-3 text-sm text-muted-foreground">{t('teams.noUsersFound')}</p>
+                        ) : (
+                          searchResults.map((user) => (
+                            <button
+                              key={user.id}
+                              type="button"
+                              onClick={() => handleSelectUser(user)}
+                              className="w-full text-left p-3 hover:bg-muted transition-colors"
+                            >
+                              <p className="font-medium truncate">
+                                {user.name || t('teams.noName')}
+                              </p>
+                              <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">{t('teams.searchMemberHint')}</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="memberRole">{t('teams.role')}</Label>

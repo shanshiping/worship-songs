@@ -6,7 +6,7 @@ import {
   FileScan,
   Globe,
   ListMusic,
-  MessageCircle,
+  MailCheck,
   Mic2,
   Music,
   Share2,
@@ -14,6 +14,8 @@ import {
   Tags,
   Trophy,
   BookOpen,
+  Users,
+  Presentation,
 } from 'lucide-react'
 
 export type FeatureBadge = 'ai' | 'new' | 'smart'
@@ -172,11 +174,31 @@ export const FEATURE_GUIDE_ITEMS: FeatureGuideItem[] = [
   },
   {
     id: 'teams',
-    icon: MessageCircle,
+    icon: Users,
     titleKey: 'guide.features.teams.title',
     descKey: 'guide.features.teams.desc',
-    tipKeys: ['guide.features.teams.tip1'],
+    tipKeys: [
+      'guide.features.teams.tip1',
+      'guide.features.teams.tip2',
+      'guide.features.teams.tip3',
+      'guide.features.teams.tip4',
+    ],
     href: '/teams',
+    featured: true,
+    badge: 'new',
+  },
+  {
+    id: 'emailVerification',
+    icon: MailCheck,
+    titleKey: 'guide.features.emailVerification.title',
+    descKey: 'guide.features.emailVerification.desc',
+    tipKeys: [
+      'guide.features.emailVerification.tip1',
+      'guide.features.emailVerification.tip2',
+      'guide.features.emailVerification.tip3',
+    ],
+    href: '/register',
+    badge: 'new',
   },
   {
     id: 'data',

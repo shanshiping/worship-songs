@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -13,18 +14,34 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { signOut } from 'next-auth/react'
-import { LogOut, Menu, Settings, User } from 'lucide-react'
+import { CircleHelp, LogOut, Menu, Settings, User } from 'lucide-react'
 import Link from 'next/link'
 import { useI18n } from '@/components/providers/i18n-provider'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { BrandLogo } from '@/components/brand-logo'
 import { MobileNav } from '@/components/layout/mobile-nav'
 import { Button } from '@/components/ui/button'
+import { FeatureGuideSheet } from '@/components/feature-guide-sheet'
+
+function GuideFromQuery({ onOpen }: { onOpen: () => void }) {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  useEffect(() => {
+    if (searchParams.get('guide') !== '1') return
+    onOpen()
+    router.replace(pathname, { scroll: false })
+  }, [searchParams, pathname, router, onOpen])
+
+  return null
+}
 
 export function Header() {
   const { data: session } = useSession()
   const { t } = useI18n()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [guideOpen, setGuideOpen] = useState(false)
 
   const userInitials = session?.user?.name
     ? session.user.name
@@ -56,6 +73,17 @@ export function Header() {
           <div className="hidden flex-1 md:block" />
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="min-h-10 min-w-10 rounded-xl"
+              aria-label={t('guide.title')}
+              title={t('guide.title')}
+              onClick={() => setGuideOpen(true)}
+            >
+              <CircleHelp className="h-5 w-5" />
+            </Button>
             <LanguageSwitcher />
 
             <DropdownMenu>
@@ -128,6 +156,10 @@ export function Header() {
       </header>
 
       <MobileNav open={mobileOpen} onOpenChange={setMobileOpen} />
+      <Suspense fallback={null}>
+        <GuideFromQuery onOpen={() => setGuideOpen(true)} />
+      </Suspense>
+      <FeatureGuideSheet open={guideOpen} onOpenChange={setGuideOpen} />
     </>
   )
 }

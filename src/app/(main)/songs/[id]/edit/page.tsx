@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Save, Loader2, Music, FileText, X, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, Music, FileText, X, CheckCircle, Presentation } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/errors'
@@ -35,6 +35,7 @@ interface Song {
   mvUrl: string | null
   sheetMusic: string | null
   coverImage: string | null
+  pptBackground: string | null
   audioFile: string | null
   lyrics: string | null
   lyricsLrc: string | null
@@ -89,9 +90,11 @@ export default function EditSongPage() {
   })
   const [sheetMusic, setSheetMusic] = useState<UploadedFile | null>(null)
   const [coverImage, setCoverImage] = useState<UploadedFile | null>(null)
+  const [pptBackground, setPptBackground] = useState<UploadedFile | null>(null)
   const [audioFile, setAudioFile] = useState<UploadedFile | null>(null)
   const [uploadingSheet, setUploadingSheet] = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
+  const [uploadingPptBackground, setUploadingPptBackground] = useState(false)
   const [uploadingAudio, setUploadingAudio] = useState(false)
   const [extractingLyrics, setExtractingLyrics] = useState(false)
 
@@ -145,6 +148,14 @@ export default function EditSongPage() {
             type: 'image/jpeg',
           })
         }
+        if (songData.pptBackground) {
+          setPptBackground({
+            path: songData.pptBackground,
+            name: t('songs.existingPptBackground'),
+            size: 0,
+            type: 'image/jpeg',
+          })
+        }
         if (songData.audioFile) {
           setAudioFile({
             path: songData.audioFile,
@@ -174,7 +185,7 @@ export default function EditSongPage() {
   }
 
   // 上传文件
-  const uploadFile = async (file: File, type: 'sheet' | 'audio' | 'cover') => {
+  const uploadFile = async (file: File, type: 'sheet' | 'audio' | 'cover' | 'pptBackground') => {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('type', type)
@@ -226,6 +237,22 @@ export default function EditSongPage() {
     }
   }
 
+  const handlePptBackgroundChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingPptBackground(true)
+    try {
+      const result = await uploadFile(file, 'pptBackground')
+      setPptBackground(result)
+      toast.success(t('songs.uploadSuccess'))
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, t('songs.uploadFailed')))
+    } finally {
+      setUploadingPptBackground(false)
+    }
+  }
+
   // 处理songs.audioFile变化
   const handleAudioFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -250,6 +277,16 @@ export default function EditSongPage() {
 
   const removeCoverImage = () => {
     setCoverImage(null)
+  }
+
+  const removePptBackground = () => {
+    setPptBackground(null)
+  }
+
+  const useCoverAsPptBackground = () => {
+    if (!coverImage) return
+    setPptBackground(coverImage)
+    toast.success(t('songs.uploadSuccess'))
   }
 
   const removeAudioFile = () => {
@@ -317,6 +354,7 @@ export default function EditSongPage() {
           tagIds,
           scriptures: scripturesForSubmit(scriptures),
           coverImage: coverImage?.path || null,
+          pptBackground: pptBackground?.path || null,
           sheetMusic: sheetMusic?.path || null,
           audioFile: audioFile?.path || null,
         }),
@@ -397,7 +435,7 @@ export default function EditSongPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* 文件上传区域 */}
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {/* 封面上传 */}
               <div className="space-y-2">
                 <Label htmlFor="coverImage">{t('songs.coverFile')}</Label>
@@ -448,6 +486,71 @@ export default function EditSongPage() {
                         </div>
                       )}
                     </label>
+                  </div>
+                )}
+              </div>
+
+              {/* PPT 背景 */}
+              <div className="space-y-2">
+                <Label htmlFor="pptBackground">{t('songs.pptBackgroundFile')}</Label>
+                {pptBackground ? (
+                  <div className="space-y-2">
+                    <img
+                      src={pptBackground.path}
+                      alt={pptBackground.name}
+                      className="h-32 w-full rounded-xl object-cover"
+                    />
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-xl">
+                      <p className="text-sm font-medium text-green-900 truncate max-w-[140px]">
+                        {pptBackground.name}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={removePptBackground}
+                        className="p-1 hover:bg-green-100 rounded-lg transition-colors"
+                      >
+                        <X className="h-4 w-4 text-green-600" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative space-y-2">
+                    <Input
+                      id="pptBackground"
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={handlePptBackgroundChange}
+                      className="hidden"
+                      disabled={uploadingPptBackground}
+                    />
+                    <label
+                      htmlFor="pptBackground"
+                      className="flex items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary hover:bg-gray-50 transition-colors cursor-pointer min-h-[140px]"
+                    >
+                      {uploadingPptBackground ? (
+                        <div className="flex items-center space-x-2 text-muted-foreground">
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          <span>{t('songs.uploading')}</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center space-y-2 text-muted-foreground text-center">
+                          <Presentation className="h-8 w-8" />
+                          <span className="text-sm">{t('songs.dropPptBackground')}</span>
+                          <span className="text-xs">{t('songs.dropPptBackgroundHint')}</span>
+                        </div>
+                      )}
+                    </label>
+                    {coverImage && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={useCoverAsPptBackground}
+                      >
+                        {t('songs.useCoverAsPptBackground')}
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>

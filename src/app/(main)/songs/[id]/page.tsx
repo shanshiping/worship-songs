@@ -8,11 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   ArrowLeft, Edit, Trash, FileText, Music2, Download,
   Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, Repeat,
-  Shuffle, Heart, ListMusic, ListPlus, Disc3, Mic2, Video, ExternalLink, Loader2
+  Shuffle, Heart, ListMusic, ListPlus, Disc3, Mic2, Video, ExternalLink, Loader2, Users,
+  Presentation,
 } from 'lucide-react'
 import Link from 'next/link'
 import { requestExtractAndSaveLyrics } from '@/lib/extract-lyrics-client'
 import { ShareButton } from '@/components/share-button'
+import { ShareToTeamDialog } from '@/components/share-to-team-dialog'
 import { SongTagBadges, type TagItem } from '@/components/tag-multi-select'
 import { AddToPlaylistDialog } from '@/components/add-to-playlist-dialog'
 import { EditSongTagsDialog } from '@/components/edit-song-tags-dialog'
@@ -22,6 +24,7 @@ import { SongScripturesDisplay } from '@/components/song-scriptures-editor'
 import { usePermissions } from '@/hooks/use-permissions'
 import { toast } from 'sonner'
 import { parseLrc } from '@/lib/lrc'
+import { downloadLyricsPpt } from '@/lib/ppt-download-client'
 import { getRouteParamId, isSongDetailId, SONG_UPLOAD_PATH } from '@/lib/route-params'
 
 interface Song {
@@ -37,6 +40,7 @@ interface Song {
   mvUrl: string | null
   sheetMusic: string | null
   coverImage: string | null
+  pptBackground: string | null
   audioFile: string | null
   lyrics: string | null
   lyricsLrc: string | null
@@ -73,9 +77,11 @@ export default function SongDetailPage() {
   const [currentLyricIndex, setCurrentLyricIndex] = useState(-1)
   const [showLyrics, setShowLyrics] = useState(true)
   const [addToPlaylistOpen, setAddToPlaylistOpen] = useState(false)
+  const [shareToTeamOpen, setShareToTeamOpen] = useState(false)
   const [tagsDialogOpen, setTagsDialogOpen] = useState(false)
   const [sheetPreviewOpen, setSheetPreviewOpen] = useState(false)
   const [extractingLyrics, setExtractingLyrics] = useState(false)
+  const [generatingPpt, setGeneratingPpt] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const lyricsRef = useRef<HTMLDivElement>(null)
   const autoExtractAttemptedRef = useRef<string | null>(null)
@@ -230,6 +236,23 @@ export default function SongDetailPage() {
     }
   }
 
+  const handleGeneratePpt = async () => {
+    if (!song || !permissions.canDownloadSong) {
+      toast.error(t('ppt.noPermission'))
+      return
+    }
+
+    setGeneratingPpt(true)
+    try {
+      await downloadLyricsPpt([song.id])
+      toast.success(t('ppt.generateSuccess'))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('ppt.generateFailed'))
+    } finally {
+      setGeneratingPpt(false)
+    }
+  }
+
   // 音频播放控制
   const togglePlay = () => {
     if (audioRef.current) {
@@ -372,6 +395,7 @@ export default function SongDetailPage() {
     ? song.lyrics.split('\n').filter((line) => line.trim())
     : []
   const timedFollowAlong = lrcLines.length > 0
+  const hasLyricsForPpt = Boolean(song.lyrics?.trim() || song.lyricsLrc?.trim())
   const tagBadgeEditProps = permissions.canEditSong
     ? {
         onTagClick: () => setTagsDialogOpen(true),
@@ -408,6 +432,14 @@ export default function SongDetailPage() {
         </div>
         <div className="flex space-x-2">
           <ShareButton type="song" id={song.id} />
+          <Button
+            variant="outline"
+            className="rounded-xl"
+            onClick={() => setShareToTeamOpen(true)}
+          >
+            <Users className="mr-2 h-4 w-4" />
+            {t('teams.shareToTeam')}
+          </Button>
           {(permissions.canEditPlaylist || permissions.canCreatePlaylist) && (
             <Button
               variant="outline"
@@ -416,6 +448,21 @@ export default function SongDetailPage() {
             >
               <ListPlus className="mr-2 h-4 w-4" />
               {t('playlists.addToPlaylist')}
+            </Button>
+          )}
+          {permissions.canDownloadSong && hasLyricsForPpt && (
+            <Button
+              variant="outline"
+              className="rounded-xl"
+              disabled={generatingPpt}
+              onClick={() => void handleGeneratePpt()}
+            >
+              {generatingPpt ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Presentation className="mr-2 h-4 w-4" />
+              )}
+              {generatingPpt ? t('ppt.generating') : t('ppt.generateFromDetail')}
             </Button>
           )}
           {permissions.canEditSong && (
@@ -850,6 +897,35 @@ export default function SongDetailPage() {
                   onUploaded={handleAttachmentUploaded}
                 />
               ) : null}
+              {song.pptBackground ? (
+                <div className="overflow-hidden rounded-xl bg-gray-50">
+                  <img
+                    src={song.pptBackground}
+                    alt={t('songs.pptBackgroundFile')}
+                    className="h-32 w-full object-cover"
+                  />
+                  <div className="flex items-center justify-between p-3">
+                    <div className="flex items-center space-x-3">
+                      <Presentation className="h-5 w-5 text-orange-500" />
+                      <span className="text-sm font-medium">{t('songs.existingPptBackground')}</span>
+                    </div>
+                    {permissions.canEditSong && (
+                      <Link
+                        href={`/songs/${song.id}/edit`}
+                        className="text-sm text-primary hover:underline"
+                      >
+                        {t('common.edit')}
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ) : permissions.canEditSong ? (
+                <SongAttachmentQuickUpload
+                  song={song}
+                  kind="pptBackground"
+                  onUploaded={handleAttachmentUploaded}
+                />
+              ) : null}
               {song.mvUrl && (
                 <a
                   href={song.mvUrl}
@@ -873,6 +949,12 @@ export default function SongDetailPage() {
         songId={song.id}
         open={addToPlaylistOpen}
         onOpenChange={setAddToPlaylistOpen}
+      />
+
+      <ShareToTeamDialog
+        songId={song.id}
+        open={shareToTeamOpen}
+        onOpenChange={setShareToTeamOpen}
       />
 
       {permissions.canEditSong && (
