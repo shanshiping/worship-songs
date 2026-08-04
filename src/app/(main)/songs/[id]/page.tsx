@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   ArrowLeft, Edit, Trash, FileText, Music2, Download,
   Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, Repeat,
-  Shuffle, Heart, ListMusic, ListPlus, Disc3, Mic2, Video, ExternalLink, Tags, Loader2
+  Shuffle, Heart, ListMusic, ListPlus, Disc3, Mic2, Video, ExternalLink, Loader2
 } from 'lucide-react'
 import Link from 'next/link'
 import { requestExtractAndSaveLyrics } from '@/lib/extract-lyrics-client'
@@ -332,19 +332,6 @@ export default function SongDetailPage() {
     }
   }, [currentTime, song?.lyricsLrc, isPlaying])
 
-  // 获取songs.category颜色
-  const getCategoryColor = (categoryName: string) => {
-    const colors: Record<string, string> = {
-      '敬拜赞美': 'from-pink-500 to-rose-500',
-      '诗歌': 'from-violet-500 to-purple-500',
-      '圣诞诗歌': 'from-red-500 to-green-500',
-      '复活节诗歌': 'from-amber-500 to-yellow-500',
-      '圣餐诗歌': 'from-blue-500 to-indigo-500',
-      '其他': 'from-gray-500 to-slate-500',
-    }
-    return colors[categoryName] || 'from-gray-500 to-slate-500'
-  }
-
   if (loading) {
     return (
       <div className="space-y-6">
@@ -385,6 +372,12 @@ export default function SongDetailPage() {
     ? song.lyrics.split('\n').filter((line) => line.trim())
     : []
   const timedFollowAlong = lrcLines.length > 0
+  const tagBadgeEditProps = permissions.canEditSong
+    ? {
+        onTagClick: () => setTagsDialogOpen(true),
+        onUncategorizedClick: () => setTagsDialogOpen(true),
+      }
+    : {}
 
   return (
     <div key={songId} className="space-y-6">
@@ -400,24 +393,7 @@ export default function SongDetailPage() {
           </Link>
           <div>
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <SongTagBadges
-                tags={song.tags}
-                {...(permissions.canEditSong
-                  ? {
-                      onTagClick: () => setTagsDialogOpen(true),
-                      onUncategorizedClick: () => setTagsDialogOpen(true),
-                    }
-                  : {})}
-              />
-              {permissions.canEditSong && (
-                <button
-                  type="button"
-                  onClick={() => setTagsDialogOpen(true)}
-                  className="text-xs text-primary hover:underline"
-                >
-                  {t('songs.editTags')}
-                </button>
-              )}
+              <SongTagBadges tags={song.tags} {...tagBadgeEditProps} />
             </div>
             <h1 className="text-3xl font-bold tracking-tight">
               <span className="gradient-text">{song.title}</span>
@@ -440,16 +416,6 @@ export default function SongDetailPage() {
             >
               <ListPlus className="mr-2 h-4 w-4" />
               {t('playlists.addToPlaylist')}
-            </Button>
-          )}
-          {permissions.canEditSong && (
-            <Button
-              variant="outline"
-              className="rounded-xl"
-              onClick={() => setTagsDialogOpen(true)}
-            >
-              <Tags className="mr-2 h-4 w-4" />
-              {t('songs.editTags')}
             </Button>
           )}
           {permissions.canEditSong && (
@@ -480,9 +446,7 @@ export default function SongDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* 专辑封面 */}
           <Card className="animate-fade-in border-0 shadow-lg overflow-hidden" style={{ animationDelay: '100ms' }}>
-            <div
-              className={`bg-gradient-to-br ${getCategoryColor(song.tags?.find((st) => st.tag.kind === 'TYPE')?.tag.name || '')} p-8`}
-            >
+            <div className="bg-gradient-to-br from-slate-600 to-slate-800 p-8">
               <div className="aspect-square max-w-md mx-auto rounded-2xl overflow-hidden shadow-2xl bg-black/20 backdrop-blur-sm">
                 {song.coverImage ? (
                   <img
@@ -652,29 +616,12 @@ export default function SongDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <button
-                type="button"
-                disabled={!permissions.canEditSong}
-                onClick={() => {
-                  if (permissions.canEditSong) setTagsDialogOpen(true)
-                }}
-                className={`flex w-full items-center justify-between rounded-xl bg-gray-50 p-3 text-left${
-                  permissions.canEditSong
-                    ? ' cursor-pointer hover:bg-gray-100'
-                    : ''
-                }`}
-                title={
-                  permissions.canEditSong ? t('songs.editTagsHint') : undefined
-                }
-              >
+              <div className="flex w-full items-center justify-between rounded-xl bg-gray-50 p-3">
                 <span className="text-sm text-muted-foreground">{t('songs.tags')}</span>
                 <div className="flex flex-wrap items-center justify-end gap-1">
-                  <SongTagBadges tags={song.tags} />
-                  {permissions.canEditSong && (
-                    <span className="ml-1 text-xs text-primary">{t('songs.editTags')}</span>
-                  )}
+                  <SongTagBadges tags={song.tags} {...tagBadgeEditProps} />
                 </div>
-              </button>
+              </div>
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                 <span className="text-sm text-muted-foreground">{t('songs.uploadedBy')}</span>
                 <span className="font-medium text-sm">
