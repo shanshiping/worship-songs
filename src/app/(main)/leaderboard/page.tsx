@@ -77,7 +77,7 @@ export default function LeaderboardPage() {
         return <Award className="h-6 w-6 text-amber-600" />
       default:
         return (
-          <span className="text-lg font-bold text-muted-foreground w-6 text-center">
+          <span className="text-sm font-medium text-muted-foreground w-6 text-center">
             {rank}
           </span>
         )
@@ -201,7 +201,7 @@ export default function LeaderboardPage() {
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
                     <div className="flex items-center space-x-4">
-                      <span className="text-lg font-bold text-muted-foreground w-8 text-center">
+                      <span className="text-sm font-medium text-muted-foreground w-8 text-center">
                         {item.rank}
                       </span>
                       <div>

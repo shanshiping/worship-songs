@@ -113,12 +113,25 @@ function FullSongBlock({
       {song.scriptures && song.scriptures.length > 0 && (
         <SongScripturesDisplay scriptures={song.scriptures} t={t} />
       )}
+      {song.sheetMusic && (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">{t('songs.sheetPreview')}</p>
+          {song.sheetMusic.toLowerCase().includes('.pdf') ? (
+            <iframe
+              title={t('songs.sheetPreview')}
+              src={song.sheetMusic}
+              className="h-80 w-full rounded border"
+            />
+          ) : (
+            <img
+              src={song.sheetMusic}
+              alt={t('songs.sheetFile')}
+              className="max-h-80 w-auto rounded border object-contain"
+            />
+          )}
+        </div>
+      )}
       <div className="flex flex-wrap gap-3 items-center text-sm">
-        {song.sheetMusic && (
-          <a href={song.sheetMusic} target="_blank" rel="noreferrer" className="text-primary underline">
-            {t('songs.sheet')}
-          </a>
-        )}
         {song.mvUrl && (
           <a href={song.mvUrl} target="_blank" rel="noreferrer" className="text-primary underline">
             MV

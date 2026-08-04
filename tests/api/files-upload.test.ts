@@ -65,4 +65,40 @@ describe('/api/files/upload', () => {
     expect(status).toBe(200)
     expect(body.path).toContain('/uploads/sheets/test-uuid.pdf')
   })
+
+  it('uploads valid cover image', async () => {
+    vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'u1' } })
+    const form = new FormData()
+    form.append(
+      'file',
+      new File(['img'], 'cover.jpg', { type: 'image/jpeg' })
+    )
+    form.append('type', 'cover')
+    const res = await POST(
+      new Request('http://localhost/api/files/upload', {
+        method: 'POST',
+        body: form,
+      })
+    )
+    const { status, body } = await readJson<{ path: string }>(res)
+    expect(status).toBe(200)
+    expect(body.path).toContain('/uploads/covers/test-uuid.jpg')
+  })
+
+  it('rejects pdf as cover', async () => {
+    vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'u1' } })
+    const form = new FormData()
+    form.append(
+      'file',
+      new File(['pdf'], 'cover.pdf', { type: 'application/pdf' })
+    )
+    form.append('type', 'cover')
+    const res = await POST(
+      new Request('http://localhost/api/files/upload', {
+        method: 'POST',
+        body: form,
+      })
+    )
+    expect((await readJson(res)).status).toBe(400)
+  })
 })
