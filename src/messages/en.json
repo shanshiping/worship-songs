@@ -306,6 +306,11 @@
     "typeTags": "Type",
     "styleTags": "Style",
     "tags": "Tags",
+    "editTags": "Edit tags",
+    "editTagsHint": "Click cover to edit tags",
+    "saveTags": "Save tags",
+    "tagsUpdateSuccess": "Tags updated",
+    "tagsUpdateFailed": "Failed to update tags",
     "noResults": "No songs found"
   },
   "meetings": {

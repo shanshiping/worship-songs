@@ -17,6 +17,7 @@ import { enUS, zhCN } from 'date-fns/locale'
 import { ShareButton } from '@/components/share-button'
 import { SongTagBadges, type TagItem } from '@/components/tag-multi-select'
 import { AddToPlaylistDialog } from '@/components/add-to-playlist-dialog'
+import { EditSongTagsDialog } from '@/components/edit-song-tags-dialog'
 import { usePermissions } from '@/hooks/use-permissions'
 import { toast } from 'sonner'
 
@@ -66,6 +67,7 @@ export default function SongDetailPage() {
   const [currentLyricIndex, setCurrentLyricIndex] = useState(-1)
   const [showLyrics, setShowLyrics] = useState(true)
   const [addToPlaylistOpen, setAddToPlaylistOpen] = useState(false)
+  const [tagsDialogOpen, setTagsDialogOpen] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const lyricsRef = useRef<HTMLDivElement>(null)
 
@@ -347,7 +349,23 @@ export default function SongDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* 专辑封面 */}
           <Card className="animate-fade-in border-0 shadow-lg overflow-hidden" style={{ animationDelay: '100ms' }}>
-            <div className={`bg-gradient-to-br ${getCategoryColor(song.tags?.find((st) => st.tag.kind === 'TYPE')?.tag.name || '')} p-8`}>
+            <div
+              className={`bg-gradient-to-br ${getCategoryColor(song.tags?.find((st) => st.tag.kind === 'TYPE')?.tag.name || '')} p-8${permissions.canEditSong ? ' cursor-pointer' : ''}`}
+              {...(permissions.canEditSong
+                ? {
+                    role: 'button' as const,
+                    tabIndex: 0,
+                    title: t('songs.editTagsHint'),
+                    onClick: () => setTagsDialogOpen(true),
+                    onKeyDown: (e: React.KeyboardEvent) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        setTagsDialogOpen(true)
+                      }
+                    },
+                  }
+                : {})}
+            >
               <div className="aspect-square max-w-md mx-auto rounded-2xl overflow-hidden shadow-2xl bg-black/20 backdrop-blur-sm">
                 {song.sheetMusic ? (
                   <img
@@ -730,6 +748,15 @@ export default function SongDetailPage() {
         open={addToPlaylistOpen}
         onOpenChange={setAddToPlaylistOpen}
       />
+
+      {permissions.canEditSong && (
+        <EditSongTagsDialog
+          open={tagsDialogOpen}
+          onOpenChange={setTagsDialogOpen}
+          song={song}
+          onSaved={fetchSong}
+        />
+      )}
     </div>
   )
 }

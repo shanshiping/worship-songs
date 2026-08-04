@@ -306,6 +306,11 @@
     "typeTags": "类型",
     "styleTags": "风格",
     "tags": "标签",
+    "editTags": "编辑标签",
+    "editTagsHint": "点击封面编辑标签",
+    "saveTags": "保存标签",
+    "tagsUpdateSuccess": "标签已更新",
+    "tagsUpdateFailed": "更新标签失败",
     "noResults": "没有找到符合条件的歌曲"
   },
   "meetings": {
