@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -72,40 +73,47 @@ export function Header() {
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-64 rounded-xl" align="end">
-                <DropdownMenuLabel className="p-4 font-normal">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={''} alt={session?.user?.name || ''} />
-                      <AvatarFallback className="bg-primary text-lg font-semibold text-primary-foreground">
-                        {userInitials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm font-semibold">{session?.user?.name}</p>
-                      <p className="text-xs text-muted-foreground">{session?.user?.email}</p>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="p-4 font-normal">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={''} alt={session?.user?.name || ''} />
+                        <AvatarFallback className="bg-primary text-lg font-semibold text-primary-foreground">
+                          {userInitials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-semibold">{session?.user?.name}</p>
+                        <p className="text-xs text-muted-foreground">{session?.user?.email}</p>
+                      </div>
                     </div>
-                  </div>
-                </DropdownMenuLabel>
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer rounded-lg">
-                  <Link href="/settings" className="flex w-full items-center px-2 py-2">
-                    <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
-                      <User className="h-4 w-4 text-foreground" />
-                    </div>
-                    <span>{t('nav.profile')}</span>
-                  </Link>
+                <DropdownMenuItem
+                  render={<Link href="/settings" />}
+                  className="cursor-pointer rounded-lg"
+                >
+                  <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                    <User className="h-4 w-4 text-foreground" />
+                  </div>
+                  <span>{t('nav.profile')}</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer rounded-lg">
-                  <Link href="/settings" className="flex w-full items-center px-2 py-2">
-                    <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
-                      <Settings className="h-4 w-4 text-foreground" />
-                    </div>
-                    <span>{t('nav.settings')}</span>
-                  </Link>
+                <DropdownMenuItem
+                  render={<Link href="/settings" />}
+                  className="cursor-pointer rounded-lg"
+                >
+                  <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                    <Settings className="h-4 w-4 text-foreground" />
+                  </div>
+                  <span>{t('nav.settings')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  onClick={async () => {
+                    await signOut({ redirect: false })
+                    window.location.assign('/login')
+                  }}
                   className="cursor-pointer rounded-lg px-2 py-2"
                 >
                   <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
