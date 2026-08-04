@@ -9,11 +9,12 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  Music, Plus, Search, FileText, LayoutGrid, List, Play, Calendar, ChevronRight, ListMusic,
+  Music, Plus, Search, FileText, LayoutGrid, List, Play, Calendar, ChevronRight, ListMusic, Tags,
 } from 'lucide-react'
 import { usePermissions } from '@/hooks/use-permissions'
 import { TagMultiSelect, SongTagBadges, type TagItem } from '@/components/tag-multi-select'
 import { AddToPlaylistDialog } from '@/components/add-to-playlist-dialog'
+import { TagManagerDialog } from '@/components/tag-manager-dialog'
 
 interface Song {
   id: string
@@ -53,6 +54,7 @@ export default function SongsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [totalSongs, setTotalSongs] = useState(0)
   const [addToPlaylistSongId, setAddToPlaylistSongId] = useState<string | null>(null)
+  const [tagManagerOpen, setTagManagerOpen] = useState(false)
 
   const canAddToPlaylist = permissions.canEditPlaylist || permissions.canCreatePlaylist
 
@@ -151,6 +153,18 @@ export default function SongsPage() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
+          {(permissions.canCreateCategory ||
+            permissions.canEditCategory ||
+            permissions.canDeleteCategory) && (
+            <Button
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setTagManagerOpen(true)}
+            >
+              <Tags className="mr-2 h-4 w-4" />
+              {t('songs.manageTags')}
+            </Button>
+          )}
           {permissions.canCreateSong && (
             <Link
               href="/song-upload"
@@ -488,6 +502,12 @@ export default function SongsPage() {
           }}
         />
       )}
+
+      <TagManagerDialog
+        open={tagManagerOpen}
+        onOpenChange={setTagManagerOpen}
+        onChanged={fetchTags}
+      />
     </div>
   )
 }
