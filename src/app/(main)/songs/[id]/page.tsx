@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import {
   ArrowLeft, Edit, Trash, FileText, Music2, Calendar, Download,
   Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, Repeat,
-  Shuffle, Heart, Share2, ListMusic, ListPlus, Disc3, Mic2, Clock, Video, ExternalLink
+  Shuffle, Heart, Share2, ListMusic, ListPlus, Disc3, Mic2, Clock, Video, ExternalLink, Tags
 } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -18,8 +18,11 @@ import { ShareButton } from '@/components/share-button'
 import { SongTagBadges, type TagItem } from '@/components/tag-multi-select'
 import { AddToPlaylistDialog } from '@/components/add-to-playlist-dialog'
 import { EditSongTagsDialog } from '@/components/edit-song-tags-dialog'
+import { SheetMusicPreviewDialog } from '@/components/sheet-music-preview-dialog'
+import { SongScripturesDisplay } from '@/components/song-scriptures-editor'
 import { usePermissions } from '@/hooks/use-permissions'
 import { toast } from 'sonner'
+import { parseLrc } from '@/lib/lrc'
 
 interface Song {
   id: string
@@ -33,10 +36,21 @@ interface Song {
   album: string | null
   mvUrl: string | null
   sheetMusic: string | null
+  coverImage: string | null
   audioFile: string | null
   lyrics: string | null
+  lyricsLrc: string | null
   notes: string | null
+  sheetUploadedAt: string | null
+  uploadedBy: { id: string; name: string | null; email: string } | null
+  sheetUploadedBy: { id: string; name: string | null; email: string } | null
   tags: Array<{ tag: TagItem }>
+  scriptures?: Array<{
+    id: string
+    reference: string
+    text: string | null
+    order: number
+  }>
   meetings: Array<{
     meeting: {
       id: string
@@ -68,6 +82,7 @@ export default function SongDetailPage() {
   const [showLyrics, setShowLyrics] = useState(true)
   const [addToPlaylistOpen, setAddToPlaylistOpen] = useState(false)
   const [tagsDialogOpen, setTagsDialogOpen] = useState(false)
+  const [sheetPreviewOpen, setSheetPreviewOpen] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const lyricsRef = useRef<HTMLDivElement>(null)
 
@@ -76,10 +91,10 @@ export default function SongDetailPage() {
   }, [params.id])
 
   useEffect(() => {
-    if (song?.lyrics && isPlaying) {
+    if (song?.lyricsLrc && isPlaying) {
       updateCurrentLyric()
     }
-  }, [currentTime, song?.lyrics, isPlaying])
+  }, [currentTime, song?.lyricsLrc, isPlaying])
 
   const fetchSong = async () => {
     try {
@@ -196,30 +211,24 @@ export default function SongDetailPage() {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`
   }
 
-  // 解析songs.lyrics
-  const parseLyrics = (lyrics: string) => {
-    if (!lyrics) return []
-    const lines = lyrics.split('\n').filter(line => line.trim())
-    return lines.map((line, index) => ({
-      text: line.trim(),
-      index,
-    }))
-  }
-
-  // 更新当前songs.lyrics行
+  // 按 LRC 时间轴更新当前行
   const updateCurrentLyric = () => {
-    if (!song?.lyrics) return
-    const lines = parseLyrics(song.lyrics)
+    if (!song?.lyricsLrc) return
+    const lines = parseLrc(song.lyricsLrc)
     if (lines.length === 0) return
 
-    // 根据时间计算当前songs.lyrics行（假设每行songs.lyrics平均 5 秒）
-    const avgTimePerLine = duration / lines.length
-    const newIndex = Math.floor(currentTime / avgTimePerLine)
+    let newIndex = -1
+    for (let i = 0; i < lines.length; i++) {
+      if (currentTime >= lines[i]!.timeSec) {
+        newIndex = i
+      } else {
+        break
+      }
+    }
 
-    if (newIndex !== currentLyricIndex && newIndex >= 0 && newIndex < lines.length) {
+    if (newIndex !== currentLyricIndex && newIndex >= 0) {
       setCurrentLyricIndex(newIndex)
 
-      // 滚动到当前songs.lyrics
       if (lyricsRef.current) {
         const lyricElement = lyricsRef.current.children[newIndex] as HTMLElement
         if (lyricElement) {
@@ -280,7 +289,11 @@ export default function SongDetailPage() {
     return null
   }
 
-  const lyrics = song.lyrics ? parseLyrics(song.lyrics) : []
+  const lrcLines = song.lyricsLrc ? parseLrc(song.lyricsLrc) : []
+  const plainLines = song.lyrics
+    ? song.lyrics.split('\n').filter((line) => line.trim())
+    : []
+  const timedFollowAlong = lrcLines.length > 0
 
   return (
     <div className="space-y-6">
@@ -295,8 +308,25 @@ export default function SongDetailPage() {
             {t('songs.back')}
           </Link>
           <div>
-            <div className="mb-2 flex flex-wrap gap-1">
-              <SongTagBadges tags={song.tags} />
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <SongTagBadges
+                tags={song.tags}
+                {...(permissions.canEditSong
+                  ? {
+                      onTagClick: () => setTagsDialogOpen(true),
+                      onUncategorizedClick: () => setTagsDialogOpen(true),
+                    }
+                  : {})}
+              />
+              {permissions.canEditSong && (
+                <button
+                  type="button"
+                  onClick={() => setTagsDialogOpen(true)}
+                  className="text-xs text-primary hover:underline"
+                >
+                  {t('songs.editTags')}
+                </button>
+              )}
             </div>
             <h1 className="text-3xl font-bold tracking-tight">
               <span className="gradient-text">{song.title}</span>
@@ -319,6 +349,16 @@ export default function SongDetailPage() {
             >
               <ListPlus className="mr-2 h-4 w-4" />
               {t('playlists.addToPlaylist')}
+            </Button>
+          )}
+          {permissions.canEditSong && (
+            <Button
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setTagsDialogOpen(true)}
+            >
+              <Tags className="mr-2 h-4 w-4" />
+              {t('songs.editTags')}
             </Button>
           )}
           {permissions.canEditSong && (
@@ -350,26 +390,12 @@ export default function SongDetailPage() {
           {/* 专辑封面 */}
           <Card className="animate-fade-in border-0 shadow-lg overflow-hidden" style={{ animationDelay: '100ms' }}>
             <div
-              className={`bg-gradient-to-br ${getCategoryColor(song.tags?.find((st) => st.tag.kind === 'TYPE')?.tag.name || '')} p-8${permissions.canEditSong ? ' cursor-pointer' : ''}`}
-              {...(permissions.canEditSong
-                ? {
-                    role: 'button' as const,
-                    tabIndex: 0,
-                    title: t('songs.editTagsHint'),
-                    onClick: () => setTagsDialogOpen(true),
-                    onKeyDown: (e: React.KeyboardEvent) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        setTagsDialogOpen(true)
-                      }
-                    },
-                  }
-                : {})}
+              className={`bg-gradient-to-br ${getCategoryColor(song.tags?.find((st) => st.tag.kind === 'TYPE')?.tag.name || '')} p-8`}
             >
               <div className="aspect-square max-w-md mx-auto rounded-2xl overflow-hidden shadow-2xl bg-black/20 backdrop-blur-sm">
-                {song.sheetMusic ? (
+                {song.coverImage ? (
                   <img
-                    src={song.sheetMusic}
+                    src={song.coverImage}
                     alt={song.title}
                     className="w-full h-full object-cover"
                   />
@@ -383,11 +409,6 @@ export default function SongDetailPage() {
                   </div>
                 )}
               </div>
-              {permissions.canEditSong && (
-                <p className="mt-4 text-center text-sm font-medium text-white/90">
-                  {t('songs.editTagsHint')}
-                </p>
-              )}
             </div>
           </Card>
 
@@ -514,8 +535,8 @@ export default function SongDetailPage() {
             </Card>
           )}
 
-          {/* songs.lyrics显示 */}
-          {song.lyrics && (
+          {/* lyrics display */}
+          {(timedFollowAlong || plainLines.length > 0) && (
             <Card className="animate-fade-in border-0 shadow-lg" style={{ animationDelay: '300ms' }}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
@@ -536,24 +557,49 @@ export default function SongDetailPage() {
                 </div>
               </CardHeader>
               {showLyrics && (
-                <CardContent>
-                  <div
-                    ref={lyricsRef}
-                    className="max-h-96 overflow-y-auto space-y-3 p-4 bg-gray-50 rounded-xl"
-                  >
-                    {lyrics.map((line, index) => (
+                <CardContent className="space-y-4">
+                  {timedFollowAlong ? (
+                    <div
+                      ref={lyricsRef}
+                      className="max-h-96 overflow-y-auto space-y-3 p-4 bg-gray-50 rounded-xl"
+                    >
+                      {lrcLines.map((line, index) => (
+                        <div
+                          key={`${line.timeSec}-${index}`}
+                          className={`py-2 px-4 rounded-lg transition-all duration-300 ${
+                            index === currentLyricIndex
+                              ? 'bg-primary text-primary-foreground font-bold text-lg scale-105'
+                              : 'text-muted-foreground hover:bg-gray-100'
+                          }`}
+                        >
+                          {line.text}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                  {plainLines.length > 0 && (
+                    <div className={timedFollowAlong ? 'space-y-2' : undefined}>
+                      {timedFollowAlong && (
+                        <p className="text-sm font-medium text-muted-foreground">
+                          {t('songs.plainLyrics')}
+                        </p>
+                      )}
                       <div
-                        key={index}
-                        className={`py-2 px-4 rounded-lg transition-all duration-300 ${
-                          index === currentLyricIndex
-                            ? 'bg-primary text-primary-foreground font-bold text-lg scale-105'
-                            : 'text-muted-foreground hover:bg-gray-100'
+                        className={`max-h-96 overflow-y-auto space-y-3 p-4 bg-gray-50 rounded-xl ${
+                          timedFollowAlong ? 'max-h-48' : ''
                         }`}
                       >
-                        {line.text}
+                        {plainLines.map((line, index) => (
+                          <div
+                            key={index}
+                            className="py-2 px-4 rounded-lg text-muted-foreground"
+                          >
+                            {line.trim()}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
                 </CardContent>
               )}
             </Card>
@@ -573,12 +619,45 @@ export default function SongDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+              <button
+                type="button"
+                disabled={!permissions.canEditSong}
+                onClick={() => {
+                  if (permissions.canEditSong) setTagsDialogOpen(true)
+                }}
+                className={`flex w-full items-center justify-between rounded-xl bg-gray-50 p-3 text-left${
+                  permissions.canEditSong
+                    ? ' cursor-pointer hover:bg-gray-100'
+                    : ''
+                }`}
+                title={
+                  permissions.canEditSong ? t('songs.editTagsHint') : undefined
+                }
+              >
                 <span className="text-sm text-muted-foreground">{t('songs.tags')}</span>
-                <div className="flex flex-wrap justify-end gap-1">
+                <div className="flex flex-wrap items-center justify-end gap-1">
                   <SongTagBadges tags={song.tags} />
+                  {permissions.canEditSong && (
+                    <span className="ml-1 text-xs text-primary">{t('songs.editTags')}</span>
+                  )}
                 </div>
+              </button>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <span className="text-sm text-muted-foreground">{t('songs.uploadedBy')}</span>
+                <span className="font-medium text-sm">
+                  {song.uploadedBy?.name || song.uploadedBy?.email || t('songs.unknownUploader')}
+                </span>
               </div>
+              {song.sheetMusic && (
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                  <span className="text-sm text-muted-foreground">{t('songs.sheetUploadedBy')}</span>
+                  <span className="font-medium text-sm text-right">
+                    {song.sheetUploadedBy?.name ||
+                      song.sheetUploadedBy?.email ||
+                      t('songs.unknownUploader')}
+                  </span>
+                </div>
+              )}
               {song.artist && (
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                   <span className="text-sm text-muted-foreground">{t('songs.artist')}</span>
@@ -634,6 +713,9 @@ export default function SongDetailPage() {
                   <p className="mt-1 text-sm">{song.notes}</p>
                 </div>
               )}
+              {song.scriptures && song.scriptures.length > 0 && (
+                <SongScripturesDisplay scriptures={song.scriptures} t={t} />
+              )}
             </CardContent>
           </Card>
 
@@ -649,18 +731,17 @@ export default function SongDetailPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {song.sheetMusic && (
-                <a
-                  href={song.sheetMusic}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                <button
+                  type="button"
+                  onClick={() => setSheetPreviewOpen(true)}
+                  className="flex w-full items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors text-left"
                 >
                   <div className="flex items-center space-x-3">
                     <FileText className="h-5 w-5 text-blue-500" />
                     <span className="text-sm font-medium">{t('songs.viewSheet')}</span>
                   </div>
                   <Download className="h-4 w-4 text-muted-foreground" />
-                </a>
+                </button>
               )}
               {song.audioFile && (
                 <a
@@ -762,6 +843,12 @@ export default function SongDetailPage() {
           onSaved={fetchSong}
         />
       )}
+
+      <SheetMusicPreviewDialog
+        open={sheetPreviewOpen}
+        onOpenChange={setSheetPreviewOpen}
+        path={song.sheetMusic}
+      />
     </div>
   )
 }

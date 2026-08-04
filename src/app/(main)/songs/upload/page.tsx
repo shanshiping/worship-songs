@@ -13,6 +13,11 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/errors'
 import { TagMultiSelect, type TagItem } from '@/components/tag-multi-select'
+import {
+  SongScripturesEditor,
+  scripturesForSubmit,
+  type ScriptureDraft,
+} from '@/components/song-scriptures-editor'
 
 interface UploadedFile {
   path: string
@@ -33,6 +38,7 @@ export default function UploadSongPage() {
   const [typeTags, setTypeTags] = useState<TagItem[]>([])
   const [styleTags, setStyleTags] = useState<TagItem[]>([])
   const [tagIds, setTagIds] = useState<string[]>([])
+  const [scriptures, setScriptures] = useState<ScriptureDraft[]>([])
   const [loading, setLoading] = useState(false)
   const [parsing, setParsing] = useState(false)
   const [parsed, setParsed] = useState(false)
@@ -47,12 +53,16 @@ export default function UploadSongPage() {
     album: '',
     mvUrl: '',
     lyrics: '',
+    lyricsLrc: '',
     notes: '',
   })
   const [sheetMusic, setSheetMusic] = useState<UploadedFile | null>(null)
+  const [coverImage, setCoverImage] = useState<UploadedFile | null>(null)
   const [audioFile, setAudioFile] = useState<UploadedFile | null>(null)
   const [uploadingSheet, setUploadingSheet] = useState(false)
+  const [uploadingCover, setUploadingCover] = useState(false)
   const [uploadingAudio, setUploadingAudio] = useState(false)
+  const [extractingLyrics, setExtractingLyrics] = useState(false)
 
   useEffect(() => {
     fetchTags()
@@ -73,7 +83,7 @@ export default function UploadSongPage() {
   }
 
   // 上传文件
-  const uploadFile = async (file: File, type: 'sheet' | 'audio') => {
+  const uploadFile = async (file: File, type: 'sheet' | 'audio' | 'cover') => {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('type', type)
@@ -159,6 +169,22 @@ export default function UploadSongPage() {
     }
   }
 
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingCover(true)
+    try {
+      const result = await uploadFile(file, 'cover')
+      setCoverImage(result)
+      toast.success(t('songs.uploadSuccess'))
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, t('songs.uploadFailed')))
+    } finally {
+      setUploadingCover(false)
+    }
+  }
+
   // 处理songs.audioFile变化
   const handleAudioFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -182,8 +208,40 @@ export default function UploadSongPage() {
     setSheetMusic(null)
   }
 
+  const removeCoverImage = () => {
+    setCoverImage(null)
+  }
+
   const removeAudioFile = () => {
     setAudioFile(null)
+  }
+
+  const handleExtractLyrics = async () => {
+    if (!sheetMusic?.path) return
+    if (formData.lyrics.trim()) {
+      const ok = window.confirm(t('songs.extractConfirmOverwrite'))
+      if (!ok) return
+    }
+    setExtractingLyrics(true)
+    try {
+      const response = await fetch('/api/songs/extract-lyrics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: sheetMusic.path }),
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        toast.error(data.error || t('songs.extractFailed'))
+        return
+      }
+      setFormData((prev) => ({ ...prev, lyrics: data.lyrics || '' }))
+      toast.success(t('songs.extractSuccess'))
+    } catch (error) {
+      console.error('Extract lyrics error:', error)
+      toast.error(t('songs.extractFailed'))
+    } finally {
+      setExtractingLyrics(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -205,6 +263,9 @@ export default function UploadSongPage() {
         credentials: 'include',
         body: JSON.stringify({
           ...formData,
+          tagIds,
+          scriptures: scripturesForSubmit(scriptures),
+          coverImage: coverImage?.path || null,
           sheetMusic: sheetMusic?.path || null,
           audioFile: audioFile?.path || null,
         }),
@@ -275,7 +336,61 @@ export default function UploadSongPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* 文件上传区域 */}
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-3">
+              {/* 封面上传 */}
+              <div className="space-y-2">
+                <Label htmlFor="coverImage">{t('songs.coverFile')}</Label>
+                {coverImage ? (
+                  <div className="space-y-2">
+                    <img
+                      src={coverImage.path}
+                      alt={coverImage.name}
+                      className="h-32 w-full rounded-xl object-cover"
+                    />
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-xl">
+                      <p className="text-sm font-medium text-green-900 truncate max-w-[140px]">
+                        {coverImage.name}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={removeCoverImage}
+                        className="p-1 hover:bg-green-100 rounded-lg transition-colors"
+                      >
+                        <X className="h-4 w-4 text-green-600" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Input
+                      id="coverImage"
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={handleCoverChange}
+                      className="hidden"
+                      disabled={uploadingCover}
+                    />
+                    <label
+                      htmlFor="coverImage"
+                      className="flex items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary hover:bg-gray-50 transition-colors cursor-pointer min-h-[140px]"
+                    >
+                      {uploadingCover ? (
+                        <div className="flex items-center space-x-2 text-muted-foreground">
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          <span>{t('songs.uploading')}</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center space-y-2 text-muted-foreground text-center">
+                          <Music className="h-8 w-8" />
+                          <span className="text-sm">{t('songs.dropCover')}</span>
+                          <span className="text-xs">{t('songs.dropCoverHint')}</span>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+                )}
+              </div>
+
               {/* 歌谱上传 */}
               <div className="space-y-2">
                 <Label htmlFor="sheetMusic">{t('songs.sheetFile')}</Label>
@@ -312,7 +427,7 @@ export default function UploadSongPage() {
                     />
                     <label
                       htmlFor="sheetMusic"
-                      className="flex items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="flex items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary hover:bg-gray-50 transition-colors cursor-pointer min-h-[140px]"
                     >
                       {uploadingSheet ? (
                         <div className="flex items-center space-x-2 text-muted-foreground">
@@ -320,7 +435,7 @@ export default function UploadSongPage() {
                           <span>{t('songs.uploading')}</span>
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center space-y-2 text-muted-foreground">
+                        <div className="flex flex-col items-center space-y-2 text-muted-foreground text-center">
                           <FileText className="h-8 w-8" />
                           <span className="text-sm">{t('songs.dropSheet')}</span>
                           <span className="text-xs">{t('songs.dropSheetHint')}</span>
@@ -559,7 +674,28 @@ export default function UploadSongPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="lyrics">{t('songs.lyrics')}</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="lyrics">{t('songs.lyrics')}</Label>
+                {sheetMusic?.path && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="rounded-lg"
+                    disabled={extractingLyrics}
+                    onClick={handleExtractLyrics}
+                  >
+                    {extractingLyrics ? (
+                      <>
+                        <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                        {t('songs.extractingLyrics')}
+                      </>
+                    ) : (
+                      t('songs.extractFromSheet')
+                    )}
+                  </Button>
+                )}
+              </div>
               <Textarea
                 id="lyrics"
                 value={formData.lyrics}
@@ -578,6 +714,20 @@ export default function UploadSongPage() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="lyricsLrc">{t('songs.lyricsLrc')}</Label>
+              <Textarea
+                id="lyricsLrc"
+                value={formData.lyricsLrc}
+                onChange={(e) =>
+                  setFormData({ ...formData, lyricsLrc: e.target.value })
+                }
+                placeholder={t('songs.lyricsLrcPlaceholder')}
+                rows={6}
+                className="rounded-xl input-focus font-mono text-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="notes">{t('songs.notes')}</Label>
               <Textarea
                 id="notes"
@@ -590,6 +740,12 @@ export default function UploadSongPage() {
                 className="rounded-xl input-focus"
               />
             </div>
+
+            <SongScripturesEditor
+              value={scriptures}
+              onChange={setScriptures}
+              t={t}
+            />
 
             <div className="flex justify-end space-x-4">
               <Link href="/songs">

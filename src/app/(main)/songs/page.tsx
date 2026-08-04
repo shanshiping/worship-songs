@@ -22,6 +22,11 @@ interface Song {
   audioFile: string | null
   lyrics: string | null
   tags: Array<{ tag: TagItem }>
+  scriptures?: Array<{
+    reference: string
+    text?: string | null
+    order?: number
+  }>
   _count: {
     meetings: number
   }
@@ -40,6 +45,7 @@ export default function SongsPage() {
   const [selectedStyleIds, setSelectedStyleIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [lyricsSearch, setLyricsSearch] = useState('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
@@ -81,7 +87,7 @@ export default function SongsPage() {
 
   useEffect(() => {
     fetchSongs()
-  }, [search, selectedTypeIds, selectedStyleIds, page])
+  }, [search, lyricsSearch, selectedTypeIds, selectedStyleIds, page])
 
   const fetchTags = async () => {
     try {
@@ -106,6 +112,7 @@ export default function SongsPage() {
       })
 
       if (search) params.append('search', search)
+      if (lyricsSearch) params.append('lyricsSearch', lyricsSearch)
       for (const id of [...selectedTypeIds, ...selectedStyleIds]) {
         params.append('tagIds', id)
       }
@@ -163,6 +170,18 @@ export default function SongsPage() {
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value)
+                setPage(1)
+              }}
+              className="pl-10 h-11 rounded-xl input-focus"
+            />
+          </div>
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t('songs.searchLyricsPlaceholder')}
+              value={lyricsSearch}
+              onChange={(e) => {
+                setLyricsSearch(e.target.value)
                 setPage(1)
               }}
               className="pl-10 h-11 rounded-xl input-focus"
@@ -269,6 +288,11 @@ export default function SongsPage() {
                       </h3>
                       {song.artist && (
                         <p className="text-sm text-muted-foreground mt-1">{song.artist}</p>
+                      )}
+                      {song.scriptures?.[0]?.reference && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                          {song.scriptures[0].reference}
+                        </p>
                       )}
                     </div>
                     <div className="ml-3 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-muted">

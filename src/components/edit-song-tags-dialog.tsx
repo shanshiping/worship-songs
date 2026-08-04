@@ -29,9 +29,11 @@ type EditSongTagsDialogProps = {
     team: string | null
     album: string | null
     mvUrl: string | null
+    coverImage: string | null
     sheetMusic: string | null
     audioFile: string | null
     lyrics: string | null
+    lyricsLrc: string | null
     notes: string | null
     tags: Array<{ tag: TagItem }>
   }
@@ -88,9 +90,11 @@ export function EditSongTagsDialog({
           team: song.team,
           album: song.album,
           mvUrl: song.mvUrl,
+          coverImage: song.coverImage,
           sheetMusic: song.sheetMusic,
           audioFile: song.audioFile,
           lyrics: song.lyrics,
+          lyricsLrc: song.lyricsLrc,
           notes: song.notes,
           tagIds: selectedIds,
         }),
