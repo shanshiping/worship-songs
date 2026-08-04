@@ -60,6 +60,7 @@ POST /api/meetings { songIds } ──► MeetingSong ──► PostgreSQL
 | 排行榜年份与分页 | [`2026-07-17-leaderboard-pagination-year-design.md`](docs/superpowers/specs/2026-07-17-leaderboard-pagination-year-design.md) |
 | 聚会年份筛选 | [`2026-07-17-meetings-year-filter-design.md`](docs/superpowers/specs/2026-07-17-meetings-year-filter-design.md) |
 | 聚会选歌搜索与手动加歌 | [`2026-07-17-meeting-song-search-design.md`](docs/superpowers/specs/2026-07-17-meeting-song-search-design.md) |
+| 选歌 Agent | [`2026-08-04-song-selection-agent-design.md`](docs/superpowers/specs/2026-08-04-song-selection-agent-design.md) |
 
 全部规格与计划见 [`docs/superpowers/`](docs/superpowers/)。
 
@@ -156,6 +157,11 @@ NEXTAUTH_SECRET="your-secret-key-here"
 
 # 应用 URL（用于分享链接）
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# 选歌 Agent（可选；免费测试可用 Groq，见 .env.example）
+# AI_API_KEY=""
+# AI_BASE_URL="https://api.groq.com/openai/v1"
+# AI_MODEL="llama-3.3-70b-versatile"
 ```
 
 若你已有本机 Postgres，把 `DATABASE_URL` 改成自己的连接串即可。

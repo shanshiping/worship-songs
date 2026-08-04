@@ -2,6 +2,7 @@
 
 import { Sidebar } from './sidebar'
 import { Header } from './header'
+import { SongAgentChat } from '@/components/song-agent-chat'
 import { useI18n } from '@/components/providers/i18n-provider'
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
@@ -22,6 +23,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+      <SongAgentChat />
     </div>
   )
 }
