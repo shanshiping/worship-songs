@@ -34,7 +34,8 @@
     "searchPlaceholder": "Search songs, meetings...",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "playlists": "Playlists"
   },
   "roles": {
     "SUPER_ADMIN": "Super Admin",
@@ -178,7 +179,9 @@
     "theme": "Theme",
     "speaker": "Speaker",
     "leader": "Worship leader",
-    "songList": "Song list"
+    "songList": "Song list",
+    "playlistRecord": "Shared playlist",
+    "fullSongInfo": "Full song details"
   },
   "songs": {
     "title": "Songs",
@@ -298,7 +301,10 @@
     "noUsage": "No usage records",
     "deleting": "Deleting...",
     "delete": "Delete",
-    "edit": "Edit"
+    "edit": "Edit",
+    "typeTags": "Type",
+    "styleTags": "Style",
+    "tags": "Tags"
   },
   "meetings": {
     "title": "Meetings",
@@ -502,5 +508,39 @@
     "export2": "One sheet per year for easier viewing",
     "export3": "Includes date, theme, speaker, leader, and songs",
     "export4": "Export a specific year or all data"
+  },
+  "playlists": {
+    "title": "Playlists",
+    "subtitle": "Create shareable song lists",
+    "create": "Create playlist",
+    "empty": "No playlists yet",
+    "songCount": "{count} songs",
+    "yours": "Yours",
+    "newTitle": "New playlist",
+    "editTitle": "Edit playlist",
+    "info": "Playlist info",
+    "name": "Title",
+    "description": "Description",
+    "pickSongs": "Pick songs",
+    "selected": "Selected",
+    "noneSelected": "No songs added yet",
+    "songs": "Songs",
+    "titleRequired": "Playlist title is required",
+    "createFailed": "Failed to create playlist",
+    "addSongs": "Add songs",
+    "addToPlaylist": "Add to playlist",
+    "added": "Added",
+    "createDialogTitle": "New playlist",
+    "editInfo": "Edit info",
+    "addSuccess": "Added to playlist",
+    "addFailed": "Failed to add",
+    "removeFailed": "Failed to remove",
+    "noPlaylistsYet": "No playlists available",
+    "createAndAdd": "Create and add",
+    "updateSuccess": "Playlist updated",
+    "updateFailed": "Failed to update playlist",
+    "confirmDelete": "Delete this playlist?",
+    "deleted": "Playlist deleted",
+    "deleteFailed": "Failed to delete playlist"
   }
 }

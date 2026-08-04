@@ -34,7 +34,8 @@
     "searchPlaceholder": "搜索歌曲、聚会...",
     "openMenu": "打开菜单",
     "closeMenu": "关闭菜单",
-    "skipToContent": "跳到主要内容"
+    "skipToContent": "跳到主要内容",
+    "playlists": "歌单"
   },
   "roles": {
     "SUPER_ADMIN": "超级管理员",
@@ -178,7 +179,9 @@
     "theme": "主题",
     "speaker": "讲员",
     "leader": "主领",
-    "songList": "诗歌列表"
+    "songList": "诗歌列表",
+    "playlistRecord": "分享歌单",
+    "fullSongInfo": "完整歌曲信息"
   },
   "songs": {
     "title": "歌曲管理",
@@ -298,7 +301,10 @@
     "noUsage": "暂无使用记录",
     "deleting": "删除中...",
     "delete": "删除",
-    "edit": "编辑"
+    "edit": "编辑",
+    "typeTags": "类型",
+    "styleTags": "风格",
+    "tags": "标签"
   },
   "meetings": {
     "title": "聚会记录",
@@ -502,5 +508,39 @@
     "export2": "每年一个 Sheet，方便查看和管理",
     "export3": "包含聚会日期、主题、讲员、主领、诗歌等信息",
     "export4": "可选择特定年份导出或导出所有数据"
+  },
+  "playlists": {
+    "title": "歌单",
+    "subtitle": "创建可分享的歌曲列表",
+    "create": "创建歌单",
+    "empty": "还没有歌单",
+    "songCount": "{count} 首歌曲",
+    "yours": "我创建的",
+    "newTitle": "新建歌单",
+    "editTitle": "编辑歌单",
+    "info": "歌单信息",
+    "name": "歌单名称",
+    "description": "说明",
+    "pickSongs": "选歌",
+    "selected": "已选歌曲",
+    "noneSelected": "尚未添加歌曲",
+    "songs": "歌曲列表",
+    "titleRequired": "请填写歌单名称",
+    "createFailed": "创建歌单失败",
+    "addSongs": "添加歌曲",
+    "addToPlaylist": "加入歌单",
+    "added": "已添加",
+    "createDialogTitle": "新建歌单",
+    "editInfo": "编辑信息",
+    "addSuccess": "已加入歌单",
+    "addFailed": "加入失败",
+    "removeFailed": "移除失败",
+    "noPlaylistsYet": "还没有可加入的歌单",
+    "createAndAdd": "新建并加入",
+    "updateSuccess": "歌单已更新",
+    "updateFailed": "更新歌单失败",
+    "confirmDelete": "确定删除这个歌单吗？",
+    "deleted": "歌单已删除",
+    "deleteFailed": "删除歌单失败"
   }
 }
