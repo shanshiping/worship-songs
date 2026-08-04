@@ -3,7 +3,7 @@
 import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -285,11 +285,12 @@ export default function SongDetailPage() {
       {/* 头部 */}
       <div className="flex items-center justify-between animate-fade-in">
         <div className="flex items-center space-x-4">
-          <Link href="/songs">
-            <Button variant="ghost" size="sm" className="rounded-xl">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              {t('songs.back')}
-            </Button>
+          <Link
+            href="/songs"
+            className={buttonVariants({ variant: 'ghost', size: 'sm', className: 'rounded-xl' })}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {t('songs.back')}
           </Link>
           <div>
             <div className="mb-2 flex flex-wrap gap-1">
@@ -319,11 +320,12 @@ export default function SongDetailPage() {
             </Button>
           )}
           {permissions.canEditSong && (
-            <Link href={`/songs/${song.id}/edit`}>
-              <Button variant="outline" className="rounded-xl">
-                <Edit className="mr-2 h-4 w-4" />
-                {t('songs.edit')}
-              </Button>
+            <Link
+              href={`/songs/${song.id}/edit`}
+              className={buttonVariants({ variant: 'outline', className: 'rounded-xl' })}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              {t('songs.edit')}
             </Link>
           )}
           {permissions.canDeleteSong && (

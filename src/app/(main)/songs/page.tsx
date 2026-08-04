@@ -3,7 +3,7 @@
 import { useI18n } from '@/components/providers/i18n-provider'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -48,9 +48,7 @@ export default function SongsPage() {
 
   const canAddToPlaylist = permissions.canEditPlaylist || permissions.canCreatePlaylist
 
-  const openAddToPlaylist = (event: React.MouseEvent, songId: string) => {
-    event.preventDefault()
-    event.stopPropagation()
+  const openAddToPlaylist = (songId: string) => {
     setAddToPlaylistSongId(songId)
   }
 
@@ -126,11 +124,12 @@ export default function SongsPage() {
         </div>
         <div className="flex items-center space-x-2">
           {permissions.canCreateSong && (
-            <Link href="/songs/upload">
-              <Button className="rounded-xl btn-active">
-                <Plus className="mr-2 h-4 w-4" />
-                {t('songs.uploadSong')}
-              </Button>
+            <Link
+              href="/songs/upload"
+              className={buttonVariants({ className: 'rounded-xl btn-active' })}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              {t('songs.uploadSong')}
             </Link>
           )}
         </div>
@@ -224,11 +223,12 @@ export default function SongsPage() {
             <p className="text-lg font-medium mb-2">{t('songs.noSongs')}</p>
             <p className="text-muted-foreground mb-6">{t('songs.noSongsHint')}</p>
             {permissions.canCreateSong && (
-              <Link href="/songs/upload">
-                <Button className="rounded-xl">
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('songs.uploadSong')}
-                </Button>
+              <Link
+                href="/songs/upload"
+                className={buttonVariants({ className: 'rounded-xl' })}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                {t('songs.uploadSong')}
               </Link>
             )}
           </CardContent>
@@ -236,12 +236,13 @@ export default function SongsPage() {
       ) : viewMode === 'grid' ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {songs.map((song, index) => (
-            <Link key={song.id} href={`/songs/${song.id}`}>
-              <Card
-                className="card-hover animate-fade-in border-0 shadow-sm cursor-pointer group h-full"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <CardContent className="p-6">
+            <Card
+              key={song.id}
+              className="card-hover animate-fade-in border-0 shadow-sm h-full"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <CardContent className="p-6">
+                <Link href={`/songs/${song.id}`} className="block group">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg group-hover:text-primary transition-colors line-clamp-1">
@@ -275,20 +276,20 @@ export default function SongsPage() {
                       </div>
                     </div>
                   </div>
-                  {canAddToPlaylist && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-3 w-full justify-center rounded-lg"
-                      onClick={(e) => openAddToPlaylist(e, song.id)}
-                    >
-                      <ListMusic className="mr-2 h-4 w-4" />
-                      {t('playlists.addToPlaylist')}
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            </Link>
+                </Link>
+                {canAddToPlaylist && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mt-3 w-full justify-center rounded-lg"
+                    onClick={() => openAddToPlaylist(song.id)}
+                  >
+                    <ListMusic className="mr-2 h-4 w-4" />
+                    {t('playlists.addToPlaylist')}
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
           ))}
         </div>
       ) : (
@@ -302,35 +303,39 @@ export default function SongsPage() {
           </div>
 
           {songs.map((song, index) => (
-            <Link key={song.id} href={`/songs/${song.id}`}>
-              <div
-                className="flex items-center md:grid md:grid-cols-12 gap-4 p-4 bg-white rounded-xl hover:shadow-md transition-all cursor-pointer group animate-fade-in border border-gray-100"
-                style={{ animationDelay: `${index * 30}ms` }}
+            <div
+              key={song.id}
+              className="flex items-center md:grid md:grid-cols-12 gap-4 p-4 bg-white rounded-xl hover:shadow-md transition-all animate-fade-in border border-gray-100"
+              style={{ animationDelay: `${index * 30}ms` }}
+            >
+              <Link
+                href={`/songs/${song.id}`}
+                className="min-w-0 md:col-span-4 flex items-center space-x-3 group"
               >
-                <div className="md:col-span-4 flex items-center space-x-3">
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
-                    <Music className="h-5 w-5 text-foreground" />
-                  </div>
-                  <p className="font-medium group-hover:text-primary transition-colors truncate">
-                    {song.title}
-                  </p>
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
+                  <Music className="h-5 w-5 text-foreground" />
                 </div>
+                <p className="font-medium group-hover:text-primary transition-colors truncate">
+                  {song.title}
+                </p>
+              </Link>
 
-                <div className="md:col-span-3 hidden md:flex flex-wrap gap-1">
-                  <SongTagBadges tags={song.tags} />
-                </div>
+              <div className="md:col-span-3 hidden md:flex flex-wrap gap-1">
+                <SongTagBadges tags={song.tags} />
+              </div>
 
-                <div className="md:col-span-2 hidden md:block">
-                  <p className="text-sm text-muted-foreground truncate">
-                    {song.artist || '-'}
-                  </p>
-                </div>
+              <div className="md:col-span-2 hidden md:block">
+                <p className="text-sm text-muted-foreground truncate">
+                  {song.artist || '-'}
+                </p>
+              </div>
 
-                <div className="md:col-span-1 hidden md:block">
-                  <span className="text-sm">{song._count.meetings}</span>
-                </div>
+              <div className="md:col-span-1 hidden md:block">
+                <span className="text-sm">{song._count.meetings}</span>
+              </div>
 
-                <div className="md:col-span-2 hidden md:flex items-center space-x-2">
+              <div className="md:col-span-2 hidden md:flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center space-x-2">
                   {song.sheetMusic && (
                     <Badge variant="outline" className="text-xs">
                       <FileText className="h-3 w-3 mr-1" />
@@ -344,36 +349,37 @@ export default function SongsPage() {
                     </Badge>
                   )}
                 </div>
-
                 {canAddToPlaylist && (
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    className="hidden md:inline-flex rounded-lg shrink-0"
+                    className="rounded-lg shrink-0"
                     title={t('playlists.addToPlaylist')}
-                    onClick={(e) => openAddToPlaylist(e, song.id)}
+                    onClick={() => openAddToPlaylist(song.id)}
                   >
                     <ListMusic className="h-4 w-4" />
                   </Button>
                 )}
-
-                <div className="md:hidden flex items-center space-x-2 ml-auto">
-                  <SongTagBadges tags={song.tags?.slice(0, 1)} />
-                  {canAddToPlaylist && (
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      className="rounded-lg shrink-0"
-                      title={t('playlists.addToPlaylist')}
-                      onClick={(e) => openAddToPlaylist(e, song.id)}
-                    >
-                      <ListMusic className="h-4 w-4" />
-                    </Button>
-                  )}
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </div>
               </div>
-            </Link>
+
+              <div className="md:hidden flex items-center space-x-2 ml-auto">
+                <SongTagBadges tags={song.tags?.slice(0, 1)} />
+                {canAddToPlaylist && (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="rounded-lg shrink-0"
+                    title={t('playlists.addToPlaylist')}
+                    onClick={() => openAddToPlaylist(song.id)}
+                  >
+                    <ListMusic className="h-4 w-4" />
+                  </Button>
+                )}
+                <Link href={`/songs/${song.id}`} aria-label={song.title}>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </Link>
+              </div>
+            </div>
           ))}
         </div>
       )}
