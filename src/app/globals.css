@@ -49,94 +49,85 @@
 }
 
 :root {
-  /* 主色调 - 温暖的蓝紫色系 */
-  --primary: oklch(0.55 0.25 275);
-  --primary-foreground: oklch(0.98 0 0);
+  /* Brand — warm earth from logo */
+  --primary: oklch(0.52 0.18 25);
+  --primary-foreground: oklch(0.99 0 0);
 
-  /* 背景色 - 温暖的浅灰 */
-  --background: oklch(0.98 0.005 275);
-  --foreground: oklch(0.15 0.02 275);
+  --background: oklch(0.985 0.004 95);
+  --foreground: oklch(0.35 0.04 65);
 
-  /* 卡片 - 纯白带微弱阴影 */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0.02 275);
+  --card-foreground: oklch(0.35 0.04 65);
 
-  /* 弹出层 */
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.02 275);
+  --popover-foreground: oklch(0.35 0.04 65);
 
-  /* 次要色 - 柔和的灰色 */
-  --secondary: oklch(0.95 0.01 275);
-  --secondary-foreground: oklch(0.3 0.05 275);
+  --secondary: oklch(0.96 0.01 95);
+  --secondary-foreground: oklch(0.35 0.04 65);
 
-  /* 静音色 */
-  --muted: oklch(0.95 0.01 275);
-  --muted-foreground: oklch(0.5 0.03 275);
+  --muted: oklch(0.96 0.008 95);
+  --muted-foreground: oklch(0.5 0.03 65);
 
-  /* 强调色 */
-  --accent: oklch(0.95 0.02 275);
-  --accent-foreground: oklch(0.2 0.05 275);
+  --accent: oklch(0.88 0.08 95);
+  --accent-foreground: oklch(0.35 0.04 65);
 
-  /* 危险色 - 温暖的红色 */
-  --destructive: oklch(0.6 0.22 25);
+  --destructive: oklch(0.5 0.2 25);
 
-  /* 边框 - 柔和的灰色 */
-  --border: oklch(0.92 0.01 275);
-  --input: oklch(0.92 0.01 275);
-  --ring: oklch(0.55 0.25 275);
+  --border: oklch(0.9 0.01 95);
+  --input: oklch(0.9 0.01 95);
+  --ring: oklch(0.52 0.18 25);
 
-  /* 图表色 - 渐变色系 */
-  --chart-1: oklch(0.65 0.25 275);
-  --chart-2: oklch(0.7 0.2 310);
-  --chart-3: oklch(0.75 0.18 340);
-  --chart-4: oklch(0.8 0.15 15);
-  --chart-5: oklch(0.85 0.12 45);
+  --chart-1: oklch(0.52 0.18 25);
+  --chart-2: oklch(0.78 0.12 95);
+  --chart-3: oklch(0.72 0.1 125);
+  --chart-4: oklch(0.45 0.05 65);
+  --chart-5: oklch(0.65 0.08 80);
 
   --radius: 0.75rem;
 
-  /* 侧边栏 - 深色渐变 */
-  --sidebar: oklch(0.18 0.05 275);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.65 0.25 275);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.25 0.08 275);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(0.3 0.05 275);
-  --sidebar-ring: oklch(0.55 0.25 275);
+  /* Light sidebar */
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.35 0.04 65);
+  --sidebar-primary: oklch(0.52 0.18 25);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.96 0.02 25);
+  --sidebar-accent-foreground: oklch(0.35 0.04 65);
+  --sidebar-border: oklch(0.9 0.01 95);
+  --sidebar-ring: oklch(0.52 0.18 25);
 }
 
 .dark {
-  --background: oklch(0.12 0.03 275);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.18 0.04 275);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.18 0.04 275);
-  --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.65 0.25 275);
-  --primary-foreground: oklch(0.12 0.03 275);
-  --secondary: oklch(0.22 0.05 275);
-  --secondary-foreground: oklch(0.9 0 0);
-  --muted: oklch(0.22 0.05 275);
-  --muted-foreground: oklch(0.65 0.03 275);
-  --accent: oklch(0.22 0.06 275);
-  --accent-foreground: oklch(0.95 0 0);
-  --destructive: oklch(0.65 0.2 25);
-  --border: oklch(0.28 0.05 275);
-  --input: oklch(0.28 0.05 275);
-  --ring: oklch(0.65 0.25 275);
-  --chart-1: oklch(0.65 0.25 275);
-  --chart-2: oklch(0.7 0.2 310);
-  --chart-3: oklch(0.75 0.18 340);
-  --chart-4: oklch(0.8 0.15 15);
-  --chart-5: oklch(0.85 0.12 45);
-  --sidebar: oklch(0.15 0.04 275);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.65 0.25 275);
-  --sidebar-primary-foreground: oklch(0.12 0.03 275);
-  --sidebar-accent: oklch(0.22 0.06 275);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(0.28 0.05 275);
-  --sidebar-ring: oklch(0.65 0.25 275);
+  --background: oklch(0.18 0.02 65);
+  --foreground: oklch(0.95 0.01 95);
+  --card: oklch(0.22 0.02 65);
+  --card-foreground: oklch(0.95 0.01 95);
+  --popover: oklch(0.22 0.02 65);
+  --popover-foreground: oklch(0.95 0.01 95);
+  --primary: oklch(0.62 0.16 25);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.28 0.02 65);
+  --secondary-foreground: oklch(0.95 0.01 95);
+  --muted: oklch(0.28 0.02 65);
+  --muted-foreground: oklch(0.7 0.02 65);
+  --accent: oklch(0.32 0.04 95);
+  --accent-foreground: oklch(0.95 0.01 95);
+  --destructive: oklch(0.6 0.18 25);
+  --border: oklch(0.32 0.02 65);
+  --input: oklch(0.32 0.02 65);
+  --ring: oklch(0.62 0.16 25);
+  --chart-1: oklch(0.62 0.16 25);
+  --chart-2: oklch(0.78 0.12 95);
+  --chart-3: oklch(0.72 0.1 125);
+  --chart-4: oklch(0.7 0.04 65);
+  --chart-5: oklch(0.65 0.08 80);
+  --sidebar: oklch(0.2 0.02 65);
+  --sidebar-foreground: oklch(0.95 0.01 95);
+  --sidebar-primary: oklch(0.62 0.16 25);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.28 0.03 25);
+  --sidebar-accent-foreground: oklch(0.95 0.01 95);
+  --sidebar-border: oklch(0.32 0.02 65);
+  --sidebar-ring: oklch(0.62 0.16 25);
 }
 
 @layer base {
@@ -152,7 +143,6 @@
   }
 }
 
-/* 自定义动画 */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -215,7 +205,6 @@
   }
 }
 
-/* 应用动画 */
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out forwards;
 }
@@ -236,48 +225,43 @@
   animation: pulse-soft 2s ease-in-out infinite;
 }
 
-/* 卡片悬停效果 */
 .card-hover {
-  transition: all 0.2s ease-out;
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
 }
 
 .card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
-              0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08),
+              0 8px 10px -6px rgba(0, 0, 0, 0.06);
 }
 
-/* 按钮点击效果 */
 .btn-active {
-  transition: all 0.1s ease-out;
+  transition: transform 0.1s ease-out;
 }
 
 .btn-active:active {
   transform: scale(0.98);
 }
 
-/* 输入框聚焦效果 */
 .input-focus {
-  transition: all 0.2s ease-out;
+  transition: box-shadow 0.2s ease-out;
 }
 
 .input-focus:focus {
-  box-shadow: 0 0 0 3px oklch(0.55 0.25 275 / 0.2);
+  box-shadow: 0 0 0 3px oklch(0.52 0.18 25 / 0.2);
 }
 
-/* 骨架屏加载效果 */
 .skeleton {
   background: linear-gradient(
     90deg,
-    oklch(0.95 0.01 275) 25%,
-    oklch(0.98 0.01 275) 50%,
-    oklch(0.95 0.01 275) 75%
+    oklch(0.95 0.008 95) 25%,
+    oklch(0.98 0.004 95) 50%,
+    oklch(0.95 0.008 95) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
 
-/* 滚动条美化 */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -288,21 +272,19 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.8 0.02 275);
+  background: oklch(0.82 0.02 95);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.7 0.03 275);
+  background: oklch(0.72 0.03 65);
 }
 
-/* 选中文本颜色 */
 ::selection {
-  background: oklch(0.55 0.25 275 / 0.3);
-  color: oklch(0.15 0.02 275);
+  background: oklch(0.52 0.18 25 / 0.25);
+  color: oklch(0.35 0.04 65);
 }
 
-/* 链接下划线动画 */
 .link-underline {
   position: relative;
   text-decoration: none;
@@ -315,7 +297,7 @@
   height: 2px;
   bottom: -2px;
   left: 0;
-  background: oklch(0.55 0.25 275);
+  background: oklch(0.52 0.18 25);
   transition: width 0.3s ease-out;
 }
 
@@ -323,31 +305,45 @@
   width: 100%;
 }
 
-/* 渐变背景 */
 .gradient-bg {
   background: linear-gradient(
     135deg,
-    oklch(0.98 0.01 275) 0%,
-    oklch(0.96 0.02 310) 50%,
-    oklch(0.98 0.01 340) 100%
+    oklch(0.985 0.004 95) 0%,
+    oklch(0.97 0.015 85) 50%,
+    oklch(0.98 0.01 40) 100%
   );
 }
 
-/* 玻璃效果 */
 .glass {
   background: oklch(1 0 0 / 0.8);
   backdrop-filter: blur(10px);
   border: 1px solid oklch(1 0 0 / 0.2);
 }
 
-/* 渐变文字 */
 .gradient-text {
   background: linear-gradient(
     135deg,
-    oklch(0.55 0.25 275),
-    oklch(0.65 0.2 310)
+    oklch(0.52 0.18 25),
+    oklch(0.72 0.1 95)
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-fade-in,
+  .animate-slide-in-left,
+  .animate-slide-in-right,
+  .animate-scale-in,
+  .animate-pulse-soft,
+  .skeleton {
+    animation: none !important;
+  }
+  .card-hover:hover {
+    transform: none;
+  }
 }

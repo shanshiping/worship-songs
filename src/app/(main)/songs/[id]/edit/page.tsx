@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowLeft, Save, Loader2, Music, FileText, X, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/errors'
 
 interface Category {
   id: string
@@ -169,8 +170,8 @@ export default function EditSongPage() {
       const result = await uploadFile(file, 'sheet')
       setSheetMusic(result)
       toast.success(t('songs.sheetUploadSuccess'))
-    } catch (error: any) {
-      toast.error(error.message || t('songs.sheetUploadFailed'))
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, t('songs.sheetUploadFailed')))
     } finally {
       setUploadingSheet(false)
     }
@@ -186,8 +187,8 @@ export default function EditSongPage() {
       const result = await uploadFile(file, 'audio')
       setAudioFile(result)
       toast.success(t('songs.audioUploadSuccess'))
-    } catch (error: any) {
-      toast.error(error.message || t('songs.audioUploadFailed'))
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, t('songs.audioUploadFailed')))
     } finally {
       setUploadingAudio(false)
     }

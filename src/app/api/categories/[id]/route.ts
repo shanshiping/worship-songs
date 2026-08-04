@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getErrorMessage } from '@/lib/errors'
 import { requirePermission } from '@/lib/server-permissions'
 import { PERMISSIONS } from '@/lib/permissions'
 
@@ -44,11 +45,12 @@ export async function PUT(
     })
 
     return NextResponse.json(category)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update category error:', error)
+    const message = getErrorMessage(error, '更新分类失败')
     return NextResponse.json(
-      { error: error.message || '更新分类失败' },
-      { status: error.message === '请先登录' ? 401 : 403 }
+      { error: message },
+      { status: message === '请先登录' ? 401 : 403 }
     )
   }
 }
@@ -87,11 +89,12 @@ export async function DELETE(
     })
 
     return NextResponse.json({ message: '分类已删除' })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Delete category error:', error)
+    const message = getErrorMessage(error, '删除分类失败')
     return NextResponse.json(
-      { error: error.message || '删除分类失败' },
-      { status: error.message === '请先登录' ? 401 : 403 }
+      { error: message },
+      { status: message === '请先登录' ? 401 : 403 }
     )
   }
 }

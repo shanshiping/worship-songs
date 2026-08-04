@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
     const year =
       yearParam && /^\d{4}$/.test(yearParam) ? parseInt(yearParam, 10) : null
 
-    const where: any = {}
+    const where: Prisma.MeetingWhereInput = {}
 
     if (month) {
       const startDate = new Date(month + '-01')

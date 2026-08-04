@@ -1,6 +1,20 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getErrorMessage } from '@/lib/errors'
 import { normalizeOptional, isValidHttpUrl } from '../route'
+
+async function getSongMeetings(songId: string) {
+  const meetingSongs = await prisma.meetingSong.findMany({
+    where: { songId },
+    include: {
+      meeting: true,
+    },
+  })
+
+  return meetingSongs.map((meetingSong) => ({
+    meeting: meetingSong.meeting,
+  }))
+}
 
 export async function GET(
   request: Request,
@@ -25,18 +39,9 @@ export async function GET(
     }
 
     // 获取使用记录
-    let meetings: any[] = []
+    let meetings: Awaited<ReturnType<typeof getSongMeetings>> = []
     try {
-      const meetingSongs = await prisma.meetingSong.findMany({
-        where: { songId: id },
-        include: {
-          meeting: true,
-        },
-      })
-
-      meetings = meetingSongs.map((ms: any) => ({
-        meeting: ms.meeting,
-      }))
+      meetings = await getSongMeetings(id)
     } catch (e) {
       console.error('Get meetings error:', e)
     }
@@ -90,7 +95,9 @@ export async function PUT(
       data: {
         title,
         artist: normalizeOptional(artist),
-        categoryId,
+        category: {
+          connect: { id: categoryId },
+        },
         key: normalizeOptional(key),
         timeSignature: normalizeOptional(timeSignature),
         composer: normalizeOptional(composer),
@@ -109,10 +116,10 @@ export async function PUT(
     })
 
     return NextResponse.json(song)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update song error:', error)
     return NextResponse.json(
-      { error: error.message || '更新歌曲失败' },
+      { error: getErrorMessage(error, '更新歌曲失败') },
       { status: 500 }
     )
   }
@@ -134,10 +141,10 @@ export async function DELETE(
     })
 
     return NextResponse.json({ message: '歌曲已删除' })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Delete song error:', error)
     return NextResponse.json(
-      { error: error.message || '删除歌曲失败' },
+      { error: getErrorMessage(error, '删除歌曲失败') },
       { status: 500 }
     )
   }

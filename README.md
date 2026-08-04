@@ -100,6 +100,7 @@ POST /api/meetings { songIds } ──► MeetingSong ──► PostgreSQL
 - **数据库**: PostgreSQL + Prisma ORM v7
 - **认证**: NextAuth.js
 - **国际化**: 自研 `I18nProvider` + `src/messages/{en,zh}.json`
+- **测试**: Vitest（API + `src/lib`，Mock Prisma）
 - **Excel 处理**: xlsx (SheetJS)
 - **图标**: Lucide React
 
@@ -109,8 +110,18 @@ POST /api/meetings { songIds } ──► MeetingSong ──► PostgreSQL
 
 ```bash
 cd worship-songs
-npm install
+pnpm install
 ```
+
+### 运行测试
+
+```bash
+pnpm test
+# 或监听模式
+pnpm test:watch
+```
+
+测试覆盖 API 路由与 `src/lib` 纯函数；数据库使用 Mock，不连接真实 PostgreSQL。
 
 ### 2. 配置环境变量
 

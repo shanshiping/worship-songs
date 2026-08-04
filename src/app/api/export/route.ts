@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import * as XLSX from 'xlsx'
 
@@ -7,7 +8,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const year = searchParams.get('year')
 
-    const where: any = {}
+    const where: Prisma.MeetingWhereInput = {}
 
     if (year) {
       const startDate = new Date(`${year}-01-01`)
@@ -39,19 +40,19 @@ export async function GET(request: Request) {
 
     // 按年份分组
     const meetingsByYear: Record<number, typeof meetings> = {}
-    meetings.forEach((meeting: any) => {
-      const year = new Date(meeting.date).getFullYear()
-      if (!meetingsByYear[year]) {
-        meetingsByYear[year] = []
+    meetings.forEach((meeting) => {
+      const meetingYear = new Date(meeting.date).getFullYear()
+      if (!meetingsByYear[meetingYear]) {
+        meetingsByYear[meetingYear] = []
       }
-      meetingsByYear[year].push(meeting)
+      meetingsByYear[meetingYear].push(meeting)
     })
 
     // 为每年创建一个 Sheet
-    for (const [year, yearMeetings] of Object.entries(meetingsByYear)) {
+    for (const [sheetYear, yearMeetings] of Object.entries(meetingsByYear)) {
       // 准备数据
-      const data = (yearMeetings as any[]).map((meeting: any) => {
-        const songs = meeting.songs.map((ms: any) => ms.song.title)
+      const data = yearMeetings.map((meeting) => {
+        const songs = meeting.songs.map((ms) => ms.song.title)
         return {
           '时间': new Date(meeting.date).toLocaleDateString('zh-CN'),
           '主题信息': meeting.theme || '',
@@ -84,7 +85,7 @@ export async function GET(request: Request) {
       ]
 
       // 添加到工作簿
-      XLSX.utils.book_append_sheet(wb, ws, year)
+      XLSX.utils.book_append_sheet(wb, ws, sheetYear)
     }
 
     // 生成 Excel 文件

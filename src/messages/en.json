@@ -31,7 +31,10 @@
     "settings": "Settings",
     "profile": "Profile",
     "signOut": "Sign out",
-    "searchPlaceholder": "Search songs, meetings..."
+    "searchPlaceholder": "Search songs, meetings...",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "skipToContent": "Skip to main content"
   },
   "roles": {
     "SUPER_ADMIN": "Super Admin",
@@ -308,6 +311,12 @@
     "allMonths": "All months",
     "monthOption": "Month {month}",
     "selectMonth": "Select month",
+    "selectMonthYear": "Select month",
+    "monthYearLabel": "{year}-{month}",
+    "wholeYear": "Whole year",
+    "wholeYearLabel": "{year} (whole year)",
+    "prevYear": "Previous year",
+    "nextYear": "Next year",
     "noMeetings": "No meetings yet",
     "createFirst": "Create first meeting",
     "speaker": "Speaker: {name}",

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getErrorMessage } from '@/lib/errors'
 import { requirePermission } from '@/lib/server-permissions'
 import { PERMISSIONS } from '@/lib/permissions'
 
@@ -96,11 +97,12 @@ export async function PUT(
     })
 
     return NextResponse.json(meeting)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update meeting error:', error)
+    const message = getErrorMessage(error, '更新聚会记录失败')
     return NextResponse.json(
-      { error: error.message || '更新聚会记录失败' },
-      { status: error.message === '请先登录' ? 401 : 403 }
+      { error: message },
+      { status: message === '请先登录' ? 401 : 403 }
     )
   }
 }
@@ -120,11 +122,12 @@ export async function DELETE(
     })
 
     return NextResponse.json({ message: '聚会记录已删除' })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Delete meeting error:', error)
+    const message = getErrorMessage(error, '删除聚会记录失败')
     return NextResponse.json(
-      { error: error.message || '删除聚会记录失败' },
-      { status: error.message === '请先登录' ? 401 : 403 }
+      { error: message },
+      { status: message === '请先登录' ? 401 : 403 }
     )
   }
 }
