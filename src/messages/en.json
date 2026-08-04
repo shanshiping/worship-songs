@@ -524,6 +524,7 @@
     "name": "Title",
     "description": "Description",
     "pickSongs": "Pick songs",
+    "pickPlaylist": "Pick a playlist",
     "selected": "Selected",
     "noneSelected": "No songs added yet",
     "songs": "Songs",

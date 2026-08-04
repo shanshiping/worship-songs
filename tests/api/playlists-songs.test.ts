@@ -225,4 +225,27 @@ describe('DELETE /api/playlists/[id]/songs/[songId]', () => {
       data: { order: 2 },
     })
   })
+
+  it('returns 500 when delete fails for reasons other than missing row', async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: 'u1', role: 'LEADER' },
+    })
+    mockPrisma.playlist.findUnique.mockResolvedValue({ createdById: 'u1' })
+    mockPrisma.playlistSong.delete.mockRejectedValue(
+      Object.assign(new Error('database unavailable'), { code: 'P1001' })
+    )
+
+    const res = await DELETE(
+      jsonRequest('http://localhost/api/playlists/p1/songs/s1', {
+        method: 'DELETE',
+      }),
+      songParams
+    )
+
+    const { status, body } = await readJson<{ error: string }>(res)
+    expect(status).toBe(500)
+    expect(body.error).toBe('database unavailable')
+    expect(mockPrisma.playlistSong.findMany).not.toHaveBeenCalled()
+    expect(mockPrisma.playlistSong.update).not.toHaveBeenCalled()
+  })
 })

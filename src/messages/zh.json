@@ -524,6 +524,7 @@
     "name": "歌单名称",
     "description": "说明",
     "pickSongs": "选歌",
+    "pickPlaylist": "选择歌单",
     "selected": "已选歌曲",
     "noneSelected": "尚未添加歌曲",
     "songs": "歌曲列表",

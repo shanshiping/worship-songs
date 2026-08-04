@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { CreatePlaylistDialog } from '@/components/create-playlist-dialog'
 import { isAdminOrAbove } from '@/lib/permissions'
+import { usePermissions } from '@/hooks/use-permissions'
 import { Check, ListMusic, Loader2, Plus } from 'lucide-react'
 
 interface PlaylistOption {
@@ -39,6 +40,7 @@ export function AddToPlaylistDialog({
   const { t } = useI18n()
   const router = useRouter()
   const { data: session } = useSession()
+  const { canCreatePlaylist } = usePermissions()
   const [playlists, setPlaylists] = useState<PlaylistOption[]>([])
   const [loading, setLoading] = useState(true)
   const [addingId, setAddingId] = useState<string | null>(null)
@@ -127,7 +129,7 @@ export function AddToPlaylistDialog({
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>{t('playlists.addToPlaylist')}</DialogTitle>
-            <DialogDescription>{t('playlists.pickSongs')}</DialogDescription>
+            <DialogDescription>{t('playlists.pickPlaylist')}</DialogDescription>
           </DialogHeader>
 
           <div className="max-h-72 overflow-y-auto space-y-1">
@@ -173,15 +175,19 @@ export function AddToPlaylistDialog({
             )}
           </div>
 
-          <DialogFooter className="sm:justify-between">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {t('playlists.createAndAdd')}
-            </Button>
+          <DialogFooter
+            className={canCreatePlaylist ? 'sm:justify-between' : undefined}
+          >
+            {canCreatePlaylist ? (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setCreateOpen(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                {t('playlists.createAndAdd')}
+              </Button>
+            ) : null}
             <Button
               type="button"
               variant="outline"
@@ -193,11 +199,13 @@ export function AddToPlaylistDialog({
         </DialogContent>
       </Dialog>
 
-      <CreatePlaylistDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onCreated={handleCreated}
-      />
+      {canCreatePlaylist ? (
+        <CreatePlaylistDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          onCreated={handleCreated}
+        />
+      ) : null}
     </>
   )
 }

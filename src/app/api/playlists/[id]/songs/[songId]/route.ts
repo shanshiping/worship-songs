@@ -22,11 +22,20 @@ export async function DELETE(
       return NextResponse.json({ error: '歌单不存在' }, { status: 404 })
     }
 
-    await prisma.playlistSong
-      .delete({
+    try {
+      await prisma.playlistSong.delete({
         where: { playlistId_songId: { playlistId: id, songId } },
       })
-      .catch(() => null)
+    } catch (error: unknown) {
+      const code =
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        typeof (error as { code: unknown }).code === 'string'
+          ? (error as { code: string }).code
+          : null
+      if (code !== 'P2025') throw error
+    }
 
     const remaining = await prisma.playlistSong.findMany({
       where: { playlistId: id },
