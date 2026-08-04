@@ -52,6 +52,25 @@ export default function SongsPage() {
     setAddToPlaylistSongId(songId)
   }
 
+  const handleSongTagClick = (tag: TagItem) => {
+    setPage(1)
+    if (tag.kind === 'TYPE') {
+      setSelectedTypeIds((prev) =>
+        prev.includes(tag.id) ? prev.filter((id) => id !== tag.id) : [...prev, tag.id]
+      )
+    } else if (tag.kind === 'STYLE') {
+      setSelectedStyleIds((prev) =>
+        prev.includes(tag.id) ? prev.filter((id) => id !== tag.id) : [...prev, tag.id]
+      )
+    }
+  }
+
+  const handleUncategorizedClick = () => {
+    setSelectedTypeIds([])
+    setSelectedStyleIds([])
+    setPage(1)
+  }
+
   useEffect(() => {
     fetchTags()
     const savedViewMode = localStorage.getItem('songsViewMode') as ViewMode
@@ -265,7 +284,11 @@ export default function SongsPage() {
 
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex flex-wrap gap-1">
-                      <SongTagBadges tags={song.tags} />
+                      <SongTagBadges
+                        tags={song.tags}
+                        onTagClick={handleSongTagClick}
+                        onUncategorizedClick={handleUncategorizedClick}
+                      />
                     </div>
                     <div className="flex items-center space-x-3 text-xs text-muted-foreground shrink-0">
                       {song.sheetMusic && <FileText className="h-3 w-3" />}
@@ -321,7 +344,11 @@ export default function SongsPage() {
               </Link>
 
               <div className="md:col-span-3 hidden md:flex flex-wrap gap-1">
-                <SongTagBadges tags={song.tags} />
+                <SongTagBadges
+                  tags={song.tags}
+                  onTagClick={handleSongTagClick}
+                  onUncategorizedClick={handleUncategorizedClick}
+                />
               </div>
 
               <div className="md:col-span-2 hidden md:block">
@@ -363,7 +390,11 @@ export default function SongsPage() {
               </div>
 
               <div className="md:hidden flex items-center space-x-2 ml-auto">
-                <SongTagBadges tags={song.tags?.slice(0, 1)} />
+                <SongTagBadges
+                  tags={song.tags?.slice(0, 1)}
+                  onTagClick={handleSongTagClick}
+                  onUncategorizedClick={handleUncategorizedClick}
+                />
                 {canAddToPlaylist && (
                   <Button
                     variant="ghost"

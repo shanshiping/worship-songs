@@ -1,6 +1,8 @@
 'use client'
 
-import { Badge } from '@/components/ui/badge'
+import type { JSX, MouseEvent } from 'react'
+
+import { Badge, badgeVariants } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 export type TagItem = {
@@ -61,22 +63,70 @@ export function TagMultiSelect({
 
 export function SongTagBadges({
   tags,
+  onTagClick,
+  onUncategorizedClick,
 }: {
   tags?: Array<{ tag: TagItem }>
-}) {
+  onTagClick?: (tag: TagItem) => void
+  onUncategorizedClick?: () => void
+}): JSX.Element {
+  const stopLinkNavigation = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation()
+    event.preventDefault()
+  }
+
   if (!tags || tags.length === 0) {
+    if (onUncategorizedClick) {
+      return (
+        <button
+          type="button"
+          className={cn(
+            badgeVariants({ variant: 'secondary' }),
+            'cursor-pointer hover:opacity-80'
+          )}
+          onClick={(event) => {
+            stopLinkNavigation(event)
+            onUncategorizedClick()
+          }}
+        >
+          未分类
+        </button>
+      )
+    }
+
     return <Badge variant="secondary">未分类</Badge>
   }
+
   return (
     <>
-      {tags.map((st) => (
-        <Badge
-          key={st.tag.id}
-          variant={st.tag.kind === 'STYLE' ? 'outline' : 'secondary'}
-        >
-          {st.tag.name}
-        </Badge>
-      ))}
+      {tags.map((st) => {
+        const variant = st.tag.kind === 'STYLE' ? 'outline' : 'secondary'
+
+        if (onTagClick) {
+          return (
+            <button
+              key={st.tag.id}
+              type="button"
+              className={cn(
+                badgeVariants({ variant }),
+                'cursor-pointer hover:opacity-80'
+              )}
+              onClick={(event) => {
+                stopLinkNavigation(event)
+                onTagClick(st.tag)
+              }}
+            >
+              {st.tag.name}
+            </button>
+          )
+        }
+
+        return (
+          <Badge key={st.tag.id} variant={variant}>
+            {st.tag.name}
+          </Badge>
+        )
+      })}
     </>
   )
 }
