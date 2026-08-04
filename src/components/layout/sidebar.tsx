@@ -76,7 +76,10 @@ export function Sidebar() {
           <Button
             variant="ghost"
             className="min-h-11 w-full justify-start rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground"
-            onClick={() => signOut({ callbackUrl: '/login' })}
+            onClick={async () => {
+              await signOut({ redirect: false })
+              window.location.assign('/login')
+            }}
           >
             <LogOut className="mr-3 h-4 w-4" />
             {t('nav.signOut')}
