@@ -22,12 +22,17 @@ export type PrismaMock = {
   song: ReturnType<typeof model>
   meeting: ReturnType<typeof model>
   category: ReturnType<typeof model>
+  tag: ReturnType<typeof model>
+  songTag: ReturnType<typeof model>
+  playlist: ReturnType<typeof model>
+  playlistSong: ReturnType<typeof model>
   meetingSong: ReturnType<typeof model>
   user: ReturnType<typeof model>
   team: ReturnType<typeof model>
   teamMember: ReturnType<typeof model>
   message: ReturnType<typeof model>
   $disconnect: MockFn
+  $queryRaw: MockFn
 }
 
 /** Shared singleton used by `vi.mock('@/lib/prisma')` factories and assertions. */
@@ -35,12 +40,17 @@ export const mockPrisma: PrismaMock = {
   song: model(),
   meeting: model(),
   category: model(),
+  tag: model(),
+  songTag: model(),
+  playlist: model(),
+  playlistSong: model(),
   meetingSong: model(),
   user: model(),
   team: model(),
   teamMember: model(),
   message: model(),
   $disconnect: vi.fn(),
+  $queryRaw: vi.fn(),
 }
 
 export function resetPrismaMock(): void {
