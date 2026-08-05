@@ -20,7 +20,7 @@ describe('isImageAssetPath', () => {
 })
 
 describe('pickSongBackgroundPath', () => {
-  it('prefers dedicated ppt background over cover and sheet', () => {
+  it('uses dedicated ppt background when set', () => {
     expect(
       pickSongBackgroundPath({
         pptBackground: '/uploads/ppt-backgrounds/custom.jpg',
@@ -30,22 +30,13 @@ describe('pickSongBackgroundPath', () => {
     ).toBe('/uploads/ppt-backgrounds/custom.jpg')
   })
 
-  it('prefers cover image over sheet music', () => {
+  it('does not fall back to cover or sheet music', () => {
     expect(
       pickSongBackgroundPath({
         coverImage: '/uploads/covers/a.jpg',
         sheetMusic: '/uploads/sheets/b.png',
       })
-    ).toBe('/uploads/covers/a.jpg')
-  })
-
-  it('falls back to sheet image when cover is missing', () => {
-    expect(
-      pickSongBackgroundPath({
-        coverImage: null,
-        sheetMusic: '/uploads/sheets/b.png',
-      })
-    ).toBe('/uploads/sheets/b.png')
+    ).toBeNull()
   })
 })
 

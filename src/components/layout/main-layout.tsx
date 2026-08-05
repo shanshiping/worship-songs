@@ -19,7 +19,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="flex min-h-screen flex-1 flex-col md:pl-64">
         <Header />
-        <main id="main-content" className="animate-fade-in flex-1 p-4 md:p-6 lg:p-8">
+        <main id="main-content" className="animate-fade-in mx-auto w-full max-w-[1400px] flex-1 p-4 md:p-6 lg:p-8">
           {children}
         </main>
       </div>

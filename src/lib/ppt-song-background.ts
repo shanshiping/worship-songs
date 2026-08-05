@@ -14,8 +14,6 @@ export function pickSongBackgroundPath(input: {
   sheetMusic?: string | null
 }): string | null {
   if (isImageAssetPath(input.pptBackground)) return input.pptBackground!.trim()
-  if (isImageAssetPath(input.coverImage)) return input.coverImage!.trim()
-  if (isImageAssetPath(input.sheetMusic)) return input.sheetMusic!.trim()
   return null
 }
 

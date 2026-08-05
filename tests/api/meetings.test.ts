@@ -19,7 +19,7 @@ describe('/api/meetings', () => {
     vi.mocked(getServerSession).mockReset()
   })
 
-  it('GET returns meetings, years, pagination', async () => {
+  it('GET returns meetings, years, leaders, pagination', async () => {
     mockPrisma.meeting.findMany
       .mockResolvedValueOnce([
         {
@@ -29,6 +29,7 @@ describe('/api/meetings', () => {
         },
       ])
       .mockResolvedValueOnce([{ date: new Date('2026-03-01') }, { date: new Date('2025-01-01') }])
+      .mockResolvedValueOnce([{ leader: 'Alice' }, { leader: 'Bob' }])
     mockPrisma.meeting.count.mockResolvedValue(1)
 
     const res = await GET(
@@ -37,13 +38,35 @@ describe('/api/meetings', () => {
     const { status, body } = await readJson<{
       meetings: unknown[]
       years: number[]
+      leaders: string[]
       pagination: { total: number }
     }>(res)
 
     expect(status).toBe(200)
     expect(body.meetings).toHaveLength(1)
     expect(body.years).toEqual([2026, 2025])
+    expect(body.leaders).toEqual(['Alice', 'Bob'])
     expect(body.pagination.total).toBe(1)
+  })
+
+  it('GET filters by leader', async () => {
+    mockPrisma.meeting.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+    mockPrisma.meeting.count.mockResolvedValue(0)
+
+    await GET(jsonRequest('http://localhost/api/meetings?leader=Alice'))
+
+    expect(mockPrisma.meeting.findMany).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        where: expect.objectContaining({ leader: 'Alice' }),
+      })
+    )
+    expect(mockPrisma.meeting.count).toHaveBeenCalledWith({
+      where: expect.objectContaining({ leader: 'Alice' }),
+    })
   })
 
   it('POST returns 401 without session', async () => {

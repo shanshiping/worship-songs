@@ -50,6 +50,12 @@
     "en": "EN",
     "zh": "中文"
   },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
   "auth": {
     "loginTitle": "Worship Songs",
     "loginSubtitle": "Sign in to continue",
@@ -355,7 +361,7 @@
     "dropCoverHint": "Images only (JPG / PNG)",
     "pptBackgroundFile": "PPT background",
     "dropPptBackground": "Upload PPT background",
-    "dropPptBackgroundHint": "Used by default when generating lyrics PPT; falls back to cover or sheet if empty",
+    "dropPptBackgroundHint": "Used when generating lyrics PPT; otherwise a soft gradient background is used",
     "useCoverAsPptBackground": "Use cover as PPT background",
     "existingPptBackground": "Saved PPT background",
     "uploadPptBackground": "Upload PPT background",
@@ -382,6 +388,21 @@
     "subtitle": "Manage all meeting records",
     "newMeeting": "New meeting",
     "clearFilters": "Clear filters",
+    "filterByLeader": "Worship leader",
+    "allLeaders": "All leaders",
+    "leaderStatsLink": "Leader song stats",
+    "leaderStats": {
+      "title": "Leader song stats",
+      "subtitle": "See which songs each worship leader selects most often",
+      "yearFilter": "Year",
+      "allTime": "All time",
+      "yearLabel": "{year}",
+      "yearOption": "{year}",
+      "meetingCount": "{count} meetings",
+      "times": "times",
+      "noData": "No leader song stats yet",
+      "noSongs": "No songs selected"
+    },
     "allYears": "All years",
     "yearOption": "{year}",
     "selectYear": "Select year",
@@ -395,6 +416,7 @@
     "prevYear": "Previous year",
     "nextYear": "Next year",
     "noMeetings": "No meetings yet",
+    "noTheme": "Untitled meeting",
     "createFirst": "Create first meeting",
     "speaker": "Speaker: {name}",
     "leader": "Leader: {name}",
@@ -638,7 +660,7 @@
   "ppt": {
     "eyebrow": "Leader tools",
     "title": "Lyrics PPT",
-    "subtitle": "Pick songs from the library and download a projection-ready PowerPoint file. Each song starts with a title slide, then lyric slides split by section labels (Chorus, Verse, etc.), up to 4 lines per slide.",
+    "subtitle": "Pick songs from the library and download a projection-ready PowerPoint file. Each song starts with a title slide (credits included), then one slide per lyric section.",
     "searchTitle": "Search songs",
     "searchDesc": "Click a song to add it to the list on the right. Reorder as needed.",
     "searchPlaceholder": "Search title, artist…",
@@ -660,10 +682,10 @@
     "moveDown": "Move down",
     "remove": "Remove",
     "formatTitle": "Slide layout",
-    "format1": "First slide: title + artist",
-    "format2": "Lyric slides: split by section labels (Chorus, Verse, 副歌, etc.), up to 4 lines each",
+    "format1": "First slide: title + lyricist / composer / performer credits",
+    "format2": "Lyric slides: one slide per section; song title bottom-left, page number bottom-right",
     "format3": "Multiple songs are merged into one file in your chosen order",
-    "format4": "Uses the song's saved PPT background when set; otherwise cover or image sheet",
+    "format4": "Uses the saved PPT background when set; otherwise a soft gradient (not cover or sheet music)",
     "generateFromDetail": "Generate PPT"
   },
   "guide": {
@@ -725,7 +747,7 @@
       "ppt": {
         "title": "Lyrics PPT generator",
         "desc": "Pick songs and download a projection-ready PowerPoint with lyric slides split by section.",
-        "tip1": "Title slide plus up to 4 lines per slide; recognizes Chorus, Verse, 副歌, etc.",
+        "tip1": "Title slide shows credits (词/曲/演唱); one slide per lyric section",
         "tip2": "Merge multiple songs into one file and reorder on the Lyrics PPT page"
       },
       "share": {

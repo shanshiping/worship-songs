@@ -2,21 +2,22 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 describe('songs grid card markup', () => {
-  it('navigates from the card and keeps tag badges outside the title block', () => {
+  it('navigates from the row and keeps tag badges outside the title block', () => {
     const source = readFileSync('src/app/(main)/songs/page.tsx', 'utf8')
-    const gridCardStart = source.indexOf('{songs.map((song, index) => (')
-    const cardContentEnd = source.indexOf('</CardContent>', gridCardStart)
-    const gridCardSource = source.slice(gridCardStart, cardContentEnd)
+    const gridBlockStart = source.indexOf(') : viewMode === \'grid\' ? (')
+    const gridBlockEnd = source.indexOf(') : (', gridBlockStart)
+    const gridSource = source.slice(gridBlockStart, gridBlockEnd)
 
-    expect(gridCardStart).toBeGreaterThan(-1)
-    expect(gridCardSource).toContain('onClick={() => router.push(`/songs/${song.id}`)}')
-    expect(gridCardSource).not.toContain('<Link href={`/songs/${song.id}`}')
+    expect(gridBlockStart).toBeGreaterThan(-1)
+    expect(gridSource).toContain('onClick={() => router.push(`/songs/${song.id}`)}')
+    expect(gridSource).not.toContain('<Link href={`/songs/${song.id}`}')
 
-    const titleBlockStart = gridCardSource.indexOf('<div className="block group mb-3">')
-    const titleBlockEnd = gridCardSource.indexOf('</div>', titleBlockStart)
-    const titleBlockSource = gridCardSource.slice(titleBlockStart, titleBlockEnd)
+    const titleBlockStart = gridSource.indexOf('<h3 className="line-clamp-1 text-sm font-medium')
+    const titleBlockEnd = gridSource.indexOf('</h3>', titleBlockStart)
+    const titleBlockSource = gridSource.slice(titleBlockStart, titleBlockEnd)
 
     expect(titleBlockStart).toBeGreaterThan(-1)
     expect(titleBlockSource).not.toContain('<SongTagBadges')
+    expect(gridSource).toContain('<SongTagBadges')
   })
 })

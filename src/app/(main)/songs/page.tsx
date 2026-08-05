@@ -7,9 +7,8 @@ import { useRouter } from 'next/navigation'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import {
-  Music, Plus, Search, FileText, LayoutGrid, List, Play, Calendar, ChevronRight, ListMusic, Tags,
+  Music, Plus, Search, FileText, LayoutGrid, List, Play, Calendar, ListMusic, Tags,
 } from 'lucide-react'
 import { usePermissions } from '@/hooks/use-permissions'
 import { TagMultiSelect, SongTagBadges, type TagItem } from '@/components/tag-multi-select'
@@ -36,6 +35,8 @@ interface Song {
 }
 
 type ViewMode = 'grid' | 'list'
+
+const SONGS_PER_PAGE = 40
 
 export default function SongsPage() {
   const { t } = useI18n()
@@ -112,7 +113,7 @@ export default function SongsPage() {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '20',
+        limit: SONGS_PER_PAGE.toString(),
       })
 
       if (search) params.append('search', search)
@@ -158,7 +159,6 @@ export default function SongsPage() {
             permissions.canDeleteCategory) && (
             <Button
               variant="outline"
-              className="rounded-xl"
               onClick={() => setTagManagerOpen(true)}
             >
               <Tags className="mr-2 h-4 w-4" />
@@ -168,7 +168,7 @@ export default function SongsPage() {
           {permissions.canCreateSong && (
             <Link
               href="/song-upload"
-              className={buttonVariants({ className: 'rounded-xl btn-active' })}
+              className={buttonVariants({ className: 'btn-active' })}
             >
               <Plus className="mr-2 h-4 w-4" />
               {t('songs.uploadSong')}
@@ -188,7 +188,7 @@ export default function SongsPage() {
                 setSearch(e.target.value)
                 setPage(1)
               }}
-              className="pl-10 h-11 rounded-xl input-focus"
+              className="pl-10 h-10 input-focus"
             />
           </div>
           <div className="relative flex-1">
@@ -200,15 +200,15 @@ export default function SongsPage() {
                 setLyricsSearch(e.target.value)
                 setPage(1)
               }}
-              className="pl-10 h-11 rounded-xl input-focus"
+              className="pl-10 h-10 input-focus"
             />
           </div>
-          <div className="flex items-center bg-gray-100 rounded-xl p-1">
+          <div className="flex items-center bg-muted rounded-md p-0.5">
             <button
               onClick={() => handleViewModeChange('grid')}
-              className={`p-2 rounded-lg transition-colors ${
+              className={`p-2 rounded-sm transition-colors ${
                 viewMode === 'grid'
-                  ? 'bg-white shadow-sm text-primary'
+                  ? 'bg-background text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
               title={t('songs.cardView')}
@@ -217,9 +217,9 @@ export default function SongsPage() {
             </button>
             <button
               onClick={() => handleViewModeChange('list')}
-              className={`p-2 rounded-lg transition-colors ${
+              className={`p-2 rounded-sm transition-colors ${
                 viewMode === 'list'
-                  ? 'bg-white shadow-sm text-primary'
+                  ? 'bg-background text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
               title={t('songs.listView')}
@@ -251,35 +251,31 @@ export default function SongsPage() {
 
       {loading ? (
         viewMode === 'grid' ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i} className="animate-pulse border-0 shadow-sm">
-                <CardContent className="p-6">
-                  <div className="h-6 w-32 skeleton rounded mb-3" />
-                  <div className="h-4 w-24 skeleton rounded mb-4" />
-                </CardContent>
-              </Card>
+          <div className="grid gap-x-4 gap-y-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="animate-pulse px-2 py-2">
+                <div className="mb-1.5 h-4 w-28 skeleton rounded" />
+                <div className="h-3 w-20 skeleton rounded" />
+              </div>
             ))}
           </div>
         ) : (
-          <div className="space-y-2">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-16 skeleton rounded-xl" />
+          <div className="divide-y divide-border/60">
+            {[...Array(10)].map((_, i) => (
+              <div key={i} className="h-9 skeleton" />
             ))}
           </div>
         )
       ) : songs.length === 0 ? (
-        <Card className="animate-fade-in border-0 shadow-sm">
+        <Card className="animate-fade-in">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
-              <Music className="h-10 w-10 text-muted-foreground" />
-            </div>
+            <Music className="mb-4 h-12 w-12 text-muted-foreground" />
             <p className="text-lg font-medium mb-2">{t('songs.noSongs')}</p>
             <p className="text-muted-foreground mb-6">{t('songs.noSongsHint')}</p>
             {permissions.canCreateSong && (
               <Link
                 href="/song-upload"
-                className={buttonVariants({ className: 'rounded-xl' })}
+                className={buttonVariants()}
               >
                 <Plus className="mr-2 h-4 w-4" />
                 {t('songs.uploadSong')}
@@ -288,83 +284,65 @@ export default function SongsPage() {
           </CardContent>
         </Card>
       ) : viewMode === 'grid' ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-x-4 gap-y-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {songs.map((song, index) => (
-            <Card
+            <div
               key={song.id}
-              className="card-hover animate-fade-in border-0 shadow-sm h-full cursor-pointer"
-              style={{ animationDelay: `${index * 50}ms` }}
+              className="group animate-fade-in cursor-pointer rounded-md px-2 py-2 text-sm transition-colors hover:bg-muted/40"
+              style={{ animationDelay: `${index * 20}ms` }}
               onClick={() => router.push(`/songs/${song.id}`)}
             >
-              <CardContent className="p-6">
-                <div className="block group mb-3">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg group-hover:text-primary transition-colors line-clamp-1">
-                        {song.title}
-                      </h3>
-                      {song.artist && (
-                        <p className="text-sm text-muted-foreground mt-1">{song.artist}</p>
-                      )}
-                      {song.scriptures?.[0]?.reference && (
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                          {song.scriptures[0].reference}
-                        </p>
-                      )}
-                    </div>
-                    <div className="ml-3 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-muted">
-                      <Music className="h-6 w-6 text-foreground" />
-                    </div>
-                  </div>
-
-                  {song.lyrics && (
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {song.lyrics.split('\n')[0]}
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <h3 className="line-clamp-1 text-sm font-medium transition-colors group-hover:text-primary">
+                    {song.title}
+                  </h3>
+                  {(song.artist || song.scriptures?.[0]?.reference) && (
+                    <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                      {[song.artist, song.scriptures?.[0]?.reference].filter(Boolean).join(' · ')}
                     </p>
                   )}
                 </div>
+                <div className="flex shrink-0 items-center gap-1.5 pt-0.5 text-muted-foreground">
+                  {song.sheetMusic && <FileText className="h-3 w-3" />}
+                  {song.audioFile && <Play className="h-3 w-3" />}
+                  <span className="flex items-center text-[11px]">
+                    <Calendar className="mr-0.5 h-3 w-3" />
+                    {song._count.meetings}
+                  </span>
+                </div>
+              </div>
 
-                <div className="flex items-center justify-between gap-2">
-                  <div
-                  className="flex flex-wrap gap-1"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <SongTagBadges
-                    tags={song.tags}
-                    onTagClick={handleSongTagClick}
-                    onUncategorizedClick={handleUncategorizedClick}
-                  />
-                </div>
-                  <div className="flex items-center space-x-3 text-xs text-muted-foreground shrink-0">
-                    {song.sheetMusic && <FileText className="h-3 w-3" />}
-                    {song.audioFile && <Play className="h-3 w-3" />}
-                    <div className="flex items-center">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      {song._count.meetings}
-                    </div>
-                  </div>
-                </div>
+              <div
+                className="mt-1.5 flex items-center justify-between gap-2"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <SongTagBadges
+                  tags={song.tags}
+                  onTagClick={handleSongTagClick}
+                  onUncategorizedClick={handleUncategorizedClick}
+                />
                 {canAddToPlaylist && (
                   <Button
                     variant="ghost"
-                    size="sm"
-                    className="mt-3 w-full justify-center rounded-lg"
+                    size="icon-xs"
+                    className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                    title={t('playlists.addToPlaylist')}
                     onClick={(event) => {
                       event.stopPropagation()
                       openAddToPlaylist(song.id)
                     }}
                   >
-                    <ListMusic className="mr-2 h-4 w-4" />
-                    {t('playlists.addToPlaylist')}
+                    <ListMusic className="h-3.5 w-3.5" />
                   </Button>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       ) : (
-        <div className="space-y-2">
-          <div className="hidden md:grid md:grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-muted-foreground">
+        <div className="divide-y divide-border/60 text-sm">
+          <div className="hidden px-2 py-1.5 text-xs font-medium text-muted-foreground md:grid md:grid-cols-12 md:gap-3">
             <div className="col-span-4">{t('songs.songTitle')}</div>
             <div className="col-span-3">{t('songs.tags')}</div>
             <div className="col-span-2">{t('songs.artist')}</div>
@@ -375,21 +353,18 @@ export default function SongsPage() {
           {songs.map((song, index) => (
             <div
               key={song.id}
-              className="flex items-center md:grid md:grid-cols-12 gap-4 p-4 bg-white rounded-xl hover:shadow-md transition-all animate-fade-in border border-gray-100 cursor-pointer"
-              style={{ animationDelay: `${index * 30}ms` }}
+              className="group flex animate-fade-in cursor-pointer items-center gap-3 px-2 py-1.5 transition-colors hover:bg-muted/40 md:grid md:grid-cols-12 md:gap-3"
+              style={{ animationDelay: `${index * 15}ms` }}
               onClick={() => router.push(`/songs/${song.id}`)}
             >
-              <div className="min-w-0 md:col-span-4 flex items-center space-x-3 group">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
-                  <Music className="h-5 w-5 text-foreground" />
-                </div>
-                <p className="font-medium group-hover:text-primary transition-colors truncate">
+              <div className="min-w-0 md:col-span-4">
+                <p className="truncate text-sm font-medium transition-colors group-hover:text-primary">
                   {song.title}
                 </p>
               </div>
 
               <div
-                className="md:col-span-3 hidden md:flex flex-wrap gap-1"
+                className="hidden flex-wrap gap-1 md:col-span-3 md:flex"
                 onClick={(event) => event.stopPropagation()}
               >
                 <SongTagBadges
@@ -399,68 +374,61 @@ export default function SongsPage() {
                 />
               </div>
 
-              <div className="md:col-span-2 hidden md:block">
-                <p className="text-sm text-muted-foreground truncate">
+              <div className="hidden md:col-span-2 md:block">
+                <p className="truncate text-xs text-muted-foreground">
                   {song.artist || '-'}
                 </p>
               </div>
 
-              <div className="md:col-span-1 hidden md:block">
-                <span className="text-sm">{song._count.meetings}</span>
+              <div className="hidden md:col-span-1 md:block">
+                <span className="text-xs text-muted-foreground">{song._count.meetings}</span>
               </div>
 
-              <div className="md:col-span-2 hidden md:flex items-center justify-between gap-2">
-                <div className="flex min-w-0 items-center space-x-2">
-                  {song.sheetMusic && (
-                    <Badge variant="outline" className="text-xs">
-                      <FileText className="h-3 w-3 mr-1" />
-                      {t('songs.sheet')}
-                    </Badge>
-                  )}
-                  {song.audioFile && (
-                    <Badge variant="outline" className="text-xs">
-                      <Play className="h-3 w-3 mr-1" />
-                      {t('songs.audio')}
-                    </Badge>
-                  )}
+              <div className="hidden items-center justify-between gap-2 md:col-span-2 md:flex">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  {song.sheetMusic && <FileText className="h-3.5 w-3.5" title={t('songs.sheet')} />}
+                  {song.audioFile && <Play className="h-3.5 w-3.5" title={t('songs.audio')} />}
                 </div>
                 {canAddToPlaylist && (
                   <Button
                     variant="ghost"
-                    size="icon-sm"
-                    className="rounded-lg shrink-0"
+                    size="icon-xs"
+                    className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
                     title={t('playlists.addToPlaylist')}
                     onClick={(event) => {
                       event.stopPropagation()
                       openAddToPlaylist(song.id)
                     }}
                   >
-                    <ListMusic className="h-4 w-4" />
+                    <ListMusic className="h-3.5 w-3.5" />
                   </Button>
                 )}
               </div>
 
-              <div className="md:hidden flex items-center space-x-2 ml-auto">
+              <div className="ml-auto flex items-center gap-2 md:hidden">
                 <SongTagBadges
                   tags={song.tags?.slice(0, 1)}
                   onTagClick={handleSongTagClick}
                   onUncategorizedClick={handleUncategorizedClick}
                 />
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  {song.sheetMusic && <FileText className="h-3 w-3" />}
+                  {song.audioFile && <Play className="h-3 w-3" />}
+                </div>
                 {canAddToPlaylist && (
                   <Button
                     variant="ghost"
-                    size="icon-sm"
-                    className="rounded-lg shrink-0"
+                    size="icon-xs"
+                    className="shrink-0"
                     title={t('playlists.addToPlaylist')}
                     onClick={(event) => {
                       event.stopPropagation()
                       openAddToPlaylist(song.id)
                     }}
                   >
-                    <ListMusic className="h-4 w-4" />
+                    <ListMusic className="h-3.5 w-3.5" />
                   </Button>
                 )}
-                <ChevronRight className="h-4 w-4 text-muted-foreground md:hidden" aria-hidden />
               </div>
             </div>
           ))}

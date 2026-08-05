@@ -7,6 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { MonthYearPicker } from '@/components/month-year-picker'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import { Calendar, Plus, Music, User } from 'lucide-react'
 import { format } from 'date-fns'
 import { enUS, zhCN } from 'date-fns/locale'
@@ -29,21 +37,18 @@ interface Meeting {
 export default function MeetingsPage() {
   const { t, locale } = useI18n()
   const dateLocale = locale === 'zh' ? zhCN : enUS
-  const meetingTypeLabels: Record<string, string> = {
-    MORNING: t('meetings.morning'),
-    AFTERNOON: t('meetings.afternoon'),
-    EVENING: t('meetings.evening'),
-  }
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [loading, setLoading] = useState(true)
   const [month, setMonth] = useState('')
+  const [leader, setLeader] = useState('')
+  const [leaders, setLeaders] = useState<string[]>([])
   const [years, setYears] = useState<number[]>([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
     fetchMeetings()
-  }, [month, page])
+  }, [month, leader, page])
 
   const fetchMeetings = async () => {
     setLoading(true)
@@ -59,12 +64,17 @@ export default function MeetingsPage() {
         params.append('month', month)
       }
 
+      if (leader) {
+        params.append('leader', leader)
+      }
+
       const response = await fetch(`/api/meetings?${params}`)
       if (response.ok) {
         const data = await response.json()
         setMeetings(data.meetings)
         setTotalPages(data.pagination.pages)
         setYears(data.years || [])
+        setLeaders(data.leaders || [])
       }
     } catch (error) {
       console.error('Failed to fetch meetings:', error)
@@ -88,7 +98,8 @@ export default function MeetingsPage() {
         </Link>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-end gap-3">
         <MonthYearPicker
           value={month}
           years={years}
@@ -99,17 +110,51 @@ export default function MeetingsPage() {
           }}
         />
 
-        {month && (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="leader-filter" className="text-xs text-muted-foreground">
+            {t('meetings.filterByLeader')}
+          </Label>
+          <Select
+            value={leader || 'all'}
+            onValueChange={(value) => {
+              setLeader(value === 'all' ? '' : value)
+              setPage(1)
+            }}
+          >
+            <SelectTrigger id="leader-filter" className="min-w-[10rem]">
+              <SelectValue placeholder={t('meetings.allLeaders')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('meetings.allLeaders')}</SelectItem>
+              {leaders.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {(month || leader) && (
           <Button
             variant="ghost"
+            className="mb-0.5"
             onClick={() => {
               setMonth('')
+              setLeader('')
               setPage(1)
             }}
           >
             {t('meetings.clearFilters')}
           </Button>
         )}
+        </div>
+
+        <Link href="/meetings/leaders">
+          <Button variant="outline" className="mb-0.5">
+            {t('meetings.leaderStatsLink')}
+          </Button>
+        </Link>
       </div>
 
       {loading ? (
@@ -132,22 +177,15 @@ export default function MeetingsPage() {
             <Link key={meeting.id} href={`/meetings/${meeting.id}`}>
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">
-                        {format(new Date(meeting.date), 'PPP', {
-                          locale: dateLocale,
-                        })}
-                      </CardTitle>
-                      {meeting.theme && (
-                        <CardDescription className="mt-1">
-                          {meeting.theme}
-                        </CardDescription>
-                      )}
-                    </div>
-                    <Badge variant="secondary">
-                      {meetingTypeLabels[meeting.type] || meeting.type}
-                    </Badge>
+                  <div className="min-w-0">
+                    <CardTitle className="text-lg font-semibold leading-snug">
+                      {meeting.theme || t('meetings.noTheme')}
+                    </CardTitle>
+                    <CardDescription className="mt-1 text-xs">
+                      {format(new Date(meeting.date), 'PPP', {
+                        locale: dateLocale,
+                      })}
+                    </CardDescription>
                   </div>
                 </CardHeader>
                 <CardContent>

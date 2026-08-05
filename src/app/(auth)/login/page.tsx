@@ -12,6 +12,7 @@ import { Phone, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { useI18n } from '@/components/providers/i18n-provider'
 import { LanguageSwitcher } from '@/components/language-switcher'
+import { ThemeSwitcher } from '@/components/theme-switcher'
 import { BrandLogo } from '@/components/brand-logo'
 
 type LoginMethod = 'email' | 'phone'
@@ -145,8 +146,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center gradient-bg p-4">
-      <LanguageSwitcher className="absolute top-4 right-4 z-10 bg-card/80 backdrop-blur-sm" />
+    <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+        <ThemeSwitcher className="bg-card/80 backdrop-blur-sm" />
+        <LanguageSwitcher className="bg-card/80 backdrop-blur-sm" />
+      </div>
 
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />

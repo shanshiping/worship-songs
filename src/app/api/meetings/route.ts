@@ -11,6 +11,7 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const month = searchParams.get('month')
     const yearParam = searchParams.get('year')
+    const leader = searchParams.get('leader')?.trim() || null
     const year =
       yearParam && /^\d{4}$/.test(yearParam) ? parseInt(yearParam, 10) : null
 
@@ -32,7 +33,11 @@ export async function GET(request: Request) {
       }
     }
 
-    const [meetings, total, allMeetings] = await Promise.all([
+    if (leader) {
+      where.leader = leader
+    }
+
+    const [meetings, total, allMeetings, leaderRows] = await Promise.all([
       prisma.meeting.findMany({
         where,
         include: {
@@ -53,11 +58,21 @@ export async function GET(request: Request) {
       prisma.meeting.findMany({
         select: { date: true },
       }),
+      prisma.meeting.findMany({
+        where: { leader: { not: null } },
+        select: { leader: true },
+        distinct: ['leader'],
+        orderBy: { leader: 'asc' },
+      }),
     ])
 
     const years = [
       ...new Set(allMeetings.map((m) => m.date.getFullYear())),
     ].sort((a, b) => b - a)
+
+    const leaders = leaderRows
+      .map((row) => row.leader?.trim())
+      .filter((name): name is string => Boolean(name))
 
     return NextResponse.json({
       meetings,
@@ -68,6 +83,7 @@ export async function GET(request: Request) {
         pages: Math.ceil(total / limit),
       },
       years,
+      leaders,
     })
   } catch (error) {
     console.error('Meetings API error:', error)

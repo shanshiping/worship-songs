@@ -7,6 +7,7 @@ import { signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import { BrandLogo } from '@/components/brand-logo'
 import { LanguageSwitcher } from '@/components/language-switcher'
+import { ThemeSwitcher } from '@/components/theme-switcher'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -47,10 +48,10 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps) {
                 aria-current={isActive ? 'page' : undefined}
                 onClick={() => onOpenChange(false)}
                 className={cn(
-                  'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200',
+                  'flex min-h-10 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                   isActive
-                    ? 'border-l-2 border-primary bg-sidebar-accent text-sidebar-foreground'
-                    : 'border-l-2 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground'
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )}
               >
                 <item.icon
@@ -63,10 +64,11 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps) {
         </nav>
 
         <div className="mt-auto space-y-3 border-t border-border p-4">
+          <ThemeSwitcher className="w-full justify-center" />
           <LanguageSwitcher className="w-full justify-center" />
           <Button
             variant="ghost"
-            className="min-h-11 w-full justify-start rounded-xl"
+            className="min-h-10 w-full justify-start"
             onClick={async () => {
               await signOut({ redirect: false })
               window.location.assign('/login')

@@ -1,124 +1,13 @@
 import { PrismaClient } from '@prisma/client'
 
 import XLSX from 'xlsx'
+import { isValidSongName, parseSongNames } from '../src/lib/excel-song-names'
 
 const prisma = new PrismaClient()
 
 // Excel 日期序列号转 JavaScript 日期
 function excelDateToJSDate(excelDate: number): Date {
   return new Date((excelDate - 25569) * 86400 * 1000)
-}
-
-// 排除的非歌曲关键词
-const excludeKeywords = [
-  '上午', '下午', '晚间', '上午场', '下午场', '晚间场',
-  '上午聚会', '下午聚会', '晚间聚会',
-  '无聚会', '暂停', '取消', '联合崇拜', '特别聚会',
-  '圣餐', '洗礼', '祷告会', '查经', '团契',
-  '主日学', '儿童崇拜', '青年崇拜',
-  '回应诗歌', '回应', '散会诗歌', '散会',
-  '布道会', '培灵会', '退修会', '感恩节',
-  '受难节', '复活节', '圣诞节',
-  '经文', '圣经', '旧约', '新约',
-  '创世记', '出埃及记', '利未记', '民数记', '申命记',
-  '约书亚记', '士师记', '路得记', '撒母耳记', '列王记',
-  '历代志', '以斯拉记', '尼希米记', '以斯帖记',
-  '约伯记', '诗篇', '箴言', '传道书', '雅歌',
-  '以赛亚书', '耶利米书', '耶利米哀歌', '以西结书', '但以理书',
-  '何西阿书', '约珥书', '阿摩司书', '俄巴底亚书', '约拿书',
-  '弥迦书', '那鸿书', '哈巴谷书', '西番雅书', '哈该书',
-  '撒迦利亚书', '玛拉基书',
-  '马太福音', '马可福音', '路加福音', '约翰福音',
-  '使徒行传', '罗马书', '哥林多前书', '哥林多后书',
-  '加拉太书', '以弗所书', '腓立比书', '歌罗西书',
-  '帖撒罗尼迦前书', '帖撒罗尼迦后书', '提摩太前书', '提摩太后书',
-  '提多书', '腓利门书', '希伯来书', '雅各书',
-  '彼得前书', '彼得后书', '约翰一书', '约翰二书', '约翰三书',
-  '犹大书', '启示录',
-  '主题', '讲章', '证道', '分享', '信息',
-  '弟兄', '姊妹', '牧师', '传道', '长老', '执事',
-]
-
-// 排除的正则表达式
-const excludePatterns = [
-  /^\d+$/,
-  /^[A-Za-z]$/,
-  /^[一二三四五六七八九十百千万亿]+$/,
-  /^第[一二三四五六七八九十百千万亿]+[首歌曲章篇]$/,
-  /^[（(].*[)）]$/,
-  /^经文[:：]/,
-  /^备注[:：]/,
-  /^说明[:：]/,
-  /^注[:：]/,
-  /^[\d\s\-\/\.]+$/,
-  /^[A-Za-z\s]+$/,
-  /章$/,
-  /节$/,
-  /篇$/,
-]
-
-// 判断是否是有效的歌曲名称
-function isValidSongName(name: string): boolean {
-  if (!name || name.trim() === '') {
-    return false
-  }
-
-  const trimmedName = name.trim()
-
-  if (trimmedName.length < 2 || trimmedName.length > 50) {
-    return false
-  }
-
-  for (const keyword of excludeKeywords) {
-    if (trimmedName.includes(keyword)) {
-      return false
-    }
-  }
-
-  for (const pattern of excludePatterns) {
-    if (pattern.test(trimmedName)) {
-      return false
-    }
-  }
-
-  if (/^\d+[\.\、\-\s]/.test(trimmedName)) {
-    return false
-  }
-
-  if (/[【】\[\]{}]/.test(trimmedName)) {
-    return false
-  }
-
-  if (trimmedName === '？' || trimmedName === '?' || trimmedName === '未知') {
-    return false
-  }
-
-  return true
-}
-
-// 清理歌曲名称
-function cleanSongName(name: string): string {
-  return name
-    .trim()
-    .replace(/\s+/g, ' ')
-    .replace(/^[\d\.\、\-\s]+/, '')
-    .replace(/[\n\r]+/g, ' ')
-    .replace(/（.*?）/g, '')
-    .replace(/\(.*?\)/g, '')
-    .trim()
-}
-
-// 解析诗歌名称
-function parseSongNames(songStr: string): string[] {
-  if (!songStr || songStr.trim() === '' || songStr === '无聚会') {
-    return []
-  }
-
-  let songs = songStr.split(/[+\n\/、；]/).map(s => s.trim())
-
-  return songs
-    .map(s => cleanSongName(s))
-    .filter(s => isValidSongName(s))
 }
 
 // 聚会数据接口

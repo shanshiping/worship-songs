@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import {
@@ -36,6 +37,7 @@ export async function POST(request: Request) {
         title: true,
         artist: true,
         lyricist: true,
+        composer: true,
         pptBackground: true,
         coverImage: true,
         sheetMusic: true,
@@ -85,6 +87,16 @@ export async function POST(request: Request) {
     }
     if (message === '权限不足') {
       return NextResponse.json({ error: message }, { status: 403 })
+    }
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2022'
+    ) {
+      console.error('PPT export error: database schema out of date', error)
+      return NextResponse.json(
+        { error: '数据库未同步最新结构，请运行 pnpm exec prisma db push' },
+        { status: 500 }
+      )
     }
     console.error('PPT export error:', error)
     return NextResponse.json({ error: '生成 PPT 失败' }, { status: 500 })

@@ -50,6 +50,12 @@
     "en": "EN",
     "zh": "中文"
   },
+  "theme": {
+    "label": "主题",
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统"
+  },
   "auth": {
     "loginTitle": "敬拜选歌平台",
     "loginSubtitle": "登录您的账户以继续",
@@ -355,7 +361,7 @@
     "dropCoverHint": "仅支持图片（JPG / PNG）",
     "pptBackgroundFile": "PPT 背景图",
     "dropPptBackground": "上传 PPT 背景",
-    "dropPptBackgroundHint": "生成歌词 PPT 时默认使用；留空则用封面或歌谱",
+    "dropPptBackgroundHint": "生成歌词 PPT 时使用；未上传则使用柔和渐变色背景",
     "useCoverAsPptBackground": "使用封面作为 PPT 背景",
     "existingPptBackground": "已保存的 PPT 背景",
     "uploadPptBackground": "上传 PPT 背景图",
@@ -381,6 +387,21 @@
     "subtitle": "管理所有聚会记录",
     "newMeeting": "新建聚会",
     "clearFilters": "清除筛选",
+    "filterByLeader": "主领",
+    "allLeaders": "全部主领",
+    "leaderStatsLink": "主领选歌统计",
+    "leaderStats": {
+      "title": "主领选歌统计",
+      "subtitle": "查看各主领在聚会中常选的诗歌",
+      "yearFilter": "年份",
+      "allTime": "全部时间",
+      "yearLabel": "{year} 年",
+      "yearOption": "{year} 年",
+      "meetingCount": "{count} 次聚会",
+      "times": "次",
+      "noData": "暂无主领选歌数据",
+      "noSongs": "暂无选歌记录"
+    },
     "allYears": "全部年份",
     "yearOption": "{year} 年",
     "selectYear": "选择年份",
@@ -394,6 +415,7 @@
     "prevYear": "上一年",
     "nextYear": "下一年",
     "noMeetings": "暂无聚会记录",
+    "noTheme": "未填写主题",
     "createFirst": "创建第一个聚会",
     "speaker": "讲员: {name}",
     "leader": "主领: {name}",
@@ -637,7 +659,7 @@
   "ppt": {
     "eyebrow": "主领工具",
     "title": "歌词 PPT",
-    "subtitle": "从曲库选择歌曲，按段落自动生成投影用 PowerPoint 文件。每首歌先标题页，再按「副歌 / 第一段 / Verse」等标记分页，每页最多 4 行歌词。",
+    "subtitle": "从曲库选择歌曲，按段落自动生成投影用 PowerPoint 文件。每首歌第一页为歌名与词/曲/演唱信息，后续每段歌词单独一页。",
     "searchTitle": "搜索歌曲",
     "searchDesc": "点击歌曲添加到右侧列表，可调整顺序",
     "searchPlaceholder": "搜索歌名、作者…",
@@ -659,10 +681,10 @@
     "moveDown": "下移",
     "remove": "移除",
     "formatTitle": "PPT 格式说明",
-    "format1": "第一页：歌名 + 作者",
-    "format2": "后续页：按「副歌 / 第一段 / Verse / Chorus」等标记分段，每页最多 4 行",
+    "format1": "第一页：歌名 + 词/曲/演唱等制作信息",
+    "format2": "后续页：按段落标记分段，每段一页；左下角显示歌名，右下角显示页码",
     "format3": "多首歌曲合并为一份文件，按所选顺序排列",
-    "format4": "若歌曲已设置 PPT 背景图，会优先使用；否则使用封面或图片歌谱",
+    "format4": "若已上传 PPT 背景图则使用；否则自动使用柔和渐变色（不使用歌谱/封面）",
     "generateFromDetail": "生成 PPT"
   },
   "guide": {

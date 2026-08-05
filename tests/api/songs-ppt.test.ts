@@ -95,8 +95,9 @@ describe('/api/songs/ppt', () => {
       {
         id: 's1',
         title: '神掌权',
-        artist: '作者',
-        lyricist: null,
+        artist: '敬拜团',
+        lyricist: '张三',
+        composer: '李四',
         lyrics: '第一段\n行一\n行二',
         lyricsLrc: null,
       },
@@ -118,8 +119,31 @@ describe('/api/songs/ppt', () => {
     const songsArg = buildLyricsPpt.mock.calls[0]?.[0] as Array<{ title: string; artist: string | null }>
     expect(songsArg).toHaveLength(1)
     expect(songsArg[0]?.title).toBe('神掌权')
-    expect(songsArg[0]?.artist).toBe('作者')
+    expect(songsArg[0]?.lyricist).toBe('张三')
+    expect(songsArg[0]?.composer).toBe('李四')
     const body = Buffer.from(await res.arrayBuffer())
     expect(body.length).toBeGreaterThan(0)
+  })
+
+  it('returns schema hint when pptBackground column is missing', async () => {
+    const { Prisma } = await import('@prisma/client')
+    mockPrisma.song.findMany.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Column not found', {
+        code: 'P2022',
+        clientVersion: '7.8.0',
+        meta: { modelName: 'Song' },
+      })
+    )
+
+    const res = await POST(
+      jsonRequest('http://localhost/api/songs/ppt', {
+        method: 'POST',
+        body: { songIds: ['s1'] },
+      })
+    )
+
+    expect(res.status).toBe(500)
+    const body = await res.json()
+    expect(body.error).toContain('prisma db push')
   })
 })

@@ -24,13 +24,13 @@ export function FeatureGuideCard({ feature, featured = false }: FeatureGuideCard
       className={cn(
         'group relative overflow-hidden border shadow-sm transition-all duration-200 hover:shadow-md',
         featured
-          ? 'border-primary/20 bg-gradient-to-br from-primary/5 via-background to-background'
+          ? 'border-primary/20 bg-gradient-to-br from-primary/8 via-accent/5 to-background'
           : 'border-border'
       )}
     >
       {featured && (
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/60 via-primary to-primary/60"
+          className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-[var(--brand-teal)] to-[var(--brand-gold)]"
           aria-hidden
         />
       )}

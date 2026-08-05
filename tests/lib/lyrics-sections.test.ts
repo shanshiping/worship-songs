@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest'
 import {
   chunkLines,
   extractArtistFromLyrics,
+  extractLyricsCredits,
   isSectionLabel,
   parseLyricsSections,
   parseSectionLabel,
   resolveLyricsText,
+  splitLyricsParagraphs,
   stripLeadingLyricsMetadata,
 } from '@/lib/lyrics-sections'
 
@@ -194,6 +196,187 @@ describe('stripLeadingLyricsMetadata', () => {
       })
     ).toBe(`副歌
 行一`)
+  })
+
+  it('removes metadata lines even when song record has no matching fields', () => {
+    const lyrics = `词：李四
+曲：王五
+演唱：某团
+第一段
+行一`
+
+    expect(stripLeadingLyricsMetadata(lyrics, { title: '某歌' })).toBe(`第一段
+行一`)
+  })
+})
+
+describe('extractLyricsCredits', () => {
+  it('collects 词/曲/演唱 for the title slide', () => {
+    const lyrics = `词：张三
+曲：李四
+演唱：王五
+副歌
+行一`
+
+    expect(
+      extractLyricsCredits(lyrics, { title: '神掌权' })
+    ).toEqual({
+      credits: ['词：张三', '曲：李四', '演唱：王五'],
+      body: '副歌\n行一',
+    })
+  })
+
+  it('fills credits from song metadata when lyrics omit them', () => {
+    expect(
+      extractLyricsCredits('副歌\n行一', {
+        title: '神掌权',
+        lyricist: '张三',
+        composer: '李四',
+        artist: '敬拜团',
+      })
+    ).toEqual({
+      credits: ['词：张三', '曲：李四', '演唱：敬拜团'],
+      body: '副歌\n行一',
+    })
+  })
+
+  it('supports label on one line and value on the next', () => {
+    expect(
+      extractLyricsCredits(`词
+张三
+曲
+李四
+编曲
+王五
+演唱
+赵六
+副歌
+行一`, { title: '神掌权' })
+    ).toEqual({
+      credits: ['词：张三', '曲：李四', '编曲：王五', '演唱：赵六'],
+      body: '副歌\n行一',
+    })
+  })
+
+  it('supports 词曲 combined label and inline multiple credits', () => {
+    expect(
+      extractLyricsCredits(`词曲：张三
+词：李四  曲：王五
+副歌
+行一`, { title: '神掌权' })
+    ).toEqual({
+      credits: ['词：李四', '曲：王五', '词曲：张三'],
+      body: '副歌\n行一',
+    })
+  })
+
+  it('prefers song metadata over duplicate lyrics credits', () => {
+    expect(
+      extractLyricsCredits(`词：歌词里的作者
+曲：歌词里的作曲
+副歌
+行一`, {
+        title: '神掌权',
+        lyricist: '数据库作词',
+        composer: '数据库作曲',
+      })
+    ).toEqual({
+      credits: ['词：数据库作词', '曲：数据库作曲'],
+      body: '副歌\n行一',
+    })
+  })
+
+  it('pulls metadata lines from anywhere in lyrics text', () => {
+    expect(
+      extractLyricsCredits(`副歌
+词：张三
+曲：李四
+编曲：王五
+演唱：赵六
+行一`, { title: '神掌权' })
+    ).toEqual({
+      credits: ['词：张三', '曲：李四', '编曲：王五', '演唱：赵六'],
+      body: '副歌\n行一',
+    })
+  })
+
+  it('orders credits as 词/曲/编曲/制作/演唱 on the title slide', () => {
+    expect(
+      extractLyricsCredits(
+        `演唱：赵六
+制作：钱七
+编曲：王五
+曲：李四
+词：张三
+副歌
+行一`,
+        { title: '神掌权' }
+      )
+    ).toEqual({
+      credits: ['词：张三', '曲：李四', '编曲：王五', '制作：钱七', '演唱：赵六'],
+      body: '副歌\n行一',
+    })
+  })
+
+  it('includes 制作 and 制作人 as separate title credits', () => {
+    expect(
+      extractLyricsCredits(`词：张三
+曲：李四
+编曲：王五
+制作：某团队
+制作人：周八
+演唱：赵六
+第一段
+行一`, { title: '神掌权' })
+    ).toEqual({
+      credits: ['词：张三', '曲：李四', '编曲：王五', '制作：某团队', '制作人：周八', '演唱：赵六'],
+      body: '第一段\n行一',
+    })
+  })
+
+  it('normalizes space-separated metadata lines', () => {
+    expect(
+      extractLyricsCredits(`作词 张三
+作曲 李四
+编曲 王五
+制作 某团队
+演唱 赵六
+第一段
+行一`, { title: '神掌权' })
+    ).toEqual({
+      credits: ['作词：张三', '作曲：李四', '编曲：王五', '制作：某团队', '演唱：赵六'],
+      body: '第一段\n行一',
+    })
+  })
+
+  it('keeps all credit lines on title slide and off lyric pages', () => {
+    expect(
+      extractLyricsCredits(`副歌
+词 张三
+曲 李四
+编曲 王五
+制作 团队
+演唱 赵六
+行一`, { title: '神掌权' })
+    ).toEqual({
+      credits: ['词：张三', '曲：李四', '编曲：王五', '制作：团队', '演唱：赵六'],
+      body: '副歌\n行一',
+    })
+  })
+})
+
+describe('splitLyricsParagraphs', () => {
+  it('splits stanzas by blank lines', () => {
+    expect(
+      splitLyricsParagraphs(`行一
+行二
+
+行三
+行四`)
+    ).toEqual([
+      ['行一', '行二'],
+      ['行三', '行四'],
+    ])
   })
 })
 

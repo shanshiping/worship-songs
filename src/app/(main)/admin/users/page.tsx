@@ -20,10 +20,10 @@ interface User {
 }
 
 const roleColors: Record<string, string> = {
-  SUPER_ADMIN: 'bg-red-500',
-  ADMIN: 'bg-orange-500',
-  LEADER: 'bg-blue-500',
-  MEMBER: 'bg-gray-500',
+  SUPER_ADMIN: 'bg-primary text-primary-foreground',
+  ADMIN: 'bg-accent text-accent-foreground',
+  LEADER: 'bg-secondary text-secondary-foreground',
+  MEMBER: 'bg-muted text-muted-foreground',
 }
 
 export default function UsersPage() {

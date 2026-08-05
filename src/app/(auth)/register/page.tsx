@@ -11,6 +11,7 @@ import { Music, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import { useI18n } from '@/components/providers/i18n-provider'
 import { LanguageSwitcher } from '@/components/language-switcher'
+import { ThemeSwitcher } from '@/components/theme-switcher'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -117,8 +118,11 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <LanguageSwitcher className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-sm" />
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+        <ThemeSwitcher className="bg-card/80 backdrop-blur-sm" />
+        <LanguageSwitcher className="bg-card/80 backdrop-blur-sm" />
+      </div>
 
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">

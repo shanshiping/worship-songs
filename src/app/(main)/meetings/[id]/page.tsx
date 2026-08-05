@@ -37,16 +37,6 @@ interface Meeting {
 export default function MeetingDetailPage() {
   const { t, locale } = useI18n()
   const dateLocale = locale === 'zh' ? zhCN : enUS
-  const meetingTypeLabels: Record<string, string> = {
-    MORNING: t('meetings.morning'),
-    AFTERNOON: t('meetings.afternoon'),
-    EVENING: t('meetings.evening'),
-  }
-  const meetingTypeColors: Record<string, string> = {
-    MORNING: 'from-amber-500 to-orange-500',
-    AFTERNOON: 'from-blue-500 to-cyan-500',
-    EVENING: 'from-violet-500 to-purple-500',
-  }
   const params = useParams()
   const router = useRouter()
   const permissions = usePermissions()
@@ -158,16 +148,14 @@ export default function MeetingDetailPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              <span className="gradient-text">
-                {format(new Date(meeting.date), 'PPP', {
-                  locale: dateLocale,
-                })}
-              </span>
+            <h1 className="text-2xl font-bold tracking-tight leading-snug md:text-3xl">
+              {meeting.theme || t('meetings.noTheme')}
             </h1>
-            {meeting.theme && (
-              <p className="text-muted-foreground mt-1 line-clamp-1">{meeting.theme}</p>
-            )}
+            <p className="mt-1 text-sm text-muted-foreground">
+              {format(new Date(meeting.date), 'PPP', {
+                locale: dateLocale,
+              })}
+            </p>
           </div>
         </div>
         <div className="flex space-x-2">
@@ -206,15 +194,6 @@ export default function MeetingDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-              <span className="text-sm text-muted-foreground">{t('meetings.typeLabel')}</span>
-              <Badge
-                variant="secondary"
-                className={`bg-gradient-to-r ${meetingTypeColors[meeting.type] || 'from-gray-500 to-slate-500'} text-white border-0`}
-              >
-                {meetingTypeLabels[meeting.type] || meeting.type}
-              </Badge>
-            </div>
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
               <span className="text-sm text-muted-foreground">{t('meetings.dateLabel')}</span>
               <div className="flex items-center space-x-2">

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { usePermissions } from '@/hooks/use-permissions'
 import { useI18n } from '@/components/providers/i18n-provider'
 import { LanguageSwitcher } from '@/components/language-switcher'
+import { ThemeSwitcher } from '@/components/theme-switcher'
 import { getNavItems } from '@/lib/nav-items'
 
 export function Sidebar() {
@@ -36,9 +37,9 @@ export function Sidebar() {
         </div>
 
         <div className="mx-4 mb-4">
-          <div className="flex items-center gap-2 rounded-lg border border-sidebar-border bg-muted/60 px-3 py-2">
-            <Shield className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs font-medium text-sidebar-foreground/80">{roleLabel}</span>
+          <div className="flex items-center gap-2 px-1 py-1 text-muted-foreground">
+            <Shield className="h-3.5 w-3.5" />
+            <span className="text-xs font-medium">{roleLabel}</span>
           </div>
         </div>
 
@@ -53,10 +54,10 @@ export function Sidebar() {
                   href={item.href}
                   aria-current={isActive ? 'page' : undefined}
                   className={cn(
-                    'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200',
+                    'flex min-h-10 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                     isActive
-                      ? 'border-l-2 border-primary bg-sidebar-accent text-sidebar-foreground'
-                      : 'border-l-2 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground'
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   )}
                 >
                   <item.icon
@@ -72,10 +73,11 @@ export function Sidebar() {
         </nav>
 
         <div className="mt-auto space-y-3 border-t border-sidebar-border p-4">
+          <ThemeSwitcher className="w-full justify-center" />
           <LanguageSwitcher className="w-full justify-center" />
           <Button
             variant="ghost"
-            className="min-h-11 w-full justify-start rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="min-h-10 w-full justify-start text-muted-foreground hover:bg-muted hover:text-foreground"
             onClick={async () => {
               await signOut({ redirect: false })
               window.location.assign('/login')

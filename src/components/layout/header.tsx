@@ -18,6 +18,7 @@ import { CircleHelp, LogOut, Menu, Settings, User } from 'lucide-react'
 import Link from 'next/link'
 import { useI18n } from '@/components/providers/i18n-provider'
 import { LanguageSwitcher } from '@/components/language-switcher'
+import { ThemeSwitcher } from '@/components/theme-switcher'
 import { BrandLogo } from '@/components/brand-logo'
 import { MobileNav } from '@/components/layout/mobile-nav'
 import { Button } from '@/components/ui/button'
@@ -54,7 +55,7 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="flex h-16 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-2 md:hidden">
             <Button
@@ -77,21 +78,22 @@ export function Header() {
               type="button"
               variant="ghost"
               size="icon"
-              className="min-h-10 min-w-10 rounded-xl"
+              className="min-h-10 min-w-10"
               aria-label={t('guide.title')}
               title={t('guide.title')}
               onClick={() => setGuideOpen(true)}
             >
               <CircleHelp className="h-5 w-5" />
             </Button>
+            <ThemeSwitcher />
             <LanguageSwitcher />
 
             <DropdownMenu>
               <DropdownMenuTrigger
-                className="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label={session?.user?.name || t('nav.profile')}
               >
-                <div className="relative h-10 w-10 cursor-pointer rounded-xl ring-2 ring-border transition-opacity hover:opacity-80 hover:ring-primary/30">
+                <div className="relative h-10 w-10 cursor-pointer transition-opacity hover:opacity-80">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={''} alt={session?.user?.name || ''} />
                     <AvatarFallback className="bg-primary font-semibold text-primary-foreground">
@@ -100,7 +102,7 @@ export function Header() {
                   </Avatar>
                 </div>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-64 rounded-xl" align="end">
+              <DropdownMenuContent className="w-64" align="end">
                 <DropdownMenuGroup>
                   <DropdownMenuLabel className="p-4 font-normal">
                     <div className="flex items-center gap-3">
@@ -120,18 +122,18 @@ export function Header() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   render={<Link href="/settings" />}
-                  className="cursor-pointer rounded-lg"
+                  className="cursor-pointer"
                 >
-                  <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                  <div className="mr-3 flex h-8 w-8 items-center justify-center bg-muted">
                     <User className="h-4 w-4 text-foreground" />
                   </div>
                   <span>{t('nav.profile')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   render={<Link href="/settings" />}
-                  className="cursor-pointer rounded-lg"
+                  className="cursor-pointer"
                 >
-                  <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                  <div className="mr-3 flex h-8 w-8 items-center justify-center bg-muted">
                     <Settings className="h-4 w-4 text-foreground" />
                   </div>
                   <span>{t('nav.settings')}</span>
@@ -142,9 +144,9 @@ export function Header() {
                     await signOut({ redirect: false })
                     window.location.assign('/login')
                   }}
-                  className="cursor-pointer rounded-lg px-2 py-2"
+                  className="cursor-pointer px-2 py-2"
                 >
-                  <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                  <div className="mr-3 flex h-8 w-8 items-center justify-center bg-muted">
                     <LogOut className="h-4 w-4 text-destructive" />
                   </div>
                   <span>{t('nav.signOut')}</span>

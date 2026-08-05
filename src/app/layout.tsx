@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { SessionProvider } from "@/components/providers/session-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import { I18nProvider } from "@/components/providers/i18n-provider";
 import { HtmlLang } from "@/components/html-lang";
 import { Toaster } from "@/components/ui/sonner";
@@ -36,14 +37,17 @@ export default async function RootLayout({
     <html
       lang={htmlLang(initialLocale)}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
         <SessionProvider>
-          <I18nProvider initialLocale={initialLocale}>
-            <HtmlLang />
-            {children}
-            <Toaster />
-          </I18nProvider>
+          <ThemeProvider>
+            <I18nProvider initialLocale={initialLocale}>
+              <HtmlLang />
+              {children}
+              <Toaster />
+            </I18nProvider>
+          </ThemeProvider>
         </SessionProvider>
       </body>
     </html>
