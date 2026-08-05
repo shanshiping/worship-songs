@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { randomBytes } from 'crypto'
+import { getSheetsSharePublic, isSheetsShareSchemaError, SHEETS_SHARE_SCHEMA_HINT } from '@/lib/sheets-share'
 
 const fullSongInclude = {
   tags: { include: { tag: true } },
@@ -133,6 +134,26 @@ export async function GET(request: Request) {
       }
 
       return NextResponse.json(data)
+    }
+
+    if (type === 'sheets') {
+      try {
+        const data = await getSheetsSharePublic(id)
+
+        if (!data) {
+          return NextResponse.json(
+            { error: '数据不存在' },
+            { status: 404 }
+          )
+        }
+
+        return NextResponse.json(data)
+      } catch (error) {
+        if (isSheetsShareSchemaError(error)) {
+          return NextResponse.json({ error: SHEETS_SHARE_SCHEMA_HINT }, { status: 503 })
+        }
+        throw error
+      }
     }
 
     return NextResponse.json(

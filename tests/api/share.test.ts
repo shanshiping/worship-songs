@@ -121,4 +121,51 @@ describe('/api/share', () => {
     )
     expect((await readJson(res)).status).toBe(400)
   })
+
+  it('GET returns sheets share with full song fields', async () => {
+    mockPrisma.sheetsShare.findUnique.mockResolvedValue({
+      id: 'sh1',
+      theme: 'Easter',
+      scripture: 'John 3:16',
+      arrangement: 'Opening fast → closing standing',
+      createdBy: { id: 'u1', name: 'Leader' },
+      songs: [
+        {
+          order: 1,
+          song: {
+            id: 's1',
+            title: 'Amazing Grace',
+            lyrics: '歌词',
+            sheetMusic: '/uploads/sheets/a.pdf',
+            sheetMusicPages: ['/uploads/sheets/a.pdf'],
+            audioFile: '/uploads/audio/a.mp3',
+            tags: [],
+            scriptures: [],
+          },
+        },
+      ],
+    })
+
+    const res = await GET(
+      jsonRequest('http://localhost/api/share?type=sheets&id=sh1&token=abc')
+    )
+    const { status, body } = await readJson<{
+      theme: string
+      arrangement: string
+      songs: Array<{
+        song: {
+          title: string
+          audioFile: string
+          sheetMusic: string
+        }
+      }>
+    }>(res)
+
+    expect(status).toBe(200)
+    expect(body.theme).toBe('Easter')
+    expect(body.arrangement).toBe('Opening fast → closing standing')
+    expect(body.songs[0].song.title).toBe('Amazing Grace')
+    expect(body.songs[0].song.audioFile).toBeTruthy()
+    expect(body.songs[0].song.sheetMusic).toBeTruthy()
+  })
 })

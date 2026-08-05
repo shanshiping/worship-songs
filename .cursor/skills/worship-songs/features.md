@@ -13,7 +13,7 @@
 | `/meetings` | 聚会列表（年/月筛选） | 登录用户 |
 | `/meetings/new` | 新建聚会、选歌 | LEADER+ |
 | `/meetings/[id]` | 聚会详情 | 登录用户 |
-| `/meetings/leaders` | 主领选歌统计 | 登录用户 |
+| `/sheets/leaders` | 主领选歌统计 | 登录用户 |
 | `/playlists` | 歌单列表 | 登录用户 |
 | `/playlists/[id]` | 歌单详情、排序、分享 | 登录用户 |
 | `/ppt` | 歌词 PPT 生成 | 下载权限 |

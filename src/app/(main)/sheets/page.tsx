@@ -3,16 +3,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import Link from 'next/link'
 import {
   ArrowDown,
   ArrowUp,
+  BarChart3,
   Download,
   Eye,
   FileText,
   Loader2,
-  Maximize2,
   Printer,
   Search,
+  Share2,
   X,
 } from 'lucide-react'
 import { MergedSheetPreviewDialog } from '@/components/merged-sheet-preview-dialog'
@@ -52,6 +54,7 @@ export default function SheetsPage() {
 
   const [theme, setTheme] = useState('')
   const [scripture, setScripture] = useState('')
+  const [arrangement, setArrangement] = useState('')
   const [themeMeetings, setThemeMeetings] = useState<ThemeMeetingMatch[]>([])
   const [themeLoading, setThemeLoading] = useState(false)
   const [scriptureRec, setScriptureRec] = useState<ScriptureRecommendation | null>(null)
@@ -66,6 +69,7 @@ export default function SheetsPage() {
   const [searching, setSearching] = useState(false)
   const [selectedSongs, setSelectedSongs] = useState<SheetsSongItem[]>([])
   const [generating, setGenerating] = useState(false)
+  const [sharing, setSharing] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null)
   const [previewFilename, setPreviewFilename] = useState('worship-sheets.pdf')
@@ -343,7 +347,8 @@ export default function SheetsPage() {
   }
 
   const handlePreview = async () => {
-    await ensureMergedPdf()
+    const cached = await ensureMergedPdf()
+    if (cached) setPreviewOpen(true)
   }
 
   const handlePrint = async () => {
@@ -359,6 +364,47 @@ export default function SheetsPage() {
     } catch (error) {
       console.error('Print merged sheet PDF failed:', error)
       toast.error(t('sheets.printFailed'))
+    }
+  }
+
+  const handleShare = async () => {
+    if (selectedSongs.length === 0) {
+      toast.error(t('sheets.noSelection'))
+      return
+    }
+
+    setSharing(true)
+    try {
+      const response = await fetch('/api/songs/sheets/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          theme: theme.trim() || undefined,
+          scripture: scripture.trim() || undefined,
+          arrangement: arrangement.trim() || undefined,
+          songIds: selectedSongs.map((song) => song.id),
+        }),
+      })
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as { error?: string } | null
+        toast.error(data?.error || t('share.createFailed'))
+        return
+      }
+
+      const data = (await response.json()) as { url?: string }
+      if (!data.url) {
+        toast.error(t('share.createFailed'))
+        return
+      }
+
+      await navigator.clipboard.writeText(data.url)
+      toast.success(t('sheets.shareSuccess'))
+    } catch (error) {
+      console.error('Sheets share failed:', error)
+      toast.error(t('share.failed'))
+    } finally {
+      setSharing(false)
     }
   }
 
@@ -386,7 +432,15 @@ export default function SheetsPage() {
           </div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{t('sheets.title')}</h1>
         </div>
-        <p className="text-xs text-muted-foreground">{t('sheets.legend')}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/sheets/leaders">
+            <Button variant="outline" size="sm">
+              <BarChart3 className="mr-1.5 h-4 w-4" />
+              {t('sheets.leaderStatsLink')}
+            </Button>
+          </Link>
+          <p className="text-xs text-muted-foreground">{t('sheets.legend')}</p>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -412,7 +466,7 @@ export default function SheetsPage() {
         </div>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <Card>
           <CardContent className="space-y-5 pt-4">
             <div>
@@ -525,15 +579,15 @@ export default function SheetsPage() {
           </CardContent>
         </Card>
 
-        <Card className="flex flex-col lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:min-h-[calc(100vh-6rem)] lg:self-start">
-          <CardHeader className="shrink-0 pb-2">
+        <Card className="lg:sticky lg:top-4 lg:self-start">
+          <CardHeader className="pb-2">
             <CardTitle className="text-base">
               {t('sheets.selectedCount', { count: selectedSongs.length })}
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex min-h-0 flex-1 flex-col gap-3">
+          <CardContent className="flex flex-col gap-3">
             {selectedSongs.length > 0 ? (
-              <div className="max-h-36 shrink-0 space-y-1 overflow-y-auto">
+              <div className="max-h-64 space-y-1 overflow-y-auto">
                 {selectedSongs.map((song, index) => (
                   <div
                     key={song.id}
@@ -582,49 +636,35 @@ export default function SheetsPage() {
                 ))}
               </div>
             ) : (
-              <p className="shrink-0 py-2 text-center text-sm text-muted-foreground">
+              <p className="py-2 text-center text-sm text-muted-foreground">
                 {t('sheets.emptySelection')}
               </p>
             )}
 
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border bg-muted/30">
-              {generating && !previewBlobUrl ? (
-                <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground">
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  {t('sheets.generating')}
-                </div>
-              ) : previewBlobUrl ? (
-                <>
-                  <div className="flex items-center justify-end border-b bg-background/80 p-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="rounded-lg"
-                      onClick={() => setPreviewOpen(true)}
-                    >
-                      <Maximize2 className="mr-1.5 h-4 w-4" />
-                      {t('sheets.fullscreen')}
-                    </Button>
-                  </div>
-                  <div className="min-h-0 flex-1 overflow-auto">
-                    <embed
-                      src={`${previewBlobUrl}#view=FitH`}
-                      type="application/pdf"
-                      title={t('sheets.previewTitle')}
-                      className="h-full min-h-[min(62vh,100%)] w-full border-0"
-                    />
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center text-sm text-muted-foreground">
-                  <Eye className="mb-3 h-10 w-10 opacity-40" />
-                  <p>{t('sheets.previewHint')}</p>
-                </div>
-              )}
-            </div>
+            {selectedSongs.length > 0 && (
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="sheets-arrangement"
+                  className="text-xs font-medium text-muted-foreground"
+                >
+                  {t('sheets.arrangementLabel')}
+                </label>
+                <Textarea
+                  id="sheets-arrangement"
+                  value={arrangement}
+                  onChange={(event) => setArrangement(event.target.value)}
+                  placeholder={t('sheets.arrangementPlaceholder')}
+                  rows={3}
+                  className="min-h-20 resize-y text-sm"
+                />
+              </div>
+            )}
 
-            <div className="grid shrink-0 grid-cols-3 gap-2">
+            {selectedSongs.length > 0 && (
+              <p className="text-xs text-muted-foreground">{t('sheets.previewHint')}</p>
+            )}
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Button
                 variant="outline"
                 disabled={generating || selectedSongs.length === 0 || !permissions.canDownloadSong}
@@ -663,6 +703,20 @@ export default function SheetsPage() {
                   <>
                     <Download className="mr-1.5 h-4 w-4" />
                     {t('sheets.download')}
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={sharing || selectedSongs.length === 0}
+                onClick={() => void handleShare()}
+              >
+                {sharing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Share2 className="mr-1.5 h-4 w-4" />
+                    {t('sheets.share')}
                   </>
                 )}
               </Button>

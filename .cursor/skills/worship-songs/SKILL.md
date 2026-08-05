@@ -52,8 +52,8 @@ Schema：`prisma/schema.prisma`
 | 模块 | 路由 | 关键 lib |
 |------|------|----------|
 | 曲库 | `/songs`, `/song-upload` | `song-title-index`, `song-title-initial-sync`, `song-title-normalize`, `tags` |
-| 主领选歌 | `/sheets` | `meeting-theme-search`, `scripture-recommendations`, `sheet-pdf-merge`, `sheet-pdf-download-client` |
-| 聚会 | `/meetings`, `/meetings/leaders` | `leader-songs`, `leader-names` |
+| 主领选歌 | `/sheets`, `/sheets/leaders` | `meeting-theme-search`, `scripture-recommendations`, `sheet-pdf-merge`, `leader-songs` |
+| 聚会 | `/meetings` | `leader-names` |
 | 歌单 | `/playlists` | `playlist-access` |
 | PPT | `/ppt` | `ppt-lyrics`, `ppt-download-client` |
 | Agent | 全局 + sheets 嵌入式 | `lib/ai/song-agent-prompt`, `song-agent-tools`, `song-search` |

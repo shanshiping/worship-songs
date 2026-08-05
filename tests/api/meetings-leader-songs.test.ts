@@ -18,17 +18,17 @@ describe('/api/meetings/leader-songs', () => {
     mockPrisma.meetingSong.findMany.mockResolvedValue([
       {
         songId: 's1',
-        meeting: { id: 'm1', leader: 'Alice' },
+        meeting: { id: 'm1', leader: 'Alice', date: new Date('2026-02-01') },
         song: { id: 's1', title: 'Song A', artist: null },
       },
       {
         songId: 's1',
-        meeting: { id: 'm2', leader: 'Alice' },
+        meeting: { id: 'm2', leader: 'Alice', date: new Date('2026-03-01') },
         song: { id: 's1', title: 'Song A', artist: null },
       },
     ])
     mockPrisma.meeting.findMany
-      .mockResolvedValueOnce([{ leader: 'Alice' }])
+      .mockResolvedValueOnce([{ leader: 'Alice', date: new Date('2026-03-01') }])
       .mockResolvedValueOnce([{ date: new Date('2026-01-01') }])
 
     const res = await GET(

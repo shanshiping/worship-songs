@@ -27,8 +27,8 @@
 |------|------|----------------|
 | 仪表盘 | `/dashboard` | `api/dashboard` |
 | 曲库 | `/songs`, `/song-upload` | `api/songs`, `api/songs/letters`, `song-title-*` |
-| 主领选歌 | `/sheets` | `meeting-theme-search`, `scripture-recommendations`, `sheet-pdf-merge` |
-| 聚会 | `/meetings`, `/meetings/leaders` | `api/meetings`, `leader-songs`, `leader-names` |
+| 主领选歌 | `/sheets`, `/sheets/leaders` | `meeting-theme-search`, `scripture-recommendations`, `sheet-pdf-merge`, `leader-songs` |
+| 聚会 | `/meetings` | `api/meetings`, `leader-names` |
 | 歌单 | `/playlists` | `playlist-access`, `api/playlists` |
 | 歌词 PPT | `/ppt` | `ppt-lyrics`, `api/songs/ppt` |
 | 排行榜 | `/leaderboard` | `api/leaderboard` |

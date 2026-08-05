@@ -149,12 +149,6 @@ export default function MeetingsPage() {
           </Button>
         )}
         </div>
-
-        <Link href="/meetings/leaders">
-          <Button variant="outline" className="mb-0.5">
-            {t('meetings.leaderStatsLink')}
-          </Button>
-        </Link>
       </div>
 
       {loading ? (

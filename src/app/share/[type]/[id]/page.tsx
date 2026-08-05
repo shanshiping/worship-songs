@@ -10,6 +10,7 @@ import { format } from 'date-fns'
 import { enUS, zhCN } from 'date-fns/locale'
 import { SongTagBadges, type TagItem } from '@/components/tag-multi-select'
 import { SongScripturesDisplay } from '@/components/song-scriptures-editor'
+import { getSongSheetPaths } from '@/lib/song-sheet-paths'
 
 interface SharedSong {
   id: string
@@ -21,6 +22,7 @@ interface SharedSong {
   lyricist?: string | null
   lyrics?: string | null
   sheetMusic?: string | null
+  sheetMusicPages?: unknown
   audioFile?: string | null
   mvUrl?: string | null
   tags?: Array<{ tag: TagItem }>
@@ -44,16 +46,47 @@ interface SharedData {
   timeSignature?: string | null
   lyrics?: string | null
   sheetMusic?: string | null
+  sheetMusicPages?: unknown
   audioFile?: string | null
   mvUrl?: string | null
   date?: string
   theme?: string | null
+  scripture?: string | null
+  arrangement?: string | null
   speaker?: string | null
   leader?: string | null
   songs?: Array<{
     song: SharedSong
     order: number
   }>
+}
+
+function SheetPreview({
+  path,
+  title,
+  t,
+}: {
+  path: string
+  title: string
+  t: (key: string) => string
+}) {
+  if (path.toLowerCase().includes('.pdf')) {
+    return (
+      <iframe
+        title={title}
+        src={path}
+        className="h-80 w-full rounded border"
+      />
+    )
+  }
+
+  return (
+    <img
+      src={path}
+      alt={t('songs.sheetFile')}
+      className="max-h-80 w-auto rounded border object-contain"
+    />
+  )
 }
 
 function FullSongBlock({
@@ -63,6 +96,8 @@ function FullSongBlock({
   song: SharedSong
   t: (key: string) => string
 }) {
+  const sheetPaths = getSongSheetPaths(song)
+
   return (
     <div className="space-y-3 border rounded-lg p-4">
       <div className="flex items-start justify-between gap-3">
@@ -113,22 +148,23 @@ function FullSongBlock({
       {song.scriptures && song.scriptures.length > 0 && (
         <SongScripturesDisplay scriptures={song.scriptures} t={t} />
       )}
-      {song.sheetMusic && (
-        <div className="space-y-2">
+      {sheetPaths.length > 0 && (
+        <div className="space-y-3">
           <p className="text-sm font-medium">{t('songs.sheetPreview')}</p>
-          {song.sheetMusic.toLowerCase().includes('.pdf') ? (
-            <iframe
-              title={t('songs.sheetPreview')}
-              src={song.sheetMusic}
-              className="h-80 w-full rounded border"
-            />
-          ) : (
-            <img
-              src={song.sheetMusic}
-              alt={t('songs.sheetFile')}
-              className="max-h-80 w-auto rounded border object-contain"
-            />
-          )}
+          {sheetPaths.map((path, index) => (
+            <div key={`${path}-${index}`} className="space-y-1">
+              {sheetPaths.length > 1 && (
+                <p className="text-xs text-muted-foreground">
+                  {t('share.sheetPage', { current: index + 1, total: sheetPaths.length })}
+                </p>
+              )}
+              <SheetPreview
+                path={path}
+                title={`${song.title ?? ''} ${index + 1}`}
+                t={t}
+              />
+            </div>
+          ))}
         </div>
       )}
       <div className="flex flex-wrap gap-3 items-center text-sm">
@@ -206,7 +242,9 @@ export default function SharePage() {
       ? data.title
       : type === 'playlist'
         ? data.title
-        : t('share.meetingRecord')
+        : type === 'sheets'
+          ? t('share.sheetsRecord')
+          : t('share.meetingRecord')
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -217,7 +255,9 @@ export default function SharePage() {
             <CardDescription>
               {type === 'playlist'
                 ? t('share.playlistRecord')
-                : t('share.sharedBy')}
+                : type === 'sheets'
+                  ? t('share.sheetsDesc')
+                  : t('share.sharedBy')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -229,6 +269,39 @@ export default function SharePage() {
               <div className="space-y-4">
                 {data.description && (
                   <p className="text-muted-foreground">{data.description}</p>
+                )}
+                {(data.songs || []).map((item) => (
+                  <div key={`${item.order}-${item.song.id}`} className="space-y-1">
+                    <p className="text-sm text-muted-foreground">#{item.order}</p>
+                    <FullSongBlock song={item.song} t={t} />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {type === 'sheets' && (
+              <div className="space-y-4">
+                {(data.theme || data.scripture || data.arrangement) && (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {data.theme && (
+                      <div>
+                        <span className="text-sm text-muted-foreground">{t('share.theme')}</span>
+                        <p className="mt-1">{data.theme}</p>
+                      </div>
+                    )}
+                    {data.scripture && (
+                      <div className="md:col-span-2">
+                        <span className="text-sm text-muted-foreground">{t('share.scripture')}</span>
+                        <p className="mt-1 whitespace-pre-wrap">{data.scripture}</p>
+                      </div>
+                    )}
+                    {data.arrangement && (
+                      <div className="md:col-span-2">
+                        <span className="text-sm text-muted-foreground">{t('share.arrangement')}</span>
+                        <p className="mt-1 whitespace-pre-wrap">{data.arrangement}</p>
+                      </div>
+                    )}
+                  </div>
                 )}
                 {(data.songs || []).map((item) => (
                   <div key={`${item.order}-${item.song.id}`} className="space-y-1">

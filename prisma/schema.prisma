@@ -27,6 +27,7 @@ model User {
   teamMembers TeamMember[]
   messages    Message[]
   playlists   Playlist[]
+  sheetsShares SheetsShare[]
   songsUploaded  Song[] @relation("SongUploader")
   sheetsUploaded Song[] @relation("SheetUploader")
   teamSongsShared TeamSong[] @relation("TeamSongSharer")
@@ -110,6 +111,32 @@ model Song {
   playlists  PlaylistSong[]
   scriptures SongScripture[]
   teamShares TeamSong[]
+  sheetsShares SheetsShareSong[]
+}
+
+// 主领选歌分享（公开链接，含主题/经文与有序歌曲列表）
+model SheetsShare {
+  id          String   @id @default(cuid())
+  theme       String?
+  scripture   String?
+  arrangement String?
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  createdBy User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  songs     SheetsShareSong[]
+}
+
+model SheetsShareSong {
+  id            String @id @default(cuid())
+  sheetsShareId String
+  songId        String
+  order         Int
+
+  sheetsShare SheetsShare @relation(fields: [sheetsShareId], references: [id], onDelete: Cascade)
+  song        Song        @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@unique([sheetsShareId, songId])
 }
 
 model SongScripture {

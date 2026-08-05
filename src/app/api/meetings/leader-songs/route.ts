@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { buildLeaderSongStats } from '@/lib/leader-songs'
+import { buildLeaderSongStats, sortLeadersByRecentAppearance } from '@/lib/leader-songs'
 import {
-  dedupeLeaderNames,
   leaderNameVariants,
   normalizeLeaderName,
 } from '@/lib/leader-names'
@@ -13,10 +12,13 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const yearParam = searchParams.get('year')
     const leader = searchParams.get('leader')?.trim() || null
-    const limitParam = parseInt(searchParams.get('limit') || '10', 10)
-    const limitPerLeader = Number.isFinite(limitParam)
-      ? Math.min(Math.max(limitParam, 1), 50)
-      : 10
+    const limitParam = searchParams.get('limit')
+    const limitPerLeader =
+      limitParam === null || limitParam === ''
+        ? undefined
+        : Number.isFinite(parseInt(limitParam, 10))
+          ? Math.min(Math.max(parseInt(limitParam, 10), 1), 500)
+          : undefined
 
     const year =
       yearParam && /^\d{4}$/.test(yearParam) ? parseInt(yearParam, 10) : null
@@ -42,7 +44,7 @@ export async function GET(request: Request) {
         where: { meeting: meetingWhere },
         select: {
           songId: true,
-          meeting: { select: { id: true, leader: true } },
+          meeting: { select: { id: true, leader: true, date: true } },
           song: {
             select: { id: true, title: true, artist: true },
           },
@@ -50,9 +52,7 @@ export async function GET(request: Request) {
       }),
       prisma.meeting.findMany({
         where: { leader: { not: null } },
-        select: { leader: true },
-        distinct: ['leader'],
-        orderBy: { leader: 'asc' },
+        select: { leader: true, date: true },
       }),
       prisma.meeting.findMany({
         select: { date: true },
@@ -63,16 +63,13 @@ export async function GET(request: Request) {
       ...new Set(allMeetings.map((m) => m.date.getFullYear())),
     ].sort((a, b) => b - a)
 
-    const leaders = dedupeLeaderNames(
-      leaderRows
-        .map((row) => row.leader?.trim())
-        .filter((name): name is string => Boolean(name))
-    )
+    const leaders = sortLeadersByRecentAppearance(leaderRows)
 
     const inputs = rows
       .map((row) => ({
         leader: row.meeting.leader?.trim() ?? '',
         meetingId: row.meeting.id,
+        meetingDate: row.meeting.date,
         songId: row.songId,
         song: row.song,
       }))
