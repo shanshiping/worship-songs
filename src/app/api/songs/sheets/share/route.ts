@@ -18,6 +18,8 @@ export async function POST(request: Request) {
       scripture?: unknown
       arrangement?: unknown
       songIds?: unknown
+      responseSongIds?: unknown
+      communionSongIds?: unknown
     }
 
     const result = await createSheetsShare({
@@ -25,6 +27,8 @@ export async function POST(request: Request) {
       scripture: typeof body.scripture === 'string' ? body.scripture : null,
       arrangement: typeof body.arrangement === 'string' ? body.arrangement : null,
       songIds: body.songIds,
+      responseSongIds: body.responseSongIds,
+      communionSongIds: body.communionSongIds,
       createdById: user.id,
     })
 

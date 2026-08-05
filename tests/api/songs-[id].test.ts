@@ -134,6 +134,98 @@ describe('/api/songs/[id]', () => {
     )
   })
 
+  it('PUT rejects invalid sheetLinkUrl', async () => {
+    mockPrisma.song.findUnique.mockResolvedValue({ sheetMusic: null })
+
+    const res = await PUT(
+      jsonRequest('http://localhost/api/songs/song-1', {
+        method: 'PUT',
+        body: {
+          title: '神掌权',
+          tagIds: [],
+          sheetLinkUrl: 'not-a-url',
+        },
+      }),
+      params
+    )
+    const { status, body } = await readJson<{ error: string }>(res)
+    expect(status).toBe(400)
+    expect(body.error).toBe('歌谱链接格式不正确')
+  })
+
+  it('PUT saves sheetLinkUrl', async () => {
+    mockPrisma.song.findUnique.mockResolvedValue({ sheetMusic: null })
+    mockPrisma.songTag.deleteMany.mockResolvedValue({ count: 0 })
+    mockPrisma.songScripture.deleteMany.mockResolvedValue({ count: 0 })
+    mockPrisma.song.update.mockResolvedValue({ id: 'song-1' })
+
+    const res = await PUT(
+      jsonRequest('http://localhost/api/songs/song-1', {
+        method: 'PUT',
+        body: {
+          title: '神掌权',
+          tagIds: [],
+          sheetLinkUrl: 'https://drive.example/sheet.pdf',
+        },
+      }),
+      params
+    )
+    expect((await readJson(res)).status).toBe(200)
+    expect(mockPrisma.song.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          sheetLinkUrl: 'https://drive.example/sheet.pdf',
+        }),
+      })
+    )
+  })
+
+  it('PUT rejects invalid listenUrl', async () => {
+    mockPrisma.song.findUnique.mockResolvedValue({ sheetMusic: null })
+
+    const res = await PUT(
+      jsonRequest('http://localhost/api/songs/song-1', {
+        method: 'PUT',
+        body: {
+          title: '神掌权',
+          tagIds: [],
+          listenUrl: 'not-a-url',
+        },
+      }),
+      params
+    )
+    const { status, body } = await readJson<{ error: string }>(res)
+    expect(status).toBe(400)
+    expect(body.error).toBe('试听链接格式不正确')
+  })
+
+  it('PUT saves listenUrl', async () => {
+    mockPrisma.song.findUnique.mockResolvedValue({ sheetMusic: null })
+    mockPrisma.songTag.deleteMany.mockResolvedValue({ count: 0 })
+    mockPrisma.songScripture.deleteMany.mockResolvedValue({ count: 0 })
+    mockPrisma.song.update.mockResolvedValue({ id: 'song-1' })
+
+    const res = await PUT(
+      jsonRequest('http://localhost/api/songs/song-1', {
+        method: 'PUT',
+        body: {
+          title: '神掌权',
+          tagIds: [],
+          listenUrl: 'https://music.example.com/track/1',
+        },
+      }),
+      params
+    )
+    expect((await readJson(res)).status).toBe(200)
+    expect(mockPrisma.song.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          listenUrl: 'https://music.example.com/track/1',
+        }),
+      })
+    )
+  })
+
   it('PUT replaces scriptures', async () => {
     mockPrisma.song.findUnique.mockResolvedValue({ sheetMusic: null })
     mockPrisma.songTag.deleteMany.mockResolvedValue({ count: 0 })

@@ -1,7 +1,7 @@
 'use client'
 
 import type { LucideIcon } from 'lucide-react'
-import { FileText, Music2, Plus, ScrollText } from 'lucide-react'
+import { ExternalLink, FileText, Music2, Plus, ScrollText } from 'lucide-react'
 import { useI18n } from '@/components/providers/i18n-provider'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -11,7 +11,9 @@ export type SheetsSongItem = {
   title: string
   artist: string | null
   sheetMusic?: string | null
+  sheetLinkUrl?: string | null
   audioFile?: string | null
+  listenUrl?: string | null
 }
 
 type SheetsSongRowProps = {
@@ -59,8 +61,10 @@ export function SheetsSongRow({
   className,
 }: SheetsSongRowProps) {
   const { t } = useI18n()
-  const hasSheet = Boolean(song.sheetMusic?.trim())
+  const hasUploadedSheet = Boolean(song.sheetMusic?.trim())
+  const hasSheetLink = Boolean(song.sheetLinkUrl?.trim())
   const hasAudio = Boolean(song.audioFile?.trim())
+  const hasListenUrl = Boolean(song.listenUrl?.trim())
 
   return (
     <div
@@ -80,11 +84,31 @@ export function SheetsSongRow({
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
-        <ResourceStatusIcon
-          icon={FileText}
-          active={hasSheet}
-          label={hasSheet ? t('sheets.hasSheet') : t('sheets.noSheet')}
-        />
+        {hasSheetLink ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="h-7 w-7"
+            asChild
+          >
+            <a
+              href={song.sheetLinkUrl!}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={t('songs.sheetOnline')}
+              title={t('songs.sheetOnline')}
+            >
+              <FileText className="h-3.5 w-3.5 text-amber-600" />
+            </a>
+          </Button>
+        ) : (
+          <ResourceStatusIcon
+            icon={FileText}
+            active={hasUploadedSheet}
+            label={hasUploadedSheet ? t('sheets.hasSheet') : t('sheets.noSheet')}
+          />
+        )}
         {hasAudio && onPlay ? (
           <Button
             type="button"
@@ -104,6 +128,25 @@ export function SheetsSongRow({
             label={t('sheets.noAudio')}
           />
         )}
+        {hasListenUrl ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="h-7 w-7"
+            asChild
+          >
+            <a
+              href={song.listenUrl!}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={t('songs.listenOnline')}
+              title={t('songs.listenOnline')}
+            >
+              <ExternalLink className="h-3.5 w-3.5 text-sky-600" />
+            </a>
+          </Button>
+        ) : null}
       </div>
 
       <div className="flex shrink-0 items-center gap-0.5">

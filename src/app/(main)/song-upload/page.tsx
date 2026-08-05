@@ -57,6 +57,8 @@ export default function UploadSongPage() {
     team: '',
     album: '',
     mvUrl: '',
+    listenUrl: '',
+    sheetLinkUrl: '',
     lyrics: '',
     lyricsLrc: '',
     notes: '',
@@ -618,6 +620,34 @@ export default function UploadSongPage() {
                   setFormData({ ...formData, mvUrl: e.target.value })
                 }
                 placeholder={t('songs.mvUrlPlaceholder')}
+                className="h-11 rounded-xl input-focus"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="listenUrl">{t('songs.listenUrl')}</Label>
+              <Input
+                id="listenUrl"
+                type="url"
+                value={formData.listenUrl}
+                onChange={(e) =>
+                  setFormData({ ...formData, listenUrl: e.target.value })
+                }
+                placeholder={t('songs.listenUrlPlaceholder')}
+                className="h-11 rounded-xl input-focus"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="sheetLinkUrl">{t('songs.sheetLinkUrl')}</Label>
+              <Input
+                id="sheetLinkUrl"
+                type="url"
+                value={formData.sheetLinkUrl}
+                onChange={(e) =>
+                  setFormData({ ...formData, sheetLinkUrl: e.target.value })
+                }
+                placeholder={t('songs.sheetLinkUrlPlaceholder')}
                 className="h-11 rounded-xl input-focus"
               />
             </div>

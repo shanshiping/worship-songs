@@ -103,6 +103,42 @@ describe('/api/songs', () => {
     )
   })
 
+  it('GET filters by keys with OR', async () => {
+    mockPrisma.song.findMany.mockResolvedValue([])
+    mockPrisma.song.count.mockResolvedValue(0)
+
+    await GET(jsonRequest('http://localhost/api/songs?keys=C&keys=Am'))
+
+    expect(mockPrisma.song.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          OR: [
+            { key: { equals: 'C', mode: 'insensitive' } },
+            { key: { equals: 'Am', mode: 'insensitive' } },
+          ],
+        },
+      }),
+    )
+  })
+
+  it('GET combines key filter with tags using AND', async () => {
+    mockPrisma.song.findMany.mockResolvedValue([])
+    mockPrisma.song.count.mockResolvedValue(0)
+
+    await GET(jsonRequest('http://localhost/api/songs?keys=G&tagIds=t1'))
+
+    expect(mockPrisma.song.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          AND: [
+            { tags: { some: { tagId: 't1' } } },
+            { key: { equals: 'G', mode: 'insensitive' } },
+          ],
+        },
+      }),
+    )
+  })
+
   it('GET filters by lyricsSearch', async () => {
     mockPrisma.song.findMany.mockResolvedValue([])
     mockPrisma.song.count.mockResolvedValue(0)

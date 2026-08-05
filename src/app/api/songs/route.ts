@@ -18,6 +18,10 @@ import {
   titleInitialFieldsForTitle,
   loadSongsForInitialIndex,
 } from '@/lib/song-title-initial-sync'
+import {
+  buildSongKeyWhere,
+  parseSongKeyParamsFromSearchParams,
+} from '@/lib/song-key-filter'
 
 export function normalizeOptional(value: unknown): string | null {
   if (typeof value !== 'string') return null
@@ -90,6 +94,7 @@ export async function GET(request: Request) {
     const search = searchParams.get('search')
     const lyricsSearch = searchParams.get('lyricsSearch')
     const letter = parseSongLetterParam(searchParams.get('letter'))
+    const keys = parseSongKeyParamsFromSearchParams(searchParams)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
     const tagIds = [
@@ -136,6 +141,11 @@ export async function GET(request: Request) {
 
     if (letter) {
       and.push({ titleInitial: letter })
+    }
+
+    const keyWhere = buildSongKeyWhere(keys)
+    if (keyWhere) {
+      and.push(keyWhere)
     }
 
     const where: Prisma.SongWhereInput =
@@ -248,6 +258,8 @@ export async function POST(request: Request) {
       team,
       album,
       mvUrl,
+      listenUrl,
+      sheetLinkUrl,
       coverImage,
       pptBackground,
       sheetMusic,
@@ -287,6 +299,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'MV 链接格式不正确' }, { status: 400 })
     }
 
+    const normalizedListenUrl = normalizeOptional(listenUrl)
+    if (normalizedListenUrl && !isValidHttpUrl(normalizedListenUrl)) {
+      return NextResponse.json({ error: '试听链接格式不正确' }, { status: 400 })
+    }
+
+    const normalizedSheetLinkUrl = normalizeOptional(sheetLinkUrl)
+    if (normalizedSheetLinkUrl && !isValidHttpUrl(normalizedSheetLinkUrl)) {
+      return NextResponse.json({ error: '歌谱链接格式不正确' }, { status: 400 })
+    }
+
     const sheetPages = parseSheetMusicPagesInput(rawSheetMusicPages, sheetMusic)
     const { sheetMusic: normalizedSheet, sheetMusicPages } = sheetFieldsFromPages(sheetPages)
     const userId = session.user.id
@@ -308,6 +330,8 @@ export async function POST(request: Request) {
         team: normalizeOptional(team),
         album: normalizeOptional(album),
         mvUrl: normalizedMvUrl,
+        listenUrl: normalizedListenUrl,
+        sheetLinkUrl: normalizedSheetLinkUrl,
         coverImage: normalizeOptional(coverImage),
         pptBackground: normalizeOptional(pptBackground),
         sheetMusic: normalizedSheet,

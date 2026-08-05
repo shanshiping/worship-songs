@@ -16,6 +16,8 @@ type SongDetail = {
   artist: string | null
   lyrics: string | null
   audioFile: string | null
+  listenUrl: string | null
+  sheetLinkUrl: string | null
 }
 
 type SheetsSongPreviewDialogProps = {
@@ -83,6 +85,28 @@ export function SheetsSongPreviewDialog({
             ) : (
               <p className="text-sm text-muted-foreground">{t('sheets.noAudio')}</p>
             )}
+
+            {song.listenUrl ? (
+              <a
+                href={song.listenUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex text-sm text-primary underline"
+              >
+                {t('songs.listenOnline')}
+              </a>
+            ) : null}
+
+            {song.sheetLinkUrl ? (
+              <a
+                href={song.sheetLinkUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex text-sm text-primary underline"
+              >
+                {t('songs.sheetOnline')}
+              </a>
+            ) : null}
 
             {song.lyrics?.trim() ? (
               <pre className="whitespace-pre-wrap rounded-lg bg-muted/50 p-3 text-sm leading-relaxed">

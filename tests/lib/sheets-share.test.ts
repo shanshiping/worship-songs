@@ -10,6 +10,7 @@ import {
   buildSheetsShareUrl,
   createSheetsShare,
   isSheetsShareSchemaError,
+  normalizeSheetsShareSectionIds,
   normalizeSheetsShareSongIds,
   SHEETS_SHARE_MAX_SONGS,
 } from '@/lib/sheets-share'
@@ -37,8 +38,33 @@ describe('sheets-share lib', () => {
     await expect(createSheetsShare({ songIds: ids })).rejects.toThrow('最多选择')
   })
 
+  it('normalizeSheetsShareSectionIds dedupes across sections', () => {
+    expect(
+      normalizeSheetsShareSectionIds({
+        songIds: ['a', 'b'],
+        responseSongIds: ['a', 'c'],
+        communionSongIds: ['b', 'd'],
+      }),
+    ).toEqual({
+      main: ['a', 'b'],
+      response: ['c'],
+      communion: ['d'],
+    })
+  })
+
+  it('createSheetsShare rejects empty main and response lists', async () => {
+    await expect(
+      createSheetsShare({ songIds: [], responseSongIds: [], communionSongIds: ['c1'] }),
+    ).rejects.toThrow('请选择至少一首歌曲')
+  })
+
   it('createSheetsShare creates ordered share record', async () => {
-    mockPrisma.song.findMany.mockResolvedValue([{ id: 's2' }, { id: 's1' }])
+    mockPrisma.song.findMany.mockResolvedValue([
+      { id: 's2' },
+      { id: 's1' },
+      { id: 'r1' },
+      { id: 'c1' },
+    ])
     mockPrisma.sheetsShare.create.mockResolvedValue({ id: 'share1' })
 
     const result = await createSheetsShare({
@@ -46,6 +72,8 @@ describe('sheets-share lib', () => {
       scripture: 'John 3:16',
       arrangement: '  Opening fast ',
       songIds: ['s2', 's1', 'missing'],
+      responseSongIds: ['r1', 's2'],
+      communionSongIds: ['c1'],
       createdById: 'u1',
     })
 
@@ -62,8 +90,10 @@ describe('sheets-share lib', () => {
           createdById: 'u1',
           songs: {
             create: [
-              { songId: 's2', order: 1 },
-              { songId: 's1', order: 2 },
+              { songId: 's2', order: 1, section: 'main' },
+              { songId: 's1', order: 2, section: 'main' },
+              { songId: 'r1', order: 1, section: 'response' },
+              { songId: 'c1', order: 1, section: 'communion' },
             ],
           },
         }),

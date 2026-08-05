@@ -104,6 +104,8 @@ export async function PUT(
       team,
       album,
       mvUrl,
+      listenUrl,
+      sheetLinkUrl,
       coverImage,
       pptBackground,
       sheetMusic,
@@ -125,6 +127,16 @@ export async function PUT(
     const normalizedMvUrl = normalizeOptional(mvUrl)
     if (normalizedMvUrl && !isValidHttpUrl(normalizedMvUrl)) {
       return NextResponse.json({ error: 'MV 链接格式不正确' }, { status: 400 })
+    }
+
+    const normalizedListenUrl = normalizeOptional(listenUrl)
+    if (normalizedListenUrl && !isValidHttpUrl(normalizedListenUrl)) {
+      return NextResponse.json({ error: '试听链接格式不正确' }, { status: 400 })
+    }
+
+    const normalizedSheetLinkUrl = normalizeOptional(sheetLinkUrl)
+    if (normalizedSheetLinkUrl && !isValidHttpUrl(normalizedSheetLinkUrl)) {
+      return NextResponse.json({ error: '歌谱链接格式不正确' }, { status: 400 })
     }
 
     const tagIds = parseTagIds(rawTagIds)
@@ -178,6 +190,8 @@ export async function PUT(
         team: normalizeOptional(team),
         album: normalizeOptional(album),
         mvUrl: normalizedMvUrl,
+        listenUrl: normalizedListenUrl,
+        sheetLinkUrl: normalizedSheetLinkUrl,
         coverImage: normalizeOptional(coverImage),
         pptBackground: normalizeOptional(pptBackground),
         sheetMusic: normalizedSheet,

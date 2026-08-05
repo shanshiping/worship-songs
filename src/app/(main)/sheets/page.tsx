@@ -5,8 +5,6 @@ import { format } from 'date-fns'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import {
-  ArrowDown,
-  ArrowUp,
   BarChart3,
   Download,
   Eye,
@@ -15,13 +13,14 @@ import {
   Printer,
   Search,
   Share2,
-  X,
+  ClipboardCopy,
 } from 'lucide-react'
 import { MergedSheetPreviewDialog } from '@/components/merged-sheet-preview-dialog'
 import { useI18n } from '@/components/providers/i18n-provider'
 import { SongLetterIndex } from '@/components/song-letter-index'
 import { SheetsAgentPanel } from '@/components/sheets-agent-panel'
 import { SheetsSongPreviewDialog } from '@/components/sheets-song-preview-dialog'
+import { SheetsSelectedSection } from '@/components/sheets-selected-section'
 import { SheetsSongRow, type SheetsSongItem } from '@/components/sheets-song-row'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -32,12 +31,17 @@ import type { ThemeMeetingMatch } from '@/lib/meeting-theme-search'
 import {
   fetchMergedSheetPdf,
 } from '@/lib/sheet-pdf-download-client'
+import { buildSheetsShareText } from '@/lib/sheets-share-text'
 import { printSheetMusic } from '@/lib/sheet-viewer'
 import type { ScriptureRecommendation } from '@/lib/scripture-recommendations'
 import type { SongIndexLetter } from '@/lib/song-title-index'
 
 const MAX_SONGS = 20
 const MIN_QUERY_LENGTH = 2
+
+type AddTarget = 'main' | 'response' | 'communion'
+
+const ADD_TARGETS: AddTarget[] = ['main', 'response', 'communion']
 
 function scriptureQuery(raw: string): string {
   return raw
@@ -68,6 +72,9 @@ export default function SheetsPage() {
   const [songs, setSongs] = useState<SheetsSongItem[]>([])
   const [searching, setSearching] = useState(false)
   const [selectedSongs, setSelectedSongs] = useState<SheetsSongItem[]>([])
+  const [responseSongs, setResponseSongs] = useState<SheetsSongItem[]>([])
+  const [communionSongs, setCommunionSongs] = useState<SheetsSongItem[]>([])
+  const [addTarget, setAddTarget] = useState<AddTarget>('main')
   const [generating, setGenerating] = useState(false)
   const [sharing, setSharing] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -75,7 +82,10 @@ export default function SheetsPage() {
   const [previewFilename, setPreviewFilename] = useState('worship-sheets.pdf')
   const [previewSelectionKey, setPreviewSelectionKey] = useState<string | null>(null)
 
-  const selectionKey = selectedSongs.map((song) => song.id).join('|')
+  const allSelectedSongs = [...selectedSongs, ...responseSongs, ...communionSongs]
+  const selectionKey = allSelectedSongs.map((song) => song.id).join('|')
+  const totalSelectedCount = allSelectedSongs.length
+  const hasCoreSelection = selectedSongs.length > 0 || responseSongs.length > 0
 
   const [previewSongId, setPreviewSongId] = useState<string | null>(null)
   const [previewSongOpen, setPreviewSongOpen] = useState(false)
@@ -110,7 +120,9 @@ export default function SheetsPage() {
             title: string
             artist: string | null
             sheetMusic?: string | null
+            sheetLinkUrl?: string | null
             audioFile?: string | null
+            listenUrl?: string | null
           }>
         }
         setSongs(
@@ -119,7 +131,9 @@ export default function SheetsPage() {
             title: song.title,
             artist: song.artist,
             sheetMusic: song.sheetMusic ?? null,
+            sheetLinkUrl: song.sheetLinkUrl ?? null,
             audioFile: song.audioFile ?? null,
+            listenUrl: song.listenUrl ?? null,
           })),
         )
       }
@@ -218,7 +232,7 @@ export default function SheetsPage() {
   }, [selectionKey])
 
   const ensureMergedPdf = useCallback(async () => {
-    if (selectedSongs.length === 0) {
+    if (allSelectedSongs.length === 0) {
       toast.error(t('sheets.noSelection'))
       return null
     }
@@ -234,7 +248,7 @@ export default function SheetsPage() {
     setGenerating(true)
     try {
       const { blob, filename, skipped } = await fetchMergedSheetPdf(
-        selectedSongs.map((song) => song.id),
+        allSelectedSongs.map((song) => song.id),
       )
       if (previewBlobUrl) URL.revokeObjectURL(previewBlobUrl)
       const blobUrl = URL.createObjectURL(blob)
@@ -254,33 +268,63 @@ export default function SheetsPage() {
     previewBlobUrl,
     previewFilename,
     previewSelectionKey,
-    selectedSongs,
+    allSelectedSongs,
     selectionKey,
     showSkippedToast,
     t,
   ])
 
-  const addSong = useCallback(
-    (song: SheetsSongItem) => {
-      setSelectedSongs((current) => {
-        if (current.some((item) => item.id === song.id)) return current
-        if (current.length >= MAX_SONGS) {
-          toast.error(t('sheets.maxSongs'))
-          return current
-        }
-        return [
-          ...current,
-          {
-            id: song.id,
-            title: song.title,
-            artist: song.artist,
-            sheetMusic: song.sheetMusic ?? null,
-            audioFile: song.audioFile ?? null,
-          },
-        ]
-      })
+  const isSongSelected = useCallback(
+    (songId: string) =>
+      selectedSongs.some((item) => item.id === songId) ||
+      responseSongs.some((item) => item.id === songId) ||
+      communionSongs.some((item) => item.id === songId),
+    [selectedSongs, responseSongs, communionSongs],
+  )
+
+  const setterForTarget = useCallback((target: AddTarget) => {
+    if (target === 'response') return setResponseSongs
+    if (target === 'communion') return setCommunionSongs
+    return setSelectedSongs
+  }, [])
+
+  const addSongToTarget = useCallback(
+    (song: SheetsSongItem, target: AddTarget = addTarget) => {
+      if (isSongSelected(song.id)) return
+
+      const currentTotal =
+        selectedSongs.length + responseSongs.length + communionSongs.length
+      if (currentTotal >= MAX_SONGS) {
+        toast.error(t('sheets.maxSongs'))
+        return
+      }
+
+      const item: SheetsSongItem = {
+        id: song.id,
+        title: song.title,
+        artist: song.artist,
+        sheetMusic: song.sheetMusic ?? null,
+        sheetLinkUrl: song.sheetLinkUrl ?? null,
+        audioFile: song.audioFile ?? null,
+        listenUrl: song.listenUrl ?? null,
+      }
+
+      setterForTarget(target)((current) => [...current, item])
     },
-    [t],
+    [
+      addTarget,
+      communionSongs.length,
+      isSongSelected,
+      responseSongs.length,
+      selectedSongs.length,
+      setterForTarget,
+      t,
+    ],
+  )
+
+  const addSong = useCallback(
+    (song: SheetsSongItem) => addSongToTarget(song, addTarget),
+    [addSongToTarget, addTarget],
   )
 
   const addAllSongs = useCallback(
@@ -288,6 +332,23 @@ export default function SheetsPage() {
       for (const song of items) addSong(song)
     },
     [addSong],
+  )
+
+  const removeSongFromTarget = useCallback((target: AddTarget, songId: string) => {
+    setterForTarget(target)((current) => current.filter((song) => song.id !== songId))
+  }, [setterForTarget])
+
+  const moveSongInTarget = useCallback(
+    (target: AddTarget, index: number, direction: -1 | 1) => {
+      setterForTarget(target)((current) => {
+        const nextIndex = index + direction
+        if (nextIndex < 0 || nextIndex >= current.length) return current
+        const next = [...current]
+        ;[next[index], next[nextIndex]] = [next[nextIndex], next[index]]
+        return next
+      })
+    },
+    [setterForTarget],
   )
 
   const openSongPreview = (songId: string) => {
@@ -309,7 +370,7 @@ export default function SheetsPage() {
     setPlayingSrc(song.audioFile)
   }
 
-  const isSelected = (songId: string) => selectedSongs.some((item) => item.id === songId)
+  const isSelected = (songId: string) => isSongSelected(songId)
 
   const songRowProps = (song: SheetsSongItem, meta?: string) => ({
     song,
@@ -320,20 +381,6 @@ export default function SheetsPage() {
     onPreview: () => openSongPreview(song.id),
     onPlay: song.audioFile?.trim() ? () => togglePlay(song) : undefined,
   })
-
-  const handleRemoveSong = (songId: string) => {
-    setSelectedSongs((current) => current.filter((song) => song.id !== songId))
-  }
-
-  const moveSong = (index: number, direction: -1 | 1) => {
-    const target = index + direction
-    if (target < 0 || target >= selectedSongs.length) return
-    setSelectedSongs((current) => {
-      const next = [...current]
-      ;[next[index], next[target]] = [next[target], next[index]]
-      return next
-    })
-  }
 
   const handleDownload = async () => {
     const cached = await ensureMergedPdf()
@@ -368,7 +415,7 @@ export default function SheetsPage() {
   }
 
   const handleShare = async () => {
-    if (selectedSongs.length === 0) {
+    if (!hasCoreSelection) {
       toast.error(t('sheets.noSelection'))
       return
     }
@@ -383,6 +430,8 @@ export default function SheetsPage() {
           scripture: scripture.trim() || undefined,
           arrangement: arrangement.trim() || undefined,
           songIds: selectedSongs.map((song) => song.id),
+          responseSongIds: responseSongs.map((song) => song.id),
+          communionSongIds: communionSongs.map((song) => song.id),
         }),
       })
 
@@ -405,6 +454,56 @@ export default function SheetsPage() {
       toast.error(t('share.failed'))
     } finally {
       setSharing(false)
+    }
+  }
+
+  const shareTextLabels = {
+    title: t('sheets.shareTextTitle'),
+    theme: t('share.theme'),
+    scripture: t('share.scripture'),
+    arrangement: t('share.arrangement'),
+    mainSongList: t('sheets.shareTextMainSongList'),
+    responseSongList: t('sheets.shareTextResponseSongList'),
+    communionSongList: t('sheets.shareTextCommunionSongList'),
+    listen: t('sheets.shareTextListen'),
+    noListen: t('sheets.shareTextNoListen'),
+    sheet: t('sheets.shareTextSheet'),
+    noSheet: t('sheets.shareTextNoSheet'),
+    webLink: t('sheets.shareTextWebLink'),
+  }
+
+  const mapSongsForShareText = (items: SheetsSongItem[]) =>
+    items.map((song) => ({
+      title: song.title,
+      artist: song.artist,
+      listenUrl: song.listenUrl,
+      sheetLinkUrl: song.sheetLinkUrl,
+    }))
+
+  const buildShareText = (shareUrl?: string) =>
+    buildSheetsShareText({
+      theme: theme.trim() || undefined,
+      scripture: scripture.trim() || undefined,
+      arrangement: arrangement.trim() || undefined,
+      mainSongs: mapSongsForShareText(selectedSongs),
+      responseSongs: mapSongsForShareText(responseSongs),
+      communionSongs: mapSongsForShareText(communionSongs),
+      shareUrl,
+      labels: shareTextLabels,
+    })
+
+  const handleShareText = async () => {
+    if (!hasCoreSelection) {
+      toast.error(t('sheets.noSelection'))
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(buildShareText())
+      toast.success(t('sheets.shareTextSuccess'))
+    } catch (error) {
+      console.error('Sheets text share failed:', error)
+      toast.error(t('share.failed'))
     }
   }
 
@@ -485,6 +584,21 @@ export default function SheetsPage() {
                   selected={selectedLetter}
                   onSelect={setSelectedLetter}
                 />
+              </div>
+              <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">{t('sheets.addTargetLabel')}</span>
+                {ADD_TARGETS.map((target) => (
+                  <Button
+                    key={target}
+                    type="button"
+                    variant={addTarget === target ? 'secondary' : 'outline'}
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => setAddTarget(target)}
+                  >
+                    {t(`sheets.section${target.charAt(0).toUpperCase()}${target.slice(1)}`)}
+                  </Button>
+                ))}
               </div>
               <div className="max-h-52 space-y-0.5 overflow-y-auto">
                 {searching ? (
@@ -582,66 +696,37 @@ export default function SheetsPage() {
         <Card className="lg:sticky lg:top-4 lg:self-start">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">
-              {t('sheets.selectedCount', { count: selectedSongs.length })}
+              {t('sheets.selectedCount', { count: totalSelectedCount })}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            {selectedSongs.length > 0 ? (
-              <div className="max-h-64 space-y-1 overflow-y-auto">
-                {selectedSongs.map((song, index) => (
-                  <div
-                    key={song.id}
-                    className="flex items-center gap-1 rounded-md bg-muted/40 py-0.5 pr-0.5 pl-1"
-                  >
-                    <span className="w-5 shrink-0 text-center text-xs text-muted-foreground">
-                      {index + 1}
-                    </span>
-                    <SheetsSongRow
-                      {...songRowProps(song)}
-                      showAdd={false}
-                      className="min-w-0 flex-1 px-0 hover:bg-transparent"
-                    />
-                    <div className="flex shrink-0">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        disabled={index === 0}
-                        onClick={() => moveSong(index, -1)}
-                        aria-label={t('sheets.moveUp')}
-                      >
-                        <ArrowUp className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        disabled={index === selectedSongs.length - 1}
-                        onClick={() => moveSong(index, 1)}
-                        aria-label={t('sheets.moveDown')}
-                      >
-                        <ArrowDown className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => handleRemoveSong(song.id)}
-                        aria-label={t('sheets.remove')}
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="py-2 text-center text-sm text-muted-foreground">
-                {t('sheets.emptySelection')}
-              </p>
-            )}
+            <SheetsSelectedSection
+              title={t('sheets.mainSongListTitle')}
+              songs={selectedSongs}
+              emptyText={t('sheets.mainEmpty')}
+              onMove={(index, direction) => moveSongInTarget('main', index, direction)}
+              onRemove={(songId) => removeSongFromTarget('main', songId)}
+              songRowProps={songRowProps}
+            />
+            <SheetsSelectedSection
+              title={t('sheets.responseSongListTitle')}
+              songs={responseSongs}
+              emptyText={t('sheets.responseEmpty')}
+              onMove={(index, direction) => moveSongInTarget('response', index, direction)}
+              onRemove={(songId) => removeSongFromTarget('response', songId)}
+              songRowProps={songRowProps}
+            />
+            <SheetsSelectedSection
+              title={t('sheets.communionSongListTitle')}
+              optional
+              songs={communionSongs}
+              emptyText={t('sheets.communionEmpty')}
+              onMove={(index, direction) => moveSongInTarget('communion', index, direction)}
+              onRemove={(songId) => removeSongFromTarget('communion', songId)}
+              songRowProps={songRowProps}
+            />
 
-            {selectedSongs.length > 0 && (
+            {hasCoreSelection && (
               <div className="space-y-1.5">
                 <label
                   htmlFor="sheets-arrangement"
@@ -660,14 +745,14 @@ export default function SheetsPage() {
               </div>
             )}
 
-            {selectedSongs.length > 0 && (
+            {allSelectedSongs.length > 0 && (
               <p className="text-xs text-muted-foreground">{t('sheets.previewHint')}</p>
             )}
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               <Button
                 variant="outline"
-                disabled={generating || selectedSongs.length === 0 || !permissions.canDownloadSong}
+                disabled={generating || allSelectedSongs.length === 0 || !permissions.canDownloadSong}
                 onClick={() => void handlePreview()}
               >
                 {generating ? (
@@ -681,7 +766,7 @@ export default function SheetsPage() {
               </Button>
               <Button
                 variant="outline"
-                disabled={generating || selectedSongs.length === 0 || !permissions.canDownloadSong}
+                disabled={generating || allSelectedSongs.length === 0 || !permissions.canDownloadSong}
                 onClick={() => void handlePrint()}
               >
                 {generating ? (
@@ -694,7 +779,7 @@ export default function SheetsPage() {
                 )}
               </Button>
               <Button
-                disabled={generating || selectedSongs.length === 0 || !permissions.canDownloadSong}
+                disabled={generating || allSelectedSongs.length === 0 || !permissions.canDownloadSong}
                 onClick={() => void handleDownload()}
               >
                 {generating ? (
@@ -706,9 +791,12 @@ export default function SheetsPage() {
                   </>
                 )}
               </Button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 variant="secondary"
-                disabled={sharing || selectedSongs.length === 0}
+                disabled={sharing || !hasCoreSelection}
                 onClick={() => void handleShare()}
               >
                 {sharing ? (
@@ -719,6 +807,14 @@ export default function SheetsPage() {
                     {t('sheets.share')}
                   </>
                 )}
+              </Button>
+              <Button
+                variant="outline"
+                disabled={!hasCoreSelection}
+                onClick={() => void handleShareText()}
+              >
+                <ClipboardCopy className="mr-1.5 h-4 w-4" />
+                {t('sheets.shareText')}
               </Button>
             </div>
           </CardContent>

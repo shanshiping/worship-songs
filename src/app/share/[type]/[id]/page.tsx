@@ -11,6 +11,7 @@ import { enUS, zhCN } from 'date-fns/locale'
 import { SongTagBadges, type TagItem } from '@/components/tag-multi-select'
 import { SongScripturesDisplay } from '@/components/song-scriptures-editor'
 import { getSongSheetPaths } from '@/lib/song-sheet-paths'
+import { groupSongsBySection } from '@/lib/sheets-share-sections'
 
 interface SharedSong {
   id: string
@@ -25,6 +26,8 @@ interface SharedSong {
   sheetMusicPages?: unknown
   audioFile?: string | null
   mvUrl?: string | null
+  listenUrl?: string | null
+  sheetLinkUrl?: string | null
   tags?: Array<{ tag: TagItem }>
   category?: { name: string }
   scriptures?: Array<{
@@ -49,6 +52,8 @@ interface SharedData {
   sheetMusicPages?: unknown
   audioFile?: string | null
   mvUrl?: string | null
+  listenUrl?: string | null
+  sheetLinkUrl?: string | null
   date?: string
   theme?: string | null
   scripture?: string | null
@@ -58,6 +63,7 @@ interface SharedData {
   songs?: Array<{
     song: SharedSong
     order: number
+    section?: string | null
   }>
 }
 
@@ -168,6 +174,26 @@ function FullSongBlock({
         </div>
       )}
       <div className="flex flex-wrap gap-3 items-center text-sm">
+        {song.listenUrl && (
+          <a
+            href={song.listenUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary underline"
+          >
+            {t('songs.listenOnline')}
+          </a>
+        )}
+        {song.sheetLinkUrl && (
+          <a
+            href={song.sheetLinkUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary underline"
+          >
+            {t('songs.sheetOnline')}
+          </a>
+        )}
         {song.mvUrl && (
           <a href={song.mvUrl} target="_blank" rel="noreferrer" className="text-primary underline">
             MV
@@ -303,12 +329,31 @@ export default function SharePage() {
                     )}
                   </div>
                 )}
-                {(data.songs || []).map((item) => (
-                  <div key={`${item.order}-${item.song.id}`} className="space-y-1">
-                    <p className="text-sm text-muted-foreground">#{item.order}</p>
-                    <FullSongBlock song={item.song} t={t} />
-                  </div>
-                ))}
+                {(() => {
+                  const grouped = groupSongsBySection(data.songs ?? [])
+                  return (
+                    [
+                      ['main', 'sheets.mainSongListTitle'],
+                      ['response', 'sheets.responseSongListTitle'],
+                      ['communion', 'sheets.communionSongListTitle'],
+                    ] as const
+                  ).map(([section, titleKey]) => {
+                    const items = grouped[section]
+                    if (items.length === 0) return null
+
+                    return (
+                      <div key={section} className="space-y-3">
+                        <h3 className="text-sm font-medium">{t(titleKey)}</h3>
+                        {items.map((item) => (
+                          <div key={`${section}-${item.order}-${item.song.id}`} className="space-y-1">
+                            <p className="text-sm text-muted-foreground">#{item.order}</p>
+                            <FullSongBlock song={item.song} t={t} />
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })
+                })()}
               </div>
             )}
 

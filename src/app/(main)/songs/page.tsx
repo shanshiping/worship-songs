@@ -15,6 +15,7 @@ import { TagMultiSelect, SongTagBadges, type TagItem } from '@/components/tag-mu
 import { AddToPlaylistDialog } from '@/components/add-to-playlist-dialog'
 import { TagManagerDialog } from '@/components/tag-manager-dialog'
 import { SongLetterIndex } from '@/components/song-letter-index'
+import { SongKeyFilter } from '@/components/song-key-filter'
 import type { SongIndexLetter } from '@/lib/song-title-index'
 
 interface Song {
@@ -59,6 +60,8 @@ export default function SongsPage() {
   const [addToPlaylistSongId, setAddToPlaylistSongId] = useState<string | null>(null)
   const [tagManagerOpen, setTagManagerOpen] = useState(false)
   const [selectedLetter, setSelectedLetter] = useState<SongIndexLetter | ''>('')
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([])
+  const [availableKeys, setAvailableKeys] = useState<Array<{ key: string; count: number }>>([])
   const [indexLetters, setIndexLetters] = useState<Array<{ letter: SongIndexLetter; count: number }>>(
     [],
   )
@@ -86,12 +89,14 @@ export default function SongsPage() {
   const handleUncategorizedClick = () => {
     setSelectedTypeIds([])
     setSelectedStyleIds([])
+    setSelectedKeys([])
     setPage(1)
   }
 
   useEffect(() => {
     fetchTags()
     void fetchIndexLetters()
+    void fetchAvailableKeys()
     const savedViewMode = localStorage.getItem('songsViewMode') as ViewMode
     if (savedViewMode) {
       setViewMode(savedViewMode)
@@ -100,7 +105,7 @@ export default function SongsPage() {
 
   useEffect(() => {
     fetchSongs()
-  }, [search, lyricsSearch, selectedTypeIds, selectedStyleIds, selectedLetter, page])
+  }, [search, lyricsSearch, selectedTypeIds, selectedStyleIds, selectedLetter, selectedKeys, page])
 
   const fetchTags = async () => {
     try {
@@ -130,6 +135,20 @@ export default function SongsPage() {
     }
   }
 
+  const fetchAvailableKeys = async () => {
+    try {
+      const response = await fetch('/api/songs/keys')
+      if (response.ok) {
+        const data = (await response.json()) as {
+          keys?: Array<{ key: string; count: number }>
+        }
+        setAvailableKeys(data.keys ?? [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch song keys:', error)
+    }
+  }
+
   const fetchSongs = async () => {
     setLoading(true)
     setLoadError(false)
@@ -142,6 +161,9 @@ export default function SongsPage() {
       if (search) params.append('search', search)
       if (lyricsSearch) params.append('lyricsSearch', lyricsSearch)
       if (selectedLetter) params.append('letter', selectedLetter)
+      for (const key of selectedKeys) {
+        params.append('keys', key)
+      }
       for (const id of [...selectedTypeIds, ...selectedStyleIds]) {
         params.append('tagIds', id)
       }
@@ -277,6 +299,14 @@ export default function SongsPage() {
           selectedIds={selectedStyleIds}
           onChange={(ids) => {
             setSelectedStyleIds(ids)
+            setPage(1)
+          }}
+        />
+        <SongKeyFilter
+          keys={availableKeys}
+          selectedKeys={selectedKeys}
+          onChange={(keys) => {
+            setSelectedKeys(keys)
             setPage(1)
           }}
         />

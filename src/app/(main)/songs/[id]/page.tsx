@@ -39,6 +39,8 @@ interface Song {
   team: string | null
   album: string | null
   mvUrl: string | null
+  listenUrl: string | null
+  sheetLinkUrl: string | null
   sheetMusic: string | null
   sheetMusicPages?: string[] | null
   coverImage: string | null
@@ -543,7 +545,7 @@ export default function SongDetailPage() {
                     max={duration || 0}
                     value={currentTime}
                     onChange={handleSeek}
-                    className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-primary"
+                    className="w-full h-2 bg-muted rounded-full appearance-none cursor-pointer accent-primary"
                   />
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>{formatTime(currentTime)}</span>
@@ -631,7 +633,7 @@ export default function SongDetailPage() {
                         step="0.1"
                         value={isMuted ? 0 : volume}
                         onChange={handleVolumeChange}
-                        className="w-20 h-1 bg-gray-200 rounded-full appearance-none cursor-pointer accent-primary"
+                        className="w-20 h-1 bg-muted rounded-full appearance-none cursor-pointer accent-primary"
                       />
                     </div>
                   </div>
@@ -666,20 +668,20 @@ export default function SongDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex w-full items-center justify-between rounded-xl bg-gray-50 p-3">
+              <div className="flex w-full items-center justify-between rounded-xl bg-muted/50 p-3">
                 <span className="text-sm text-muted-foreground">{t('songs.tags')}</span>
                 <div className="flex flex-wrap items-center justify-end gap-1">
                   <SongTagBadges tags={song.tags} {...tagBadgeEditProps} />
                 </div>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
                 <span className="text-sm text-muted-foreground">{t('songs.uploadedBy')}</span>
                 <span className="font-medium text-sm">
                   {song.uploadedBy?.name || song.uploadedBy?.email || t('songs.unknownUploader')}
                 </span>
               </div>
               {song.sheetMusic && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
                   <span className="text-sm text-muted-foreground">{t('songs.sheetUploadedBy')}</span>
                   <span className="font-medium text-sm text-right">
                     {song.sheetUploadedBy?.name ||
@@ -689,49 +691,49 @@ export default function SongDetailPage() {
                 </div>
               )}
               {song.artist && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
                   <span className="text-sm text-muted-foreground">{t('songs.artist')}</span>
                   <span className="font-medium">{song.artist}</span>
                 </div>
               )}
               {song.key && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
                   <span className="text-sm text-muted-foreground">{t('songs.key')}</span>
                   <span className="font-medium">{song.key}</span>
                 </div>
               )}
               {song.timeSignature && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
                   <span className="text-sm text-muted-foreground">{t('songs.timeSignature')}</span>
                   <span className="font-medium">{song.timeSignature}</span>
                 </div>
               )}
               {song.composer && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
                   <span className="text-sm text-muted-foreground">{t('songs.composer')}</span>
                   <span className="font-medium">{song.composer}</span>
                 </div>
               )}
               {song.lyricist && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
                   <span className="text-sm text-muted-foreground">{t('songs.lyricist')}</span>
                   <span className="font-medium">{song.lyricist}</span>
                 </div>
               )}
               {song.team && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
                   <span className="text-sm text-muted-foreground">{t('songs.team')}</span>
                   <span className="font-medium">{song.team}</span>
                 </div>
               )}
               {song.album && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
                   <span className="text-sm text-muted-foreground">{t('songs.album')}</span>
                   <span className="font-medium">{song.album}</span>
                 </div>
               )}
               {song.notes && (
-                <div className="p-3 bg-gray-50 rounded-xl">
+                <div className="p-3 bg-muted/50 rounded-xl">
                   <span className="text-sm text-muted-foreground">{t('songs.notes')}</span>
                   <p className="mt-1 text-sm">{song.notes}</p>
                 </div>
@@ -771,7 +773,7 @@ export default function SongDetailPage() {
                     {timedFollowAlong ? (
                       <div
                         ref={lyricsRef}
-                        className="max-h-80 overflow-y-auto space-y-2 rounded-xl bg-gray-50 p-4"
+                        className="max-h-80 overflow-y-auto space-y-2 rounded-xl bg-muted/50 p-4"
                       >
                         {lrcLines.map((line, index) => (
                           <div
@@ -779,7 +781,7 @@ export default function SongDetailPage() {
                             className={`rounded-lg px-4 py-2 transition-all duration-300 ${
                               index === currentLyricIndex
                                 ? 'scale-105 bg-primary text-lg font-bold text-primary-foreground'
-                                : 'text-muted-foreground hover:bg-gray-100'
+                                : 'text-muted-foreground hover:bg-muted'
                             }`}
                           >
                             {line.text}
@@ -795,7 +797,7 @@ export default function SongDetailPage() {
                           </p>
                         )}
                         <div
-                          className={`max-h-80 overflow-y-auto space-y-2 rounded-xl bg-gray-50 p-4 ${
+                          className={`max-h-80 overflow-y-auto space-y-2 rounded-xl bg-muted/50 p-4 ${
                             timedFollowAlong ? 'max-h-48' : ''
                           }`}
                         >
@@ -812,7 +814,7 @@ export default function SongDetailPage() {
                     )}
                   </>
                 ) : (
-                  <div className="flex flex-col items-center justify-center rounded-xl bg-gray-50 py-8 text-center">
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-muted/50 py-8 text-center">
                     {extractingLyrics ? (
                       <>
                         <Loader2 className="mb-2 h-8 w-8 animate-spin text-muted-foreground/70" />
@@ -866,7 +868,7 @@ export default function SongDetailPage() {
                 <button
                   type="button"
                   onClick={() => setSheetPreviewOpen(true)}
-                  className="flex w-full items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors text-left"
+                  className="flex w-full items-center justify-between p-3 bg-muted/50 rounded-xl hover:bg-muted transition-colors text-left"
                 >
                   <div className="flex items-center space-x-3">
                     <FileText className="h-5 w-5 text-blue-500" />
@@ -889,7 +891,7 @@ export default function SongDetailPage() {
                 <a
                   href={song.audioFile}
                   download
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded-xl hover:bg-muted transition-colors"
                 >
                   <div className="flex items-center space-x-3">
                     <Music2 className="h-5 w-5 text-purple-500" />
@@ -905,7 +907,7 @@ export default function SongDetailPage() {
                 />
               ) : null}
               {song.pptBackground ? (
-                <div className="overflow-hidden rounded-xl bg-gray-50">
+                <div className="overflow-hidden rounded-xl bg-muted/50">
                   <img
                     src={song.pptBackground}
                     alt={t('songs.pptBackgroundFile')}
@@ -938,11 +940,39 @@ export default function SongDetailPage() {
                   href={song.mvUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded-xl hover:bg-muted transition-colors"
                 >
                   <div className="flex items-center space-x-3">
                     <Video className="h-5 w-5 text-red-500" />
                     <span className="text-sm font-medium">{t('songs.watchMv')}</span>
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                </a>
+              )}
+              {song.listenUrl && (
+                <a
+                  href={song.listenUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded-xl hover:bg-muted transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Music2 className="h-5 w-5 text-emerald-600" />
+                    <span className="text-sm font-medium">{t('songs.listenOnline')}</span>
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                </a>
+              )}
+              {song.sheetLinkUrl && (
+                <a
+                  href={song.sheetLinkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded-xl hover:bg-muted transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <FileText className="h-5 w-5 text-amber-600" />
+                    <span className="text-sm font-medium">{t('songs.sheetOnline')}</span>
                   </div>
                   <ExternalLink className="h-4 w-4 text-muted-foreground" />
                 </a>

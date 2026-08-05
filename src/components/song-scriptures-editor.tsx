@@ -147,7 +147,7 @@ export function SongScripturesDisplay({
         {ordered.map((item, index) => (
           <div
             key={item.id ?? `${item.reference}-${index}`}
-            className="rounded-xl bg-gray-50 p-3"
+            className="rounded-xl bg-muted/50 p-3"
           >
             <p className="font-medium">{item.reference}</p>
             {item.text ? (

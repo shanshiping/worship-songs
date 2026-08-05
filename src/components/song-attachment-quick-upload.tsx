@@ -182,7 +182,7 @@ export function SongAttachmentQuickUpload({
 
   if (variant === 'card') {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 py-8 text-center">
+      <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/50 py-8 text-center">
         <Icon className="mb-2 h-8 w-8 text-muted-foreground/50" />
         <p className="text-sm text-muted-foreground">{emptyHint}</p>
         <Input
@@ -196,7 +196,7 @@ export function SongAttachmentQuickUpload({
         />
         <label
           htmlFor={inputId}
-          className={`mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg border bg-white px-4 py-2 text-sm font-medium text-primary shadow-sm transition-colors hover:bg-gray-50${
+          className={`mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-primary shadow-sm transition-colors hover:bg-muted/50${
             uploading ? ' pointer-events-none opacity-60' : ''
           }`}
         >
@@ -229,7 +229,7 @@ export function SongAttachmentQuickUpload({
       />
       <label
         htmlFor={inputId}
-        className={`flex w-full cursor-pointer items-center justify-between rounded-xl bg-gray-50 p-3 transition-colors hover:bg-gray-100${
+        className={`flex w-full cursor-pointer items-center justify-between rounded-xl bg-muted/50 p-3 transition-colors hover:bg-muted${
           uploading ? ' pointer-events-none opacity-60' : ''
         }`}
       >

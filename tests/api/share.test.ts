@@ -139,6 +139,7 @@ describe('/api/share', () => {
             sheetMusic: '/uploads/sheets/a.pdf',
             sheetMusicPages: ['/uploads/sheets/a.pdf'],
             audioFile: '/uploads/audio/a.mp3',
+            listenUrl: 'https://music.example.com/s1',
             tags: [],
             scriptures: [],
           },
@@ -156,6 +157,7 @@ describe('/api/share', () => {
         song: {
           title: string
           audioFile: string
+          listenUrl: string
           sheetMusic: string
         }
       }>
@@ -166,6 +168,7 @@ describe('/api/share', () => {
     expect(body.arrangement).toBe('Opening fast → closing standing')
     expect(body.songs[0].song.title).toBe('Amazing Grace')
     expect(body.songs[0].song.audioFile).toBeTruthy()
+    expect(body.songs[0].song.listenUrl).toBe('https://music.example.com/s1')
     expect(body.songs[0].song.sheetMusic).toBeTruthy()
   })
 })

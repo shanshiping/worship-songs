@@ -90,6 +90,8 @@ model Song {
   team          String?  // 团队（自由文本）
   album         String?  // 专辑
   mvUrl         String?  // MV 外链
+  listenUrl     String?  // 第三方在线试听链接
+  sheetLinkUrl  String?  // 第三方在线歌谱链接
   coverImage    String?  // 封面图片路径
   pptBackground String?  // PPT 投影默认背景图路径
   sheetMusic    String?  // 歌谱文件路径（首页，兼容旧数据）
@@ -132,6 +134,7 @@ model SheetsShareSong {
   sheetsShareId String
   songId        String
   order         Int
+  section       String @default("main") // main, response, communion
 
   sheetsShare SheetsShare @relation(fields: [sheetsShareId], references: [id], onDelete: Cascade)
   song        Song        @relation(fields: [songId], references: [id], onDelete: Cascade)
