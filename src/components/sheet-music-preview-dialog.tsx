@@ -32,25 +32,36 @@ import { toast } from 'sonner'
 type SheetMusicPreviewDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  path: string | null
+  path?: string | null
+  paths?: string[]
 }
 
 export function SheetMusicPreviewDialog({
   open,
   onOpenChange,
-  path,
+  path = null,
+  paths,
 }: SheetMusicPreviewDialogProps) {
   const { t } = useI18n()
   const [zoom, setZoom] = useState(DEFAULT_SHEET_ZOOM)
+  const [pageIndex, setPageIndex] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const viewerRef = useRef<HTMLDivElement>(null)
+
+  const sheetPaths = paths && paths.length > 0 ? paths : path ? [path] : []
+  const activePath = sheetPaths[pageIndex] ?? null
 
   useEffect(() => {
     if (!open) {
       setZoom(DEFAULT_SHEET_ZOOM)
+      setPageIndex(0)
       setIsFullscreen(false)
     }
   }, [open])
+
+  useEffect(() => {
+    setPageIndex(0)
+  }, [sheetPaths.join('|')])
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -83,10 +94,10 @@ export function SheetMusicPreviewDialog({
   }, [])
 
   const handlePrint = useCallback(() => {
-    if (!path) return
+    if (!activePath) return
     try {
       printSheetMusic({
-        path,
+        path: activePath,
         origin: window.location.origin,
         title: t('songs.sheetPreview'),
       })
@@ -94,11 +105,11 @@ export function SheetMusicPreviewDialog({
       console.error('Print sheet music failed:', error)
       toast.error(t('songs.printSheetFailed'))
     }
-  }, [path, t])
+  }, [activePath, t])
 
-  if (!path) return null
+  if (!activePath || sheetPaths.length === 0) return null
 
-  const pdf = isPdfSheetPath(path)
+  const pdf = isPdfSheetPath(activePath)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -170,6 +181,38 @@ export function SheetMusicPreviewDialog({
               <Printer className="h-4 w-4" />
             </Button>
             <span className="text-xs text-muted-foreground">{t('songs.zoomHint')}</span>
+            {sheetPaths.length > 1 ? (
+              <div className="ml-auto flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-lg"
+                  disabled={pageIndex === 0}
+                  onClick={() => setPageIndex((current) => Math.max(0, current - 1))}
+                >
+                  {t('songs.prevSheetPage')}
+                </Button>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {t('songs.sheetPageIndicator', {
+                    current: pageIndex + 1,
+                    total: sheetPaths.length,
+                  })}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-lg"
+                  disabled={pageIndex >= sheetPaths.length - 1}
+                  onClick={() =>
+                    setPageIndex((current) => Math.min(sheetPaths.length - 1, current + 1))
+                  }
+                >
+                  {t('songs.nextSheetPage')}
+                </Button>
+              </div>
+            ) : null}
           </div>
 
           <div
@@ -191,12 +234,12 @@ export function SheetMusicPreviewDialog({
                 {pdf ? (
                   <iframe
                     title={t('songs.sheetPreview')}
-                    src={path}
+                    src={activePath}
                     className="h-[70vh] w-full max-w-full border-0"
                   />
                 ) : (
                   <img
-                    src={path}
+                    src={activePath}
                     alt={t('songs.sheetFile')}
                     className="h-auto max-h-[70vh] w-auto max-w-full object-contain"
                     draggable={false}
@@ -218,7 +261,7 @@ export function SheetMusicPreviewDialog({
             {t('songs.printSheet')}
           </Button>
           <a
-            href={path}
+            href={activePath}
             download
             className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-2.5 text-sm font-medium hover:bg-muted"
           >

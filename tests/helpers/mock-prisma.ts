@@ -35,6 +35,7 @@ export type PrismaMock = {
   teamSong: ReturnType<typeof model>
   $disconnect: MockFn
   $queryRaw: MockFn
+  $transaction: MockFn
 }
 
 /** Shared singleton used by `vi.mock('@/lib/prisma')` factories and assertions. */
@@ -55,6 +56,15 @@ export const mockPrisma: PrismaMock = {
   teamSong: model(),
   $disconnect: vi.fn(),
   $queryRaw: vi.fn(),
+  $transaction: vi.fn(async (ops: unknown) => {
+    if (typeof ops === 'function') {
+      return ops(mockPrisma)
+    }
+    if (Array.isArray(ops)) {
+      return Promise.all(ops)
+    }
+    return ops
+  }),
 }
 
 export function resetPrismaMock(): void {

@@ -6,6 +6,7 @@ import { FileText, Loader2, Music2, Presentation, Upload } from 'lucide-react'
 import { useId, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/errors'
+import { getSongSheetPaths } from '@/lib/song-sheet-paths'
 
 type AttachmentKind = 'sheet' | 'audio' | 'pptBackground'
 
@@ -23,6 +24,7 @@ interface SongForUpload {
   coverImage: string | null
   pptBackground: string | null
   sheetMusic: string | null
+  sheetMusicPages?: string[] | null
   audioFile: string | null
   lyrics: string | null
   lyricsLrc: string | null
@@ -67,8 +69,20 @@ async function uploadFile(file: File, type: AttachmentKind) {
 
 function buildUpdatePayload(
   song: SongForUpload,
-  patch: Partial<Pick<SongForUpload, 'sheetMusic' | 'audioFile' | 'pptBackground'>>,
+  patch: Partial<Pick<SongForUpload, 'sheetMusic' | 'sheetMusicPages' | 'audioFile' | 'pptBackground'>>,
 ) {
+  const existingSheetPages = getSongSheetPaths(song)
+  const nextSheetPages =
+    patch.sheetMusicPages !== undefined
+      ? patch.sheetMusicPages ?? []
+      : patch.sheetMusic !== undefined
+        ? patch.sheetMusic
+          ? [...existingSheetPages, patch.sheetMusic].filter(
+              (path, index, list) => list.indexOf(path) === index,
+            )
+          : []
+        : existingSheetPages
+
   return {
     title: song.title,
     artist: song.artist,
@@ -82,7 +96,8 @@ function buildUpdatePayload(
     coverImage: song.coverImage,
     pptBackground:
       patch.pptBackground !== undefined ? patch.pptBackground : song.pptBackground,
-    sheetMusic: patch.sheetMusic !== undefined ? patch.sheetMusic : song.sheetMusic,
+    sheetMusic: nextSheetPages[0] ?? null,
+    sheetMusicPages: nextSheetPages,
     audioFile: patch.audioFile !== undefined ? patch.audioFile : song.audioFile,
     lyrics: song.lyrics,
     lyricsLrc: song.lyricsLrc,

@@ -4,7 +4,9 @@ import {
   Calendar,
   Database,
   FileScan,
+  FileText,
   Globe,
+  LayoutDashboard,
   ListMusic,
   MailCheck,
   Mic2,
@@ -32,6 +34,33 @@ export type FeatureGuideItem = {
 }
 
 export const FEATURE_GUIDE_ITEMS: FeatureGuideItem[] = [
+  {
+    id: 'sheets',
+    icon: FileText,
+    titleKey: 'guide.features.sheets.title',
+    descKey: 'guide.features.sheets.desc',
+    tipKeys: [
+      'guide.features.sheets.tip1',
+      'guide.features.sheets.tip2',
+      'guide.features.sheets.tip3',
+    ],
+    href: '/sheets',
+    featured: true,
+    badge: 'new',
+  },
+  {
+    id: 'dashboard',
+    icon: LayoutDashboard,
+    titleKey: 'guide.features.dashboard.title',
+    descKey: 'guide.features.dashboard.desc',
+    tipKeys: [
+      'guide.features.dashboard.tip1',
+      'guide.features.dashboard.tip2',
+    ],
+    href: '/dashboard',
+    featured: true,
+    badge: 'new',
+  },
   {
     id: 'songAgent',
     icon: Bot,
@@ -119,6 +148,7 @@ export const FEATURE_GUIDE_ITEMS: FeatureGuideItem[] = [
     tipKeys: [
       'guide.features.songs.tip1',
       'guide.features.songs.tip2',
+      'guide.features.songs.tip3',
     ],
     href: '/songs',
   },

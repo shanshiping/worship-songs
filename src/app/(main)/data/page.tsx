@@ -15,6 +15,7 @@ interface ImportResult {
   results: {
     songs: number
     meetings: number
+    meetingsUpdated?: number
     errors: string[]
     skipped: number
   }
@@ -181,6 +182,14 @@ export default function DataPage() {
                       <p className="text-xs text-muted-foreground">{t('data.newSongs')}</p>
                       <p className="text-2xl font-bold text-green-600">{result.results.songs}</p>
                     </div>
+                    {(result.results.meetingsUpdated ?? 0) > 0 && (
+                      <div className="bg-white p-3 rounded-lg col-span-2">
+                        <p className="text-xs text-muted-foreground">{t('data.meetingsUpdated')}</p>
+                        <p className="text-2xl font-bold text-indigo-600">
+                          {result.results.meetingsUpdated}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {result.results.skipped > 0 && (

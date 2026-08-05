@@ -5,6 +5,7 @@ export type ThemeMeetingSong = {
   title: string
   artist: string | null
   sheetMusic: string | null
+  audioFile: string | null
 }
 
 export type ThemeMeetingMatch = {
@@ -46,6 +47,7 @@ export async function searchMeetingsByTheme(
               title: true,
               artist: true,
               sheetMusic: true,
+              audioFile: true,
             },
           },
         },
@@ -66,6 +68,7 @@ export async function searchMeetingsByTheme(
       title: row.song.title,
       artist: row.song.artist,
       sheetMusic: row.song.sheetMusic,
+      audioFile: row.song.audioFile,
     })),
   }))
 }

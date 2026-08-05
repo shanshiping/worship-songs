@@ -14,8 +14,17 @@ vi.mock('@/lib/sheet-lyrics', () => ({
     return '自动识别歌词'
   }),
 }))
+vi.mock('@/lib/song-title-initial-sync', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/song-title-initial-sync')>()
+  return {
+    ...actual,
+    loadSongsForInitialIndex: vi.fn().mockResolvedValue([]),
+    syncStaleSongTitleInitials: vi.fn().mockResolvedValue(0),
+  }
+})
 
 import { GET, POST } from '@/app/api/songs/route'
+import { songListOrderByPreferred } from '@/lib/song-title-initial-sync'
 import { getServerSession } from 'next-auth'
 import { resolveLyricsWithAutoExtract } from '@/lib/sheet-lyrics'
 
@@ -26,7 +35,7 @@ describe('/api/songs', () => {
     vi.mocked(resolveLyricsWithAutoExtract).mockClear()
   })
 
-  it('GET returns paginated songs', async () => {
+  it('GET returns paginated songs ordered by title', async () => {
     mockPrisma.song.findMany.mockResolvedValue([
       { id: 's1', title: 'Song', tags: [], _count: { meetings: 0 } },
     ])
@@ -41,6 +50,37 @@ describe('/api/songs', () => {
     expect(status).toBe(200)
     expect(body.songs).toHaveLength(1)
     expect(body.pagination.total).toBe(1)
+    expect(mockPrisma.song.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: songListOrderByPreferred,
+      }),
+    )
+  })
+
+  it('GET filters by initial letter', async () => {
+    mockPrisma.song.findMany.mockResolvedValue([])
+    mockPrisma.song.count.mockResolvedValue(0)
+
+    await GET(jsonRequest('http://localhost/api/songs?letter=S'))
+
+    expect(mockPrisma.song.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { titleInitial: 'S' },
+      }),
+    )
+  })
+
+  it('GET filters by hash initial letter', async () => {
+    mockPrisma.song.findMany.mockResolvedValue([])
+    mockPrisma.song.count.mockResolvedValue(0)
+
+    await GET(jsonRequest('http://localhost/api/songs?letter=%23'))
+
+    expect(mockPrisma.song.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { titleInitial: '#' },
+      }),
+    )
   })
 
   it('GET filters by tagIds with AND', async () => {

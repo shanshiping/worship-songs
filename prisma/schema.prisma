@@ -79,6 +79,8 @@ model Message {
 model Song {
   id            String   @id @default(cuid())
   title         String
+  titleInitial  String   @default("#") // 首字母索引 A-Z 或 #
+  titleInitialOrder Int  @default(27) // 排序：A=1 … Z=26，#=27
   artist        String?
   key           String?  // 调，如 C、G、Am
   timeSignature String?  // 拍，如 4/4、6/8
@@ -89,7 +91,8 @@ model Song {
   mvUrl         String?  // MV 外链
   coverImage    String?  // 封面图片路径
   pptBackground String?  // PPT 投影默认背景图路径
-  sheetMusic    String?  // 歌谱文件路径
+  sheetMusic    String?  // 歌谱文件路径（首页，兼容旧数据）
+  sheetMusicPages Json?  // 多页歌谱路径数组 string[]
   audioFile     String?  // 音频文件路径
   lyrics        String?  // 纯文本歌词
   lyricsLrc     String?  // 可选 LRC 时间轴歌词

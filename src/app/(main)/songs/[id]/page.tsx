@@ -26,6 +26,7 @@ import { toast } from 'sonner'
 import { parseLrc } from '@/lib/lrc'
 import { downloadLyricsPpt } from '@/lib/ppt-download-client'
 import { getRouteParamId, isSongDetailId, SONG_UPLOAD_PATH } from '@/lib/route-params'
+import { getSongSheetPaths } from '@/lib/song-sheet-paths'
 
 interface Song {
   id: string
@@ -39,6 +40,7 @@ interface Song {
   album: string | null
   mvUrl: string | null
   sheetMusic: string | null
+  sheetMusicPages?: string[] | null
   coverImage: string | null
   pptBackground: string | null
   audioFile: string | null
@@ -396,6 +398,7 @@ export default function SongDetailPage() {
     : []
   const timedFollowAlong = lrcLines.length > 0
   const hasLyricsForPpt = Boolean(song.lyrics?.trim() || song.lyricsLrc?.trim())
+  const sheetPaths = getSongSheetPaths(song)
   const tagBadgeEditProps = permissions.canEditSong
     ? {
         onTagClick: () => setTagsDialogOpen(true),
@@ -859,7 +862,7 @@ export default function SongDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {song.sheetMusic ? (
+              {sheetPaths.length > 0 ? (
                 <button
                   type="button"
                   onClick={() => setSheetPreviewOpen(true)}
@@ -867,7 +870,11 @@ export default function SongDetailPage() {
                 >
                   <div className="flex items-center space-x-3">
                     <FileText className="h-5 w-5 text-blue-500" />
-                    <span className="text-sm font-medium">{t('songs.viewSheet')}</span>
+                    <span className="text-sm font-medium">
+                      {sheetPaths.length > 1
+                        ? t('songs.viewSheetPages', { count: sheetPaths.length })
+                        : t('songs.viewSheet')}
+                    </span>
                   </div>
                   <Download className="h-4 w-4 text-muted-foreground" />
                 </button>
@@ -969,7 +976,7 @@ export default function SongDetailPage() {
       <SheetMusicPreviewDialog
         open={sheetPreviewOpen}
         onOpenChange={setSheetPreviewOpen}
-        path={song.sheetMusic}
+        paths={sheetPaths}
       />
     </div>
   )

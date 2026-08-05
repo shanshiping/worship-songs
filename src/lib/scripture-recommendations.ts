@@ -5,6 +5,7 @@ export type ScriptureDirectMatch = {
   title: string
   artist: string | null
   sheetMusic: string | null
+  audioFile: string | null
   reference: string
 }
 
@@ -13,6 +14,7 @@ export type ScriptureHistoricalPick = {
   title: string
   artist: string | null
   sheetMusic: string | null
+  audioFile: string | null
   count: number
   lastUsedDate: string | null
 }
@@ -47,6 +49,7 @@ export async function getScriptureRecommendations(
           title: true,
           artist: true,
           sheetMusic: true,
+          audioFile: true,
         },
       },
     },
@@ -61,6 +64,7 @@ export async function getScriptureRecommendations(
       title: row.song.title,
       artist: row.song.artist,
       sheetMusic: row.song.sheetMusic,
+      audioFile: row.song.audioFile,
       reference: row.reference,
     })
   }
@@ -112,6 +116,7 @@ export async function getScriptureRecommendations(
         title: song.title,
         artist: song.artist,
         sheetMusic: song.sheetMusic,
+        audioFile: song.audioFile,
         count: row._count.songId,
         lastUsedDate: lastDate ? lastDate.toISOString() : null,
       }

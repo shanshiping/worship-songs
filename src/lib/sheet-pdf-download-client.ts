@@ -23,7 +23,8 @@ export async function fetchMergedSheetPdf(
     ? decodeURIComponent(skippedHeader).split('|').filter(Boolean)
     : []
 
-  const blob = await response.blob()
+  const buffer = await response.arrayBuffer()
+  const blob = new Blob([buffer], { type: 'application/pdf' })
   const disposition = response.headers.get('Content-Disposition')
   const filenameMatch = disposition?.match(/filename="([^"]+)"/)
   const filename = filenameMatch?.[1] ?? 'worship-sheets.pdf'

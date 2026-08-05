@@ -5,12 +5,20 @@ vi.mock('@/lib/prisma', async () => {
   const { mockPrisma } = await import('../helpers/mock-prisma')
   return { prisma: mockPrisma }
 })
+vi.mock('@/lib/meeting-theme-search', () => ({
+  searchMeetingsByTheme: vi.fn(),
+}))
+vi.mock('@/lib/scripture-recommendations', () => ({
+  getScriptureRecommendations: vi.fn(),
+}))
 vi.mock('next-auth', () => ({ getServerSession: vi.fn() }))
 vi.mock('@/lib/auth', () => ({ authOptions: {} }))
 
 import { searchSongsForAgent } from '@/lib/ai/song-search'
 import { createSongAgentTools } from '@/lib/ai/song-agent-tools'
 import { getServerSession } from 'next-auth'
+import { searchMeetingsByTheme } from '@/lib/meeting-theme-search'
+import { getScriptureRecommendations } from '@/lib/scripture-recommendations'
 
 describe('searchSongsForAgent', () => {
   beforeEach(() => {
@@ -112,5 +120,54 @@ describe('addSongToPlaylist tool', () => {
 
     expect(result).toMatchObject({ ok: true, alreadyInPlaylist: false })
     expect(mockPrisma.playlistSong.create).toHaveBeenCalled()
+  })
+})
+
+describe('searchMeetingsByTheme tool', () => {
+  beforeEach(() => {
+    vi.mocked(searchMeetingsByTheme).mockReset()
+  })
+
+  it('returns theme meetings from helper', async () => {
+    vi.mocked(searchMeetingsByTheme).mockResolvedValue([
+      {
+        id: 'm1',
+        date: '2026-01-01T00:00:00.000Z',
+        theme: '复活节',
+        leader: '张三',
+        songs: [],
+      },
+    ])
+
+    const tools = createSongAgentTools()
+    const result = await tools.searchMeetingsByTheme.execute!(
+      { query: '复活' },
+      { toolCallId: 'c1', messages: [], context: {} },
+    )
+
+    expect(searchMeetingsByTheme).toHaveBeenCalledWith('复活', 5)
+    expect(result).toMatchObject({ count: 1 })
+  })
+})
+
+describe('getScriptureRecommendations tool', () => {
+  beforeEach(() => {
+    vi.mocked(getScriptureRecommendations).mockReset()
+  })
+
+  it('returns scripture recommendations from helper', async () => {
+    vi.mocked(getScriptureRecommendations).mockResolvedValue({
+      directMatches: [],
+      historicalPicks: [],
+    })
+
+    const tools = createSongAgentTools()
+    const result = await tools.getScriptureRecommendations.execute!(
+      { reference: '约翰 3:16' },
+      { toolCallId: 'c1', messages: [], context: {} },
+    )
+
+    expect(getScriptureRecommendations).toHaveBeenCalledWith('约翰 3:16')
+    expect(result).toEqual({ directMatches: [], historicalPicks: [] })
   })
 })

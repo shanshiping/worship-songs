@@ -14,6 +14,8 @@ import { usePermissions } from '@/hooks/use-permissions'
 import { TagMultiSelect, SongTagBadges, type TagItem } from '@/components/tag-multi-select'
 import { AddToPlaylistDialog } from '@/components/add-to-playlist-dialog'
 import { TagManagerDialog } from '@/components/tag-manager-dialog'
+import { SongLetterIndex } from '@/components/song-letter-index'
+import type { SongIndexLetter } from '@/lib/song-title-index'
 
 interface Song {
   id: string
@@ -56,6 +58,11 @@ export default function SongsPage() {
   const [totalSongs, setTotalSongs] = useState(0)
   const [addToPlaylistSongId, setAddToPlaylistSongId] = useState<string | null>(null)
   const [tagManagerOpen, setTagManagerOpen] = useState(false)
+  const [selectedLetter, setSelectedLetter] = useState<SongIndexLetter | ''>('')
+  const [indexLetters, setIndexLetters] = useState<Array<{ letter: SongIndexLetter; count: number }>>(
+    [],
+  )
+  const [loadError, setLoadError] = useState(false)
 
   const canAddToPlaylist = permissions.canEditPlaylist || permissions.canCreatePlaylist
 
@@ -84,6 +91,7 @@ export default function SongsPage() {
 
   useEffect(() => {
     fetchTags()
+    void fetchIndexLetters()
     const savedViewMode = localStorage.getItem('songsViewMode') as ViewMode
     if (savedViewMode) {
       setViewMode(savedViewMode)
@@ -92,7 +100,7 @@ export default function SongsPage() {
 
   useEffect(() => {
     fetchSongs()
-  }, [search, lyricsSearch, selectedTypeIds, selectedStyleIds, page])
+  }, [search, lyricsSearch, selectedTypeIds, selectedStyleIds, selectedLetter, page])
 
   const fetchTags = async () => {
     try {
@@ -108,8 +116,23 @@ export default function SongsPage() {
     }
   }
 
+  const fetchIndexLetters = async () => {
+    try {
+      const response = await fetch('/api/songs/letters')
+      if (response.ok) {
+        const data = (await response.json()) as {
+          letters?: Array<{ letter: SongIndexLetter; count: number }>
+        }
+        setIndexLetters(data.letters ?? [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch song index letters:', error)
+    }
+  }
+
   const fetchSongs = async () => {
     setLoading(true)
+    setLoadError(false)
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -118,6 +141,7 @@ export default function SongsPage() {
 
       if (search) params.append('search', search)
       if (lyricsSearch) params.append('lyricsSearch', lyricsSearch)
+      if (selectedLetter) params.append('letter', selectedLetter)
       for (const id of [...selectedTypeIds, ...selectedStyleIds]) {
         params.append('tagIds', id)
       }
@@ -128,9 +152,18 @@ export default function SongsPage() {
         setSongs(data.songs)
         setTotalPages(data.pagination.pages)
         setTotalSongs(data.pagination.total)
+      } else {
+        setLoadError(true)
+        setSongs([])
+        setTotalPages(1)
+        setTotalSongs(0)
       }
     } catch (error) {
       console.error('Failed to fetch songs:', error)
+      setLoadError(true)
+      setSongs([])
+      setTotalPages(1)
+      setTotalSongs(0)
     } finally {
       setLoading(false)
     }
@@ -247,6 +280,14 @@ export default function SongsPage() {
             setPage(1)
           }}
         />
+        <SongLetterIndex
+          letters={indexLetters}
+          selected={selectedLetter}
+          onSelect={(letter) => {
+            setSelectedLetter(letter)
+            setPage(1)
+          }}
+        />
       </div>
 
       {loading ? (
@@ -266,12 +307,37 @@ export default function SongsPage() {
             ))}
           </div>
         )
+      ) : loadError ? (
+        <Card className="animate-fade-in">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <Music className="mb-4 h-12 w-12 text-muted-foreground" />
+            <p className="mb-2 text-lg font-medium">{t('songs.loadFailed')}</p>
+            <p className="mb-6 text-muted-foreground">{t('songs.loadFailedHint')}</p>
+            <Button type="button" onClick={() => void fetchSongs()}>
+              {t('songs.retryLoad')}
+            </Button>
+          </CardContent>
+        </Card>
       ) : songs.length === 0 ? (
         <Card className="animate-fade-in">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Music className="mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="text-lg font-medium mb-2">{t('songs.noSongs')}</p>
-            <p className="text-muted-foreground mb-6">{t('songs.noSongsHint')}</p>
+            <p className="text-lg font-medium mb-2">
+              {selectedLetter ? t('songs.noSongsForLetter', { letter: selectedLetter }) : t('songs.noSongs')}
+            </p>
+            <p className="text-muted-foreground mb-6">
+              {selectedLetter ? t('songs.noSongsForLetterHint') : t('songs.noSongsHint')}
+            </p>
+            {selectedLetter && (
+              <Button
+                type="button"
+                variant="outline"
+                className="mb-4"
+                onClick={() => setSelectedLetter('')}
+              >
+                {t('songs.allLetters')}
+              </Button>
+            )}
             {permissions.canCreateSong && (
               <Link
                 href="/song-upload"

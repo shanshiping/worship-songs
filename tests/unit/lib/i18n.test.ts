@@ -25,8 +25,8 @@ describe('i18n helpers', () => {
   })
 
   it('interpolates params', () => {
-    expect(translate('en', 'dashboard.usedTimes', { count: 3 })).toBe(
-      'Used 3 times'
+    expect(translate('en', 'dashboard.moreSongs', { count: 3 })).toBe(
+      '+3 more'
     )
   })
 

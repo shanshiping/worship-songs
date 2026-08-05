@@ -4,6 +4,20 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { resolveLyricsWithAutoExtract } from '@/lib/sheet-lyrics'
+import {
+  parseSheetMusicPagesInput,
+  sheetFieldsFromPages,
+} from '@/lib/song-sheet-paths'
+import { normalizeSongTitle } from '@/lib/song-title-normalize'
+import {
+  isInitialFieldSchemaError,
+  parseSongLetterParam,
+  songListOrderByFallback,
+  songListOrderByPreferred,
+  syncStaleSongTitleInitials,
+  titleInitialFieldsForTitle,
+  loadSongsForInitialIndex,
+} from '@/lib/song-title-initial-sync'
 
 export function normalizeOptional(value: unknown): string | null {
   if (typeof value !== 'string') return null
@@ -75,6 +89,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search')
     const lyricsSearch = searchParams.get('lyricsSearch')
+    const letter = parseSongLetterParam(searchParams.get('letter'))
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
     const tagIds = [
@@ -119,24 +134,82 @@ export async function GET(request: Request) {
       })
     }
 
+    if (letter) {
+      and.push({ titleInitial: letter })
+    }
+
     const where: Prisma.SongWhereInput =
       and.length === 0 ? {} : and.length === 1 ? and[0]! : { AND: and }
 
-    const [songs, total] = await Promise.all([
-      prisma.song.findMany({
-        where,
-        include: {
-          ...songDetailInclude(),
-          _count: {
-            select: { meetings: true },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.song.count({ where }),
-    ])
+    const include = {
+      ...songDetailInclude(),
+      _count: {
+        select: { meetings: true },
+      },
+    }
+
+    let songs
+    let total
+    let usedInitialFallback = false
+    try {
+      ;[songs, total] = await Promise.all([
+        prisma.song.findMany({
+          where,
+          include,
+          orderBy: songListOrderByPreferred,
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        prisma.song.count({ where }),
+      ])
+    } catch (error) {
+      if (!isInitialFieldSchemaError(error)) throw error
+      usedInitialFallback = true
+      const fallbackAnd = and.filter((clause) => !('titleInitial' in (clause as object)))
+      const fallbackWhere: Prisma.SongWhereInput =
+        fallbackAnd.length === 0
+          ? {}
+          : fallbackAnd.length === 1
+            ? fallbackAnd[0]!
+            : { AND: fallbackAnd }
+      ;[songs, total] = await Promise.all([
+        prisma.song.findMany({
+          where: fallbackWhere,
+          include,
+          orderBy: songListOrderByFallback,
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        prisma.song.count({ where: fallbackWhere }),
+      ])
+    }
+
+    if (letter && usedInitialFallback) {
+      const allTitles = await prisma.song.findMany({ select: { id: true, title: true } })
+      const matchingIds = allTitles
+        .filter((song) => titleInitialFieldsForTitle(song.title).titleInitial === letter)
+        .map((song) => song.id)
+      const start = (page - 1) * limit
+      const pageIds = matchingIds.slice(start, start + limit)
+      if (pageIds.length > 0) {
+        const fetched = await prisma.song.findMany({
+          where: { id: { in: pageIds } },
+          include,
+          orderBy: songListOrderByFallback,
+        })
+        const order = new Map(pageIds.map((id, index) => [id, index]))
+        songs = fetched.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
+      } else {
+        songs = []
+      }
+      total = matchingIds.length
+    }
+
+    if (letter) {
+      void loadSongsForInitialIndex(prisma)
+        .then((rows) => syncStaleSongTitleInitials(prisma, rows))
+        .catch((error) => console.error('Background song initial sync failed:', error))
+    }
 
     return NextResponse.json({
       songs,
@@ -178,6 +251,7 @@ export async function POST(request: Request) {
       coverImage,
       pptBackground,
       sheetMusic,
+      sheetMusicPages: rawSheetMusicPages,
       audioFile,
       lyrics,
       lyricsLrc,
@@ -192,6 +266,16 @@ export async function POST(request: Request) {
       )
     }
 
+    const normalizedTitle = normalizeSongTitle(title)
+    if (!normalizedTitle) {
+      return NextResponse.json(
+        { error: '歌曲名称无效' },
+        { status: 400 }
+      )
+    }
+
+    const initialFields = titleInitialFieldsForTitle(normalizedTitle)
+
     const tagIds = parseTagIds(rawTagIds)
     const scripturesResult = parseScriptures(rawScriptures)
     if (!scripturesResult.ok) {
@@ -203,7 +287,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'MV 链接格式不正确' }, { status: 400 })
     }
 
-    const normalizedSheet = normalizeOptional(sheetMusic)
+    const sheetPages = parseSheetMusicPagesInput(rawSheetMusicPages, sheetMusic)
+    const { sheetMusic: normalizedSheet, sheetMusicPages } = sheetFieldsFromPages(sheetPages)
     const userId = session.user.id
 
     const resolvedLyrics = await resolveLyricsWithAutoExtract(
@@ -213,7 +298,8 @@ export async function POST(request: Request) {
 
     const song = await prisma.song.create({
       data: {
-        title,
+        title: normalizedTitle,
+        ...initialFields,
         artist: normalizeOptional(artist),
         key: normalizeOptional(key),
         timeSignature: normalizeOptional(timeSignature),
@@ -225,6 +311,7 @@ export async function POST(request: Request) {
         coverImage: normalizeOptional(coverImage),
         pptBackground: normalizeOptional(pptBackground),
         sheetMusic: normalizedSheet,
+        sheetMusicPages: sheetMusicPages.length > 0 ? sheetMusicPages : undefined,
         audioFile: normalizeOptional(audioFile),
         lyrics: resolvedLyrics,
         lyricsLrc: normalizeOptional(lyricsLrc),

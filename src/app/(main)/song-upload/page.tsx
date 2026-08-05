@@ -19,6 +19,10 @@ import {
   scripturesForSubmit,
   type ScriptureDraft,
 } from '@/components/song-scriptures-editor'
+import {
+  SheetMusicPagesEditor,
+  type SheetMusicPageFile,
+} from '@/components/sheet-music-pages-editor'
 
 interface UploadedFile {
   path: string
@@ -57,7 +61,7 @@ export default function UploadSongPage() {
     lyricsLrc: '',
     notes: '',
   })
-  const [sheetMusic, setSheetMusic] = useState<UploadedFile | null>(null)
+  const [sheetMusicPages, setSheetMusicPages] = useState<SheetMusicPageFile[]>([])
   const [coverImage, setCoverImage] = useState<UploadedFile | null>(null)
   const [audioFile, setAudioFile] = useState<UploadedFile | null>(null)
   const [uploadingSheet, setUploadingSheet] = useState(false)
@@ -152,20 +156,23 @@ export default function UploadSongPage() {
     }
   }
 
-  // 处理songs.sheetFile变化
-  const handleSheetMusicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
+  const uploadSheetFiles = async (files: File[]): Promise<SheetMusicPageFile[]> => {
     setUploadingSheet(true)
+    const uploaded: SheetMusicPageFile[] = []
     try {
-      const result = await uploadFile(file, 'sheet')
-      setSheetMusic(result)
-      toast.success(t('songs.sheetUploadSuccess'))
-      handleFileParse(file)
-      void autoExtractLyricsAfterSheetUpload(result.path)
+      for (const file of files) {
+        const result = (await uploadFile(file, 'sheet')) as SheetMusicPageFile
+        uploaded.push(result)
+        handleFileParse(file)
+      }
+      if (uploaded.length > 0) {
+        toast.success(t('songs.sheetUploadSuccess'))
+        void autoExtractLyricsAfterSheetUpload(uploaded[0].path)
+      }
+      return uploaded
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, t('songs.sheetUploadFailed')))
+      return []
     } finally {
       setUploadingSheet(false)
     }
@@ -206,10 +213,6 @@ export default function UploadSongPage() {
   }
 
   // 删除已上传的文件
-  const removeSheetMusic = () => {
-    setSheetMusic(null)
-  }
-
   const removeCoverImage = () => {
     setCoverImage(null)
   }
@@ -218,7 +221,7 @@ export default function UploadSongPage() {
     setAudioFile(null)
   }
 
-  const handleExtractLyrics = async (sheetPath = sheetMusic?.path) => {
+  const handleExtractLyrics = async (sheetPath = sheetMusicPages[0]?.path) => {
     if (!sheetPath) return
     if (formData.lyrics.trim()) {
       const ok = window.confirm(t('songs.extractConfirmOverwrite'))
@@ -280,7 +283,8 @@ export default function UploadSongPage() {
           tagIds,
           scriptures: scripturesForSubmit(scriptures),
           coverImage: coverImage?.path || null,
-          sheetMusic: sheetMusic?.path || null,
+          sheetMusic: sheetMusicPages[0]?.path || null,
+          sheetMusicPages: sheetMusicPages.map((page) => page.path),
           audioFile: audioFile?.path || null,
         }),
       })
@@ -405,60 +409,12 @@ export default function UploadSongPage() {
                 )}
               </div>
 
-              {/* 歌谱上传 */}
-              <div className="space-y-2">
-                <Label htmlFor="sheetMusic">{t('songs.sheetFile')}</Label>
-                {sheetMusic ? (
-                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-xl">
-                    <div className="flex items-center space-x-3">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                      <div>
-                        <p className="text-sm font-medium text-green-900 truncate max-w-[200px]">
-                          {sheetMusic.name}
-                        </p>
-                        <p className="text-xs text-green-600">
-                          {formatFileSize(sheetMusic.size)}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={removeSheetMusic}
-                      className="p-1 hover:bg-green-100 rounded-lg transition-colors"
-                    >
-                      <X className="h-4 w-4 text-green-600" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <Input
-                      id="sheetMusic"
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={handleSheetMusicChange}
-                      className="hidden"
-                      disabled={uploadingSheet}
-                    />
-                    <label
-                      htmlFor="sheetMusic"
-                      className="flex items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary hover:bg-gray-50 transition-colors cursor-pointer min-h-[140px]"
-                    >
-                      {uploadingSheet ? (
-                        <div className="flex items-center space-x-2 text-muted-foreground">
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                          <span>{t('songs.uploading')}</span>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center space-y-2 text-muted-foreground text-center">
-                          <FileText className="h-8 w-8" />
-                          <span className="text-sm">{t('songs.dropSheet')}</span>
-                          <span className="text-xs">{t('songs.dropSheetHint')}</span>
-                        </div>
-                      )}
-                    </label>
-                  </div>
-                )}
-              </div>
+              <SheetMusicPagesEditor
+                pages={sheetMusicPages}
+                uploading={uploadingSheet}
+                onChange={setSheetMusicPages}
+                onUploadFiles={uploadSheetFiles}
+              />
 
               {/* 音频上传 */}
               <div className="space-y-2">
@@ -690,7 +646,7 @@ export default function UploadSongPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <Label htmlFor="lyrics">{t('songs.lyrics')}</Label>
-                {sheetMusic?.path && (
+                {sheetMusicPages[0]?.path && (
                   <Button
                     type="button"
                     variant="outline"

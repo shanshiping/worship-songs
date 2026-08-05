@@ -1,5 +1,6 @@
 'use client'
 
+import { usePathname } from 'next/navigation'
 import { Sidebar } from './sidebar'
 import { Header } from './header'
 import { SongAgentChat } from '@/components/song-agent-chat'
@@ -7,6 +8,8 @@ import { useI18n } from '@/components/providers/i18n-provider'
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const { t } = useI18n()
+  const pathname = usePathname()
+  const hideGlobalAgent = pathname === '/sheets'
 
   return (
     <div className="min-h-screen bg-background">
@@ -23,7 +26,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
-      <SongAgentChat />
+      {!hideGlobalAgent && <SongAgentChat />}
     </div>
   )
 }

@@ -4,13 +4,16 @@ import { prisma } from '@/lib/prisma'
 import { PERMISSIONS } from '@/lib/permissions'
 import { requirePermission } from '@/lib/server-permissions'
 import { readSheetBytes, resolveSheetPath } from '@/lib/sheet-lyrics'
+import { getSongSheetPaths } from '@/lib/song-sheet-paths'
 import {
   filterSongsWithSheet,
   findSongsWithoutSheet,
-  mergeSheetMusicPdf,
+  mergeSheetMusicPdfDetailed,
 } from '@/lib/sheet-pdf-merge'
 
 const MAX_SONGS = 20
+
+export const runtime = 'nodejs'
 
 export async function POST(request: Request) {
   try {
@@ -39,6 +42,7 @@ export async function POST(request: Request) {
         id: true,
         title: true,
         sheetMusic: true,
+        sheetMusicPages: true,
       },
     })
 
@@ -63,23 +67,26 @@ export async function POST(request: Request) {
 
     const mergeInputs = []
     for (const song of withSheets) {
-      const path = song.sheetMusic!.trim()
-      const resolved = resolveSheetPath(path)
-      if (!resolved) {
-        skippedTitles.push(song.title)
-        continue
-      }
+      const paths = getSongSheetPaths(song)
+      for (const [index, path] of paths.entries()) {
+        const resolved = resolveSheetPath(path)
+        if (!resolved) {
+          skippedTitles.push(song.title)
+          continue
+        }
 
-      try {
-        const bytes = await readSheetBytes(path)
-        mergeInputs.push({
-          title: song.title,
-          sheetPath: path,
-          bytes,
-          mimeType: resolved.mimeType,
-        })
-      } catch {
-        skippedTitles.push(song.title)
+        try {
+          const bytes = await readSheetBytes(path)
+          mergeInputs.push({
+            title:
+              paths.length > 1 ? `${song.title} (${index + 1}/${paths.length})` : song.title,
+            sheetPath: path,
+            bytes,
+            mimeType: resolved.mimeType,
+          })
+        } catch {
+          skippedTitles.push(song.title)
+        }
       }
     }
 
@@ -90,7 +97,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const pdfBytes = await mergeSheetMusicPdf(mergeInputs)
+    const pdfBytes = await mergeSheetMusicPdfDetailed(mergeInputs)
     const date = new Date().toISOString().slice(0, 10)
     const filename = `worship-sheets-${date}.pdf`
 
@@ -99,12 +106,12 @@ export async function POST(request: Request) {
       'Content-Disposition': `attachment; filename="${filename}"`,
     }
 
-    const uniqueSkipped = [...new Set(skippedTitles)]
+    const uniqueSkipped = [...new Set([...skippedTitles, ...pdfBytes.failedTitles])]
     if (uniqueSkipped.length > 0) {
       headers['X-Skipped-Songs'] = encodeURIComponent(uniqueSkipped.join('|'))
     }
 
-    return new NextResponse(Buffer.from(pdfBytes), { headers })
+    return new NextResponse(Buffer.from(pdfBytes.pdf), { headers })
   } catch (error) {
     const message = error instanceof Error ? error.message : '生成失败'
     if (message === '请先登录') {
@@ -124,6 +131,9 @@ export async function POST(request: Request) {
       )
     }
     console.error('Sheet merge error:', error)
-    return NextResponse.json({ error: '生成歌谱 PDF 失败' }, { status: 500 })
+    return NextResponse.json(
+      { error: message === '没有可合并的歌谱' ? message : '生成歌谱 PDF 失败' },
+      { status: 500 },
+    )
   }
 }

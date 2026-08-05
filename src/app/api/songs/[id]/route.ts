@@ -5,6 +5,13 @@ import { prisma } from '@/lib/prisma'
 import { getErrorMessage } from '@/lib/errors'
 import { resolveLyricsWithAutoExtract } from '@/lib/sheet-lyrics'
 import {
+  getSongSheetPaths,
+  parseSheetMusicPagesInput,
+  sheetFieldsFromPages,
+} from '@/lib/song-sheet-paths'
+import { normalizeSongTitle } from '@/lib/song-title-normalize'
+import { titleInitialFieldsForTitle } from '@/lib/song-title-initial-sync'
+import {
   normalizeOptional,
   isValidHttpUrl,
   parseTagIds,
@@ -100,12 +107,20 @@ export async function PUT(
       coverImage,
       pptBackground,
       sheetMusic,
+      sheetMusicPages: rawSheetMusicPages,
       audioFile,
       lyrics,
       lyricsLrc,
       notes,
       scriptures: rawScriptures,
     } = body
+
+    const normalizedTitle = normalizeSongTitle(title ?? '')
+    if (!normalizedTitle) {
+      return NextResponse.json({ error: '歌曲名称无效' }, { status: 400 })
+    }
+
+    const initialFields = titleInitialFieldsForTitle(normalizedTitle)
 
     const normalizedMvUrl = normalizeOptional(mvUrl)
     if (normalizedMvUrl && !isValidHttpUrl(normalizedMvUrl)) {
@@ -118,18 +133,22 @@ export async function PUT(
       return NextResponse.json({ error: scripturesResult.error }, { status: 400 })
     }
 
-    const normalizedSheet = normalizeOptional(sheetMusic)
+    const sheetPages = parseSheetMusicPagesInput(rawSheetMusicPages, sheetMusic)
+    const { sheetMusic: normalizedSheet, sheetMusicPages } = sheetFieldsFromPages(sheetPages)
 
     const existing = await prisma.song.findUnique({
       where: { id },
-      select: { sheetMusic: true },
+      select: { sheetMusic: true, sheetMusicPages: true },
     })
 
     if (!existing) {
       return NextResponse.json({ error: '歌曲不存在' }, { status: 404 })
     }
 
-    const sheetChanged = normalizedSheet !== (existing.sheetMusic ?? null)
+    const existingPages = getSongSheetPaths(existing)
+    const sheetChanged =
+      existingPages.length !== sheetPages.length ||
+      existingPages.some((path, index) => path !== sheetPages[index])
     const sheetAddedOrReplaced = sheetChanged && normalizedSheet !== null
     const sheetRemoved = sheetChanged && normalizedSheet === null
     const userId = session?.user?.id
@@ -149,7 +168,8 @@ export async function PUT(
     const song = await prisma.song.update({
       where: { id },
       data: {
-        title,
+        title: normalizedTitle,
+        ...initialFields,
         artist: normalizeOptional(artist),
         key: normalizeOptional(key),
         timeSignature: normalizeOptional(timeSignature),
@@ -161,6 +181,7 @@ export async function PUT(
         coverImage: normalizeOptional(coverImage),
         pptBackground: normalizeOptional(pptBackground),
         sheetMusic: normalizedSheet,
+        sheetMusicPages: sheetMusicPages.length > 0 ? sheetMusicPages : null,
         audioFile: normalizeOptional(audioFile),
         lyrics: resolvedLyrics,
         lyricsLrc: normalizeOptional(lyricsLrc),
