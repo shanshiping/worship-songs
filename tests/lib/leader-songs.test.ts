@@ -40,6 +40,45 @@ describe('buildLeaderSongStats', () => {
     expect(stats[1].songs[0]).toMatchObject({ id: 's2', count: 1, rank: 1 })
   })
 
+  it('merges alias leader names under the canonical name', () => {
+    const stats = buildLeaderSongStats([
+      {
+        leader: '黎明',
+        meetingId: 'm1',
+        songId: 's1',
+        song: { id: 's1', title: 'Song A', artist: null },
+      },
+      {
+        leader: '徐黎明',
+        meetingId: 'm2',
+        songId: 's1',
+        song: { id: 's1', title: 'Song A', artist: null },
+      },
+      {
+        leader: '海平',
+        meetingId: 'm3',
+        songId: 's2',
+        song: { id: 's2', title: 'Song B', artist: null },
+      },
+      {
+        leader: '王海平',
+        meetingId: 'm4',
+        songId: 's2',
+        song: { id: 's2', title: 'Song B', artist: null },
+      },
+    ])
+
+    expect(stats).toHaveLength(2)
+    expect(stats.find((item) => item.leader === '黎明')).toMatchObject({
+      meetingCount: 2,
+      songs: [{ id: 's1', count: 2 }],
+    })
+    expect(stats.find((item) => item.leader === '王海平')).toMatchObject({
+      meetingCount: 2,
+      songs: [{ id: 's2', count: 2 }],
+    })
+  })
+
   it('filters by leader', () => {
     const stats = buildLeaderSongStats(rows, { leader: 'Bob' })
 

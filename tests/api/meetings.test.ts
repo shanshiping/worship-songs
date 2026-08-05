@@ -56,16 +56,20 @@ describe('/api/meetings', () => {
       .mockResolvedValueOnce([])
     mockPrisma.meeting.count.mockResolvedValue(0)
 
-    await GET(jsonRequest('http://localhost/api/meetings?leader=Alice'))
+    await GET(jsonRequest('http://localhost/api/meetings?leader=黎明'))
 
     expect(mockPrisma.meeting.findMany).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        where: expect.objectContaining({ leader: 'Alice' }),
+        where: expect.objectContaining({
+          leader: { in: ['黎明', '徐黎明'] },
+        }),
       })
     )
     expect(mockPrisma.meeting.count).toHaveBeenCalledWith({
-      where: expect.objectContaining({ leader: 'Alice' }),
+      where: expect.objectContaining({
+        leader: { in: ['黎明', '徐黎明'] },
+      }),
     })
   })
 

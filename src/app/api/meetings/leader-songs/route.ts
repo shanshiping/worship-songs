@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { buildLeaderSongStats } from '@/lib/leader-songs'
+import {
+  dedupeLeaderNames,
+  leaderNameVariants,
+  normalizeLeaderName,
+} from '@/lib/leader-names'
 
 export async function GET(request: Request) {
   try {
@@ -16,8 +21,13 @@ export async function GET(request: Request) {
     const year =
       yearParam && /^\d{4}$/.test(yearParam) ? parseInt(yearParam, 10) : null
 
-    const meetingWhere: Prisma.MeetingWhereInput = {
-      leader: leader ? leader : { not: null },
+    const meetingWhere: Prisma.MeetingWhereInput = {}
+
+    if (leader) {
+      const variants = leaderNameVariants(leader)
+      meetingWhere.leader = variants.length === 1 ? variants[0] : { in: variants }
+    } else {
+      meetingWhere.leader = { not: null }
     }
 
     if (year !== null) {
@@ -53,9 +63,11 @@ export async function GET(request: Request) {
       ...new Set(allMeetings.map((m) => m.date.getFullYear())),
     ].sort((a, b) => b - a)
 
-    const leaders = leaderRows
-      .map((row) => row.leader?.trim())
-      .filter((name): name is string => Boolean(name))
+    const leaders = dedupeLeaderNames(
+      leaderRows
+        .map((row) => row.leader?.trim())
+        .filter((name): name is string => Boolean(name))
+    )
 
     const inputs = rows
       .map((row) => ({
@@ -73,7 +85,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       year,
-      leader,
+      leader: leader ? normalizeLeaderName(leader) : null,
       limitPerLeader,
       years,
       leaders,

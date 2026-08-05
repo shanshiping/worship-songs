@@ -1,3 +1,5 @@
+import { leaderMatchesFilter, normalizeLeaderName } from '@/lib/leader-names'
+
 export type LeaderSongInput = {
   leader: string
   meetingId: string
@@ -38,7 +40,7 @@ export function buildLeaderSongStats(
   const filtered = rows.filter((row) => {
     const name = row.leader?.trim()
     if (!name) return false
-    if (leaderFilter) return name === leaderFilter
+    if (leaderFilter) return leaderMatchesFilter(name, leaderFilter)
     return true
   })
 
@@ -51,7 +53,9 @@ export function buildLeaderSongStats(
   >()
 
   for (const row of filtered) {
-    const leader = row.leader.trim()
+    const leader = normalizeLeaderName(row.leader.trim())
+    if (!leader) continue
+
     if (!byLeader.has(leader)) {
       byLeader.set(leader, { meetings: new Set(), songs: new Map() })
     }

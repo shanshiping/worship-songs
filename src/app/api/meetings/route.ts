@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { dedupeLeaderNames, leaderNameVariants, normalizeLeaderName } from '@/lib/leader-names'
 
 export async function GET(request: Request) {
   try {
@@ -34,7 +35,8 @@ export async function GET(request: Request) {
     }
 
     if (leader) {
-      where.leader = leader
+      const variants = leaderNameVariants(leader)
+      where.leader = variants.length === 1 ? variants[0] : { in: variants }
     }
 
     const [meetings, total, allMeetings, leaderRows] = await Promise.all([
@@ -70,9 +72,11 @@ export async function GET(request: Request) {
       ...new Set(allMeetings.map((m) => m.date.getFullYear())),
     ].sort((a, b) => b - a)
 
-    const leaders = leaderRows
-      .map((row) => row.leader?.trim())
-      .filter((name): name is string => Boolean(name))
+    const leaders = dedupeLeaderNames(
+      leaderRows
+        .map((row) => row.leader?.trim())
+        .filter((name): name is string => Boolean(name))
+    )
 
     return NextResponse.json({
       meetings,
