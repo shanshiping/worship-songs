@@ -10,7 +10,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getSongAgentModel, isAiConfigured } from '@/lib/ai/provider'
-import { SONG_AGENT_SYSTEM_PROMPT } from '@/lib/ai/song-agent-prompt'
+import { buildSongAgentSystemPrompt, type SongAgentPageContext } from '@/lib/ai/song-agent-prompt'
 import { createSongAgentTools } from '@/lib/ai/song-agent-tools'
 
 const MAX_MESSAGES = 40
@@ -33,12 +33,16 @@ export async function POST(request: Request) {
     const messages = Array.isArray(body?.messages)
       ? (body.messages as UIMessage[])
       : []
+    const pageContext =
+      body?.pageContext && typeof body.pageContext === 'object'
+        ? (body.pageContext as SongAgentPageContext)
+        : undefined
 
     const truncated = messages.slice(-MAX_MESSAGES)
 
     const result = streamText({
       model: getSongAgentModel(),
-      system: SONG_AGENT_SYSTEM_PROMPT,
+      system: buildSongAgentSystemPrompt(pageContext),
       messages: await convertToModelMessages(truncated),
       tools: createSongAgentTools(),
       stopWhen: isStepCount(5),

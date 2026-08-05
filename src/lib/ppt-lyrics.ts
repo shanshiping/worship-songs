@@ -73,13 +73,14 @@ function applyGradientBackground(
     y: 0,
     w: SLIDE_W,
     h: SLIDE_H,
+    // pptxgenjs runtime supports gradient fills; package types are incomplete
     fill: {
       type: 'gradient',
       color: kind === 'title' ? COLORS.titleBg : COLORS.lyricsBg,
       gradient: 'linear',
       angle: gradient.angle,
       stops: gradient.stops,
-    },
+    } as unknown as PptxGenJS.ShapeFillProps,
     line: { type: 'none' },
   })
 }

@@ -1,0 +1,35 @@
+# Production: Next.js app container only.
+# Database: use TencentDB / Neon / self-hosted Postgres via DATABASE_URL.
+#
+#   cp .env.production.example .env
+#   docker compose -f docker-compose.prod.yml up -d --build
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: worship-songs-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      RUN_DB_PUSH: ${RUN_DB_PUSH:-true}
+    volumes:
+      - uploads_data:/app/public/uploads
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1:3000/login >/dev/null 2>&1 || exit 1",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  uploads_data:

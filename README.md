@@ -444,16 +444,24 @@ worship-songs/
 
 ## 部署
 
+### Docker + 腾讯云（推荐自建）
+
+Next.js 为全栈单体（页面 + API 同一进程），一个 Docker 容器即可。
+
+```bash
+cp .env.production.example .env
+# 编辑 DATABASE_URL、NEXTAUTH_URL 等
+
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+详细步骤（TencentDB、Nginx、HTTPS、TCR）：[`docs/deploy-tencent-cloud-docker.md`](docs/deploy-tencent-cloud-docker.md)
+
 ### 构建生产版本
 
 ```bash
-npm run build
-```
-
-### 启动生产服务器
-
-```bash
-npm start
+pnpm build
+pnpm start
 ```
 
 ### 部署到 Vercel

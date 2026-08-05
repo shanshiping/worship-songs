@@ -5,6 +5,7 @@ export type AgentSongResult = {
   id: string
   title: string
   artist: string | null
+  hasSheetMusic: boolean
   tags: { name: string; kind: string }[]
   lyricSnippet: string | null
 }
@@ -73,6 +74,7 @@ export async function searchSongsForAgent(options: {
     id: song.id,
     title: song.title,
     artist: song.artist,
+    hasSheetMusic: Boolean(song.sheetMusic?.trim()),
     tags: song.tags.map((st) => ({
       name: st.tag.name,
       kind: st.tag.kind,

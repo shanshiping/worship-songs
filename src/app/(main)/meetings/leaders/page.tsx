@@ -100,7 +100,7 @@ export default function LeaderSongsPage() {
           </Label>
           <Select
             value={year || 'all'}
-            onValueChange={(value) => setYear(value === 'all' ? '' : value)}
+            onValueChange={(value) => setYear(!value || value === 'all' ? '' : value)}
           >
             <SelectTrigger id="leader-stats-year" className="min-w-[10rem]">
               <SelectValue placeholder={t('meetings.leaderStats.allTime')} />
@@ -122,7 +122,7 @@ export default function LeaderSongsPage() {
           </Label>
           <Select
             value={leader || 'all'}
-            onValueChange={(value) => setLeader(value === 'all' ? '' : value)}
+            onValueChange={(value) => setLeader(!value || value === 'all' ? '' : value)}
           >
             <SelectTrigger id="leader-stats-leader" className="min-w-[10rem]">
               <SelectValue placeholder={t('meetings.allLeaders')} />

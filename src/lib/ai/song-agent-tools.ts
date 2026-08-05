@@ -6,6 +6,8 @@ import { isAdminOrAbove, hasPermission, PERMISSIONS } from '@/lib/permissions'
 import { assertCanModifyPlaylist } from '@/lib/playlist-access'
 import { getCurrentUser } from '@/lib/server-permissions'
 import { searchSongsForAgent } from '@/lib/ai/song-search'
+import { searchMeetingsByTheme } from '@/lib/meeting-theme-search'
+import { getScriptureRecommendations } from '@/lib/scripture-recommendations'
 
 export function createSongAgentTools() {
   return {
@@ -79,6 +81,7 @@ export function createSongAgentTools() {
               id: song.id,
               title: song.title,
               artist: song.artist,
+              hasSheetMusic: Boolean(song.sheetMusic?.trim()),
               usageCount: countById.get(song.id) ?? 0,
               tags: song.tags.map((st) => ({
                 name: st.tag.name,
@@ -89,6 +92,31 @@ export function createSongAgentTools() {
           .filter(Boolean)
 
         return { songs: ordered }
+      },
+    }),
+
+    searchMeetingsByTheme: tool({
+      description:
+        'Find past meetings with similar themes and their selected songs.',
+      inputSchema: z.object({
+        query: z.string().describe('Theme keywords to search in meeting history'),
+        limit: z.number().int().min(1).max(10).optional(),
+      }),
+      execute: async ({ query, limit }) => {
+        const meetings = await searchMeetingsByTheme(query, limit ?? 5)
+        return { count: meetings.length, meetings }
+      },
+    }),
+
+    getScriptureRecommendations: tool({
+      description:
+        'Find songs linked to a scripture reference and historically selected in meetings.',
+      inputSchema: z.object({
+        reference: z.string().describe('Scripture reference, e.g. 约翰福音 3:16'),
+      }),
+      execute: async ({ reference }) => {
+        const recommendations = await getScriptureRecommendations(reference)
+        return recommendations
       },
     }),
 

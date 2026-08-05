@@ -117,7 +117,7 @@ export default function MeetingsPage() {
           <Select
             value={leader || 'all'}
             onValueChange={(value) => {
-              setLeader(value === 'all' ? '' : value)
+              setLeader(!value || value === 'all' ? '' : value)
               setPage(1)
             }}
           >

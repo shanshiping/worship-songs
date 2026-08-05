@@ -4,10 +4,15 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { dedupeLeaderNames, leaderNameVariants, normalizeLeaderName } from '@/lib/leader-names'
+import {
+  isValidThemeSearchQuery,
+  searchMeetingsByTheme,
+} from '@/lib/meeting-theme-search'
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
+    const themeSearch = searchParams.get('themeSearch')?.trim() || ''
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
     const month = searchParams.get('month')
@@ -15,6 +20,18 @@ export async function GET(request: Request) {
     const leader = searchParams.get('leader')?.trim() || null
     const year =
       yearParam && /^\d{4}$/.test(yearParam) ? parseInt(yearParam, 10) : null
+
+    if (themeSearch) {
+      if (!isValidThemeSearchQuery(themeSearch)) {
+        return NextResponse.json(
+          { error: '主题搜索至少需要 2 个字符' },
+          { status: 400 },
+        )
+      }
+
+      const meetings = await searchMeetingsByTheme(themeSearch, limit)
+      return NextResponse.json({ meetings })
+    }
 
     const where: Prisma.MeetingWhereInput = {}
 

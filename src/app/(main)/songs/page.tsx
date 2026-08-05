@@ -386,8 +386,16 @@ export default function SongsPage() {
 
               <div className="hidden items-center justify-between gap-2 md:col-span-2 md:flex">
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  {song.sheetMusic && <FileText className="h-3.5 w-3.5" title={t('songs.sheet')} />}
-                  {song.audioFile && <Play className="h-3.5 w-3.5" title={t('songs.audio')} />}
+                  {song.sheetMusic && (
+                    <span title={t('songs.sheet')}>
+                      <FileText className="h-3.5 w-3.5" />
+                    </span>
+                  )}
+                  {song.audioFile && (
+                    <span title={t('songs.audio')}>
+                      <Play className="h-3.5 w-3.5" />
+                    </span>
+                  )}
                 </div>
                 {canAddToPlaylist && (
                   <Button

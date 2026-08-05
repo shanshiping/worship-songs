@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     const type = typeof typeRaw === 'string' && isUploadKind(typeRaw) ? typeRaw : 'sheet'
     const validTypes = ALLOWED_TYPES[type]
 
-    if (!validTypes.includes(file.type as (typeof validTypes)[number])) {
+    if (!(validTypes as readonly string[]).includes(file.type)) {
       return NextResponse.json({ error: '不支持的文件格式' }, { status: 400 })
     }
 
